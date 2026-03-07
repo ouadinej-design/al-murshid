@@ -1,0 +1,2652 @@
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import {
+  BookOpen, Bookmark, Activity, ArrowRight, Star, Heart,
+  Timer, X, Clock, Award, Copy, CheckCircle, Bell, BellOff,
+  RotateCcw, ChevronLeft, ChevronRight, Play, Pause,
+  Plus, Trash2, Target, TrendingUp, Calendar, Zap
+} from "lucide-react";
+
+// ════════════════════════════════════════════════════════════════════
+// DONNÉES — 30 JUZ avec durées de lecture moyennes (minutes)
+// Basé sur la pratique malikite : tartil modéré (~1 page/min)
+// ════════════════════════════════════════════════════════════════════
+const JUZ_DATA = Array.from({ length: 30 }, (_, i) => ({
+  number: i + 1,
+  name: `Juz ${i + 1}`,
+  arabicName: ["الم", "سَيَقُولُ", "تِلْكَ الرُّسُلُ", "لَن تَنَالُوا", "وَالْمُحْصَنَاتُ", "لَا يُحِبُّ اللَّهُ", "وَإِذَا سَمِعُوا", "وَلَوْ أَنَّنَا", "قَالَ الْمَلأُ", "وَاعْلَمُوا", "يَعْتَذِرُونَ", "وَمَا مِن دَابَّةٍ", "وَمَا أُبَرِّئُ", "رُبَمَا", "سُبْحَانَ الَّذِي", "قَالَ أَلَمْ", "اقْتَرَبَ", "قَدْ أَفْلَحَ", "وَقَالَ الَّذِينَ", "أَمَّنْ خَلَقَ", "اتْلُ مَا أُوحِيَ", "وَمَن يَقْنُتْ", "وَمَا لِيَ", "فَمَن أَظْلَمُ", "إِلَيْهِ يُرَدُّ", "حم", "قَالَ فَمَا خَطْبُكُمْ", "قَدْ سَمِعَ اللَّهُ", "تَبَارَكَ الَّذِي", "عَمَّ"][i],
+  pages: 20,
+  readingMinutes: [47, 45, 48, 46, 44, 43, 45, 47, 46, 44, 43, 45, 44, 43, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 30, 28, 25, 22][i],
+  surahs: getSurahsForJuz(i + 1),
+  encouragement: getEncouragement(i + 1),
+}));
+
+function getSurahsForJuz(juz) {
+  const map = {
+    1:[1,2],2:[2],3:[2,3],4:[3,4],5:[4,5],6:[4,5,6],7:[5,6,7],8:[6,7],9:[7,8],10:[8,9],
+    11:[9,10,11],12:[11,12],13:[12,13,14],14:[15,16],15:[17,18],16:[18,19,20],17:[21,22],
+    18:[23,24,25],19:[25,26,27],20:[27,28,29],21:[29,30,31,32,33],22:[33,34,35,36],
+    23:[36,37,38,39],24:[39,40,41],25:[41,42,43,44,45],26:[46,47,48,49,50,51],
+    27:[51,52,53,54,55,56,57],28:[58,59,60,61,62,63,64,65,66],
+    29:[67,68,69,70,71,72,73,74,75,76,77],30:[78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114]
+  };
+  return map[juz] || [];
+}
+
+function getEncouragement(juz) {
+  const messages = [
+    { arabic: "مَا شَاءَ اللَّهُ", fr: "Masha'Allah ! Premier Juz complété — tu as posé la première pierre de ton Khatm.", hadith: "Le Prophète ﷺ dit : « Récitez le Coran, car il intercédera pour ses compagnons au Jour du Jugement. » — Muslim", verse: "إِنَّ هَٰذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ", verseFr: "Ce Coran guide vers ce qui est le plus droit — Al-Isrā 9", emoji: "🌱" },
+    { arabic: "بَارَكَ اللَّهُ فِيكَ", fr: "Barakallāhu fīk ! Deux Juz — tu avances sur le chemin des Ahl al-Qur'an.", hadith: "« Celui qui récite le Coran et le maîtrise sera avec les nobles anges vertueux. » — Bukhāri & Muslim", verse: "وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍ", verseFr: "Nous avons facilité le Coran pour la méditation — Al-Qamar 17", emoji: "✨" },
+    { arabic: "اللَّهُ أَكْبَرُ", fr: "Allāhu Akbar ! 3 Juz — Imam Mālik récitait chaque nuit avec recueillement. Tu suis ses pas.", hadith: "Imam Mālik رحمه الله : « La science la plus noble est la parole d'Allah. »", verse: "كِتَابٌ أَنزَلْنَاهُ إِلَيْكَ مُبَارَكٌ لِّيَدَّبَّرُوا آيَاتِهِ", verseFr: "Un Livre béni que Nous t'avons révélé pour qu'on médite Ses versets — Ṣād 29", emoji: "🌿" },
+    { arabic: "تَبَارَكَ اللَّهُ", fr: "Tabārakallāh ! 4 Juz terminés — la régularité est l'essence du madhhab malikite.", hadith: "« L'acte le plus aimé d'Allah est celui fait régulièrement, même petit. » — Bukhāri", verse: "وَاتَّبِعُوا أَحْسَنَ مَا أُنزِلَ إِلَيْكُم مِّن رَّبِّكُمْ", verseFr: "Suivez ce qui vous a été révélé de meilleur par votre Seigneur — Az-Zumar 55", emoji: "💎" },
+    { arabic: "سُبْحَانَ اللَّهِ", fr: "Subḥānallāh ! Juz 5 — tu es à 1/6 du Khatm. Continue avec confiance.", hadith: "« Chaque lettre du Coran vaut dix bonnes œuvres. » — Tirmidhī", verse: "إِنَّ الَّذِينَ يَتْلُونَ كِتَابَ اللَّهِ وَأَقَامُوا الصَّلَاةَ", verseFr: "Ceux qui récitent le Livre d'Allah… espèrent un commerce qui ne périra pas — Fāṭir 29", emoji: "⭐" },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "Al-ḥamdu lillāh ! 6 Juz — un cinquième du Coran dans ta poitrine.", hadith: "Ibn Abī Zayd al-Qayrawānī : « La récitation du Coran purifie le cœur. »", verse: "يَا أَيُّهَا النَّاسُ قَدْ جَاءَتْكُم مَّوْعِظَةٌ مِّن رَّبِّكُمْ وَشِفَاءٌ لِّمَا فِي الصُّدُورِ", verseFr: "Une exhortation et une guérison pour ce qui est dans les poitrines — Yūnus 57", emoji: "💫" },
+    { arabic: "مَا شَاءَ اللَّهُ", fr: "7 Juz ! Imam Mālik récitait avec lenteur et recueillement — tu honores son héritage.", hadith: "« Récite le Coran avec tristesse, car c'est son état naturel. » — Ibn Māja", verse: "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا", verseFr: "Récite le Coran lentement et distinctement — Al-Muzzammil 4", emoji: "🌙" },
+    { arabic: "اللَّهُ وَلِيُّنَا", fr: "8 Juz — tu progresses magnifiquement. Que Allah te facilite la suite.", hadith: "« La meilleure d'entre vous est celui qui apprend le Coran et l'enseigne. » — Bukhāri", verse: "الَّذِينَ آتَيْنَاهُمُ الْكِتَابَ يَتْلُونَهُ حَقَّ تِلَاوَتِهِ", verseFr: "Ceux à qui Nous avons donné le Livre le récitent comme il se doit — Al-Baqara 121", emoji: "🌟" },
+    { arabic: "بِسْمِ اللَّهِ", fr: "9 Juz ! Presque un tiers du chemin. Istiqāma — la constance est la clé !", hadith: "Imam Mālik lisait le Coran entier chaque semaine de sa vie entière.", verse: "فَاسْتَمِسْكْ بِالَّذِي أُوحِيَ إِلَيْكَ إِنَّكَ عَلَىٰ صِرَاطٍ مُّسْتَقِيمٍ", verseFr: "Tiens-toi fermement à ce qui t'est révélé — Az-Zukhruf 43", emoji: "🔥" },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "10 Juz ! Un tiers du Khatm accompli — les anges se réjouissent avec toi.", hadith: "« Allah élève les gens par ce Livre et abaisse d'autres par lui. » — Muslim", verse: "إِنَّ هَٰذَا الْقُرْآنَ يَقُصُّ عَلَىٰ بَنِي إِسْرَائِيلَ أَكْثَرَ الَّذِي هُمْ فِيهِ يَخْتَلِفُونَ", verseFr: "Ce Coran expose aux enfants d'Israël l'essentiel de leurs divergences — An-Naml 76", emoji: "🏅" },
+    { arabic: "مَاشَاءَاللَّه", fr: "11 Juz — chaque page lue est une lumière sur ton visage au Jour dernier.", hadith: "« Celui dont la poitrine est vide du Coran est comme une maison en ruine. » — Tirmidhī", verse: "قُلْ لَّئِنِ اجْتَمَعَتِ الْإِنسُ وَالْجِنُّ عَلَىٰ أَن يَأْتُوا بِمِثْلِ هَٰذَا الْقُرْآنِ لَا يَأْتُونَ بِمِثْلِهِ", verseFr: "Jamais hommes et djinns réunis ne pourraient produire pareil Coran — Al-Isrā 88", emoji: "💡" },
+    { arabic: "اللَّهُ أَكْبَرُ", fr: "12 Juz terminés ! 40% du chemin. Ta discipline est une forme d'ibāda.", hadith: "Ibn Abī Zayd al-Qayrawānī : « Fais du Coran ton compagnon de vie. »", verse: "وَإِذَا قُرِئَ الْقُرْآنُ فَاسْتَمِعُوا لَهُ وَأَنصِتُوا لَعَلَّكُمْ تُرْحَمُونَ", verseFr: "Quand on récite le Coran, écoutez-le et restez silencieux — Al-A'rāf 204", emoji: "🎯" },
+    { arabic: "سُبْحَانَ اللَّهِ", fr: "13 Juz — presque la moitié ! Tu touches au cœur du Coran.", hadith: "« Le Coran est la corde d'Allah — accroche-toi à elle. » — Hakim", verse: "وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ لِّلْمُؤْمِنِينَ", verseFr: "Nous faisons descendre du Coran ce qui est guérison et miséricorde — Al-Isrā 82", emoji: "💚" },
+    { arabic: "تَبَارَكَ اللَّهُ", fr: "14 Juz ! Un pas de plus vers la moitié du Khatm — waAllāhi c'est immense.", hadith: "« Récite le Coran en 7 nuits au minimum. » — Muwatta Mālik" },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "🏆 MOITIÉ DU KHATM ! Juz 15 accompli — tu es au cœur du Coran. Ya Rabb !", hadith: "« Il n'est pas de jalousie permise sauf deux : celui à qui Allah a donné le Coran et il le récite nuit et jour. » — Bukhāri" },
+    { arabic: "مَا شَاءَ اللَّهُ", fr: "16 Juz — la seconde moitié commence. Tu es lancé(e), ne t'arrête pas !", hadith: "Imam Mālik : « Persévère, car la régularité efface les lacunes. »" },
+    { arabic: "اللَّهُ وَلِيُّنَا", fr: "17 Juz ! Plus qu'à moitié. Chaque jour rapproche du Khatm.", hadith: "« Réciter le Coran dans la prière de nuit vaut 70 fois mieux en dehors. » — Dāraquṭnī" },
+    { arabic: "بَارَكَ اللَّهُ", fr: "18 Juz — 60% du Coran dans ta vie. MāshāAllāh, quelle baraka !", hadith: "Ibn Abī Zayd al-Qayrawānī recommandait de lire le Coran entier chaque mois." },
+    { arabic: "سُبْحَانَ اللَّهِ", fr: "19 Juz ! Deux tiers bientôt atteints. La fin se rapproche.", hadith: "« Le Coran est un remède à ce qui est dans les poitrines. » — Coran 10:57" },
+    { arabic: "اللَّهُ أَكْبَرُ", fr: "20 Juz ! Deux tiers du Coran accomplis — les portes du Ciel s'ouvrent pour toi.", hadith: "« Lis le Coran, car il t'intercédera. » — Muslim" },
+    { arabic: "تَبَارَكَ اللَّهُ", fr: "21 Juz — 70% du parcours. Tu fais partie des Ahl al-Qur'ān désormais.", hadith: "Imam Mālik pleurait lors de la récitation — laisse le Coran toucher ton cœur." },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "22 Juz ! Plus que 8 — l'élan de la fin est ta plus grande force.", hadith: "« Beautifie ta voix pour le Coran. » — Abū Dāwūd" },
+    { arabic: "مَا شَاءَ اللَّهُ", fr: "23 Juz — 77% du Khatm. Tu vois la lumière au bout du tunnel.", hadith: "Ibn Abī Zayd : « La récitation du Coran est le dhikr suprême. »" },
+    { arabic: "بِسْمِ اللَّهِ", fr: "24 Juz ! Plus que 6 — concentrate-toi, la victoire est proche !", hadith: "« Complète le Coran, c'est la plus grande réussite du croyant. » — Hadith" },
+    { arabic: "تَبَارَكَ اللَّهُ", fr: "14 Juz ! Un pas de plus vers la moitié du Khatm — waAllāhi c'est immense.", hadith: "« Récite le Coran en 7 nuits au minimum. » — Muwatta Mālik", verse: "إِنَّ الَّذِينَ يَتْلُونَ كِتَابَ اللَّهِ وَأَقَامُوا الصَّلَاةَ وَأَنفَقُوا مِمَّا رَزَقْنَاهُمْ", verseFr: "Ceux qui récitent le Livre d'Allah… espèrent un commerce impérissable — Fāṭir 29", emoji: "🌈" },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "🏆 MOITIÉ DU KHATM ! Juz 15 accompli — tu es au cœur du Coran. Ya Rabb !", hadith: "« Il n'est pas de jalousie permise sauf deux : celui à qui Allah a donné le Coran et il le récite nuit et jour. » — Bukhāri", verse: "أَفَلَا يَتَدَبَّرُونَ الْقُرْآنَ وَلَوْ كَانَ مِنْ عِندِ غَيْرِ اللَّهِ لَوَجَدُوا فِيهِ اخْتِلَافًا كَثِيرًا", verseFr: "Ne méditent-ils pas sur le Coran ? S'il venait d'un autre qu'Allah, ils y trouveraient beaucoup de contradictions — An-Nisā 82", emoji: "🏆" },
+    { arabic: "مَا شَاءَ اللَّهُ", fr: "16 Juz — la seconde moitié commence. Tu es lancé(e), ne t'arrête plus !", hadith: "Imam Mālik : « Persévère, car la régularité efface toutes les lacunes. »", verse: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ", verseFr: "Celui qui craint Allah, Il lui trouvera une issue et le pourvoira d'où il ne s'y attend pas — At-Ṭalāq 2-3", emoji: "🚀" },
+    { arabic: "اللَّهُ وَلِيُّنَا", fr: "17 Juz ! Plus qu'à moitié. Chaque page rapproche du Khatm.", hadith: "« Réciter le Coran dans la prière de nuit vaut 70 fois mieux en dehors. » — Dāraquṭnī", verse: "وَلَقَدْ ضَرَبْنَا لِلنَّاسِ فِي هَٰذَا الْقُرْآنِ مِن كُلِّ مَثَلٍ لَّعَلَّهُمْ يَتَذَكَّرُونَ", verseFr: "Nous avons proposé aux hommes dans ce Coran toutes sortes d'exemples — Az-Zumar 27", emoji: "⚡" },
+    { arabic: "بَارَكَ اللَّهُ", fr: "18 Juz — 60% du Coran dans ta vie. MāshāAllāh, quelle baraka !", hadith: "Ibn Abī Zayd al-Qayrawānī recommandait de lire le Coran entier chaque mois.", verse: "سَنُرِيهِمْ آيَاتِنَا فِي الْآفَاقِ وَفِي أَنفُسِهِمْ حَتَّىٰ يَتَبَيَّنَ لَهُمْ أَنَّهُ الْحَقُّ", verseFr: "Nous leur montrerons Nos signes dans l'univers et en eux-mêmes — Fuṣṣilat 53", emoji: "🌙" },
+    { arabic: "سُبْحَانَ اللَّهِ", fr: "19 Juz ! Deux tiers bientôt atteints. La fin se rapproche avec certitude.", hadith: "« Le Coran est un remède à ce qui est dans les poitrines. » — Coran 10:57", verse: "وَلَوْ أَنَّ قُرْآنًا سُيِّرَتْ بِهِ الْجِبَالُ أَوْ قُطِّعَتْ بِهِ الْأَرْضُ", verseFr: "Si un Coran pouvait déplacer des montagnes ou fendre la terre… c'est celui-ci — Ar-Ra'd 31", emoji: "🌊" },
+    { arabic: "اللَّهُ أَكْبَرُ", fr: "20 Juz ! Deux tiers du Coran accomplis — les portes du Ciel s'ouvrent pour toi.", hadith: "« Lis le Coran, car il t'intercédera. » — Muslim", verse: "إِنَّ هَٰذَا لَهُوَ الْقَصَصُ الْحَقُّ ۚ وَمَا مِنْ إِلَٰهٍ إِلَّا اللَّهُ", verseFr: "Ceci est le récit vrai — il n'y a de divinité qu'Allah — Āl 'Imrān 62", emoji: "🎯" },
+    { arabic: "تَبَارَكَ اللَّهُ", fr: "21 Juz — 70% du parcours. Tu fais partie des Ahl al-Qur'ān désormais.", hadith: "Imam Mālik pleurait lors de la récitation — laisse le Coran toucher ton cœur.", verse: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ", verseFr: "C'est par l'invocation d'Allah que les cœurs se tranquillisent — Ar-Ra'd 28", emoji: "💎" },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "22 Juz ! Plus que 8 — l'élan de la fin est ta plus grande force.", hadith: "« Beautifie ta voix pour le Coran. » — Abū Dāwūd", verse: "وَإِذَا تُلِيَتْ عَلَيْهِمْ آيَاتُهُ زَادَتْهُمْ إِيمَانًا", verseFr: "Quand Ses versets leur sont récités, cela accroît leur foi — Al-Anfāl 2", emoji: "✨" },
+    { arabic: "مَا شَاءَ اللَّهُ", fr: "23 Juz — 77% du Khatm. Tu vois la lumière au bout du tunnel.", hadith: "Ibn Abī Zayd : « La récitation du Coran est le dhikr suprême. »", verse: "وَنَزَّلْنَا عَلَيْكَ الْكِتَابَ تِبْيَانًا لِّكُلِّ شَيْءٍ", verseFr: "Nous avons fait descendre sur toi le Livre comme clarification de toute chose — An-Naḥl 89", emoji: "🌟" },
+    { arabic: "بِسْمِ اللَّهِ", fr: "24 Juz ! Plus que 6 — concentre-toi, la victoire est à portée de main !", hadith: "« Complète le Coran, c'est la plus grande réussite du croyant. »", verse: "وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا", verseFr: "Ceux qui luttent pour Nous, Nous les guiderons sur Nos voies — Al-'Ankabūt 69", emoji: "🔥" },
+    { arabic: "اللَّهُ وَلِيُّنَا", fr: "25 Juz — 5 restants. Chaque Juz maintenant est une couronne de lumière.", hadith: "« Les parents de celui qui a mémorisé le Coran seront couronnés au Paradis. » — Abū Dāwūd", verse: "وَمَن يُعَظِّمْ شَعَائِرَ اللَّهِ فَإِنَّهَا مِن تَقْوَى الْقُلُوبِ", verseFr: "Quiconque respecte les rites d'Allah, cela procède de la piété des cœurs — Al-Ḥajj 32", emoji: "👑" },
+    { arabic: "سُبْحَانَ اللَّهِ", fr: "26 Juz ! Quatre seulement. Tu es dans les derniers rangs — la récompense est immense.", hadith: "Imam Mālik : « Finir le Khatm est parmi les actes les plus méritoires. »", verse: "فَأَمَّا مَن أُوتِيَ كِتَابَهُ بِيَمِينِهِ فَيَقُولُ هَاؤُمُ اقْرَءُوا كِتَابِيَهْ", verseFr: "Celui qui recevra son livre en la droite dira : Tenez, lisez mon livre ! — Al-Ḥāqqa 19", emoji: "🌠" },
+    { arabic: "اللَّهُ أَكْبَرُ", fr: "27 Juz — 3 restants ! La volonté d'Allah est avec celui qui persévère.", hadith: "« Allah ne gaspille pas la récompense de celui qui fait du bien. » — Coran 12:90", verse: "إِنَّ مَعَ الْعُسْرِ يُسْرًا", verseFr: "Certes, avec la difficulté vient la facilité — Ash-Sharḥ 6", emoji: "💫" },
+    { arabic: "تَبَارَكَ اللَّهُ", fr: "28 Juz ! Deux derniers. Ce que tu vis maintenant, tes ancêtres en rêvaient.", hadith: "Ibn Abī Zayd al-Qayrawānī a terminé des centaines de Khatm — tu marches sur ses pas.", verse: "وَمَا خَلَقْتُ الْجِنَّ وَالْإِنسَ إِلَّا لِيَعْبُدُونِ", verseFr: "Je n'ai créé les djinns et les hommes que pour qu'ils M'adorent — Adh-Dhāriyāt 56", emoji: "🌙" },
+    { arabic: "الْحَمْدُ لِلَّهِ", fr: "29 Juz ! Plus qu'UN ! La du'ā de fin de Khatm t'attend — Allah est témoin.", hadith: "« La du'ā à la fin du Khatm est exaucée. » — Authentifié par ad-Dārimī", verse: "فَإِذَا قَرَأْتَ الْقُرْآنَ فَاسْتَعِذْ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ", verseFr: "Lorsque tu lis le Coran, cherche refuge auprès d'Allah contre le Shayṭān — An-Naḥl 98", emoji: "⭐" },
+    { arabic: "خَتَمْتَ الْقُرْآنَ", fr: "KHATM ACCOMPLI ! Al-ḥamdu lillāh Rabbil-'ālamīn ! Tu as complété le Livre d'Allah. Que cette récitation soit lumière dans ta tombe, intercession au Jugement, et baraka en ce monde et dans l'au-delà.", hadith: "« Celui qui complète le Coran, les anges font du'ā pour lui. » — Imam Ahmad. Lis maintenant la du'ā de Khatm : اللَّهُمَّ ارْحَمْنِي بِالْقُرْآنِ", verse: "إِنَّ الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ لَهُمْ جَنَّاتُ النَّعِيمِ", verseFr: "Ceux qui ont cru et accompli les bonnes œuvres auront les jardins du Délice — Luqmān 8", emoji: "🏆" },
+  ];
+  return messages[juz - 1] || messages[0];
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DONNÉES ADHKAR MALIKITES — Muwatta + Cabinet Maher
+// ════════════════════════════════════════════════════════════════════
+const ADHKAR_MALIKITES = [
+  // ── MATIN ──
+  { id:1, title:"Du'a du Réveil — Muwatta Malik",
+    arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ",
+    transliteration:"Aṣbaḥnā wa aṣbaḥal-mulku lillāh, wal-ḥamdu lillāh, lā ilāha illallāhu waḥdahu lā sharīka lah",
+    french:"Nous nous sommes levés et la royauté appartient à Allah. La louange est à Allah. Il n'y a de divinité qu'Allah, Seul, sans associé.",
+    source:"Muwatta Malik, Kitab al-Nida", repetition:1, category:"MATIN" },
+
+  { id:2, title:"Sayyid al-Istighfar du Matin",
+    arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
+    transliteration:"Allāhumma anta rabbī lā ilāha illā anta, khalaqtanī wa anā 'abduk, wa anā 'alā 'ahdika wa wa'dika mas-taṭa't...",
+    french:"Ô Allah, Tu es mon Seigneur. Nul dieu que Toi. Tu m'as créé et je suis Ton serviteur. Je m'en tiens à Ton pacte et Ta promesse autant que je le peux. Je cherche refuge en Toi contre le mal que j'ai commis. Je reconnais Tes bienfaits envers moi et je confesse mes péchés. Pardonne-moi, car nul ne pardonne les péchés que Toi.",
+    source:"Authentifié par Imam al-Bukhāri — récité le matin pour être protégé", repetition:1, category:"MATIN" },
+
+  { id:3, title:"Protection du Matin",
+    arabic:"بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+    transliteration:"Bismillāhil-ladhī lā yaḍurru ma'as-mihi shay'un fil-arḍi wa lā fis-samā'i, wa huwas-samī'ul-'alīm",
+    french:"Au nom d'Allah avec Lequel rien ne peut nuire, ni sur la terre ni dans le ciel — Il est l'Audient, l'Omniscient.",
+    source:"Abū Dāwūd, at-Tirmidhī — récité 3× le matin", repetition:3, category:"MATIN" },
+
+  // ── SOIR ──
+  { id:4, title:"Du'a du Soir — Muwatta",
+    arabic:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+    transliteration:"Amsaynā wa amsal-mulku lillāh, wal-ḥamdu lillāh, lā ilāha illallāhu waḥdahu lā sharīka lah, lahul-mulku wa lahul-ḥamdu wa huwa 'alā kulli shay'in qadīr",
+    french:"Nous avons passé le soir et la royauté appartient à Allah. La louange est à Allah. Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent.",
+    source:"Muwatta Malik, Kitab al-Nida'", repetition:1, category:"SOIR" },
+
+  { id:5, title:"Āyat al-Kursī le soir",
+    arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ",
+    transliteration:"Allāhu lā ilāha illā huwal-ḥayyul-qayyūm, lā ta'khudhuhū sinatun wa lā nawm...",
+    french:"Allah — point de divinité que Lui, le Vivant, Celui qui subsiste par Lui-même. Ni somnolence ni sommeil ne Le saisissent. À Lui appartient ce qui est dans les cieux et sur la terre. Qui pourrait intercéder auprès de Lui sans Sa permission ? Il sait ce qui est devant eux et ce qui est derrière eux. Ils n'embrassent de Sa science que ce qu'Il veut. Son Trône s'étend sur les cieux et la terre dont la garde ne Lui pèse pas. Il est le Très Haut, l'Immense.",
+    source:"Coran 2:255 — Imam Mālik recommandait sa récitation chaque soir (Muwatta)", repetition:1, category:"SOIR" },
+
+  { id:6, title:"Al-Mu'awwidhatān le soir",
+    arabic:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۞ مِن شَرِّ مَا خَلَقَ ۞ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۞ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۞ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+    transliteration:"Qul a'ūdhu bi-rabbil-falaq, min sharri mā khalaq, wa min sharri ghāsiqin idhā waqab...",
+    french:"Dis : Je cherche refuge auprès du Seigneur de l'aurore, contre le mal de ce qu'Il a créé, contre le mal de l'obscurité quand elle s'étend, contre le mal de celles qui soufflent sur les nœuds, contre le mal de l'envieux quand il envie. (Sourates al-Falaq et an-Nās)",
+    source:"Recommandées 3× chaque soir — Abū Dāwūd, Nasā'ī — pratique malikite", repetition:3, category:"SOIR" },
+
+  // ── PRIÈRE ──
+  { id:7, title:"Après le Fard — Istighfar Malikite",
+    arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
+    transliteration:"Astaghfirullāhal-'aẓīmal-ladhī lā ilāha illā huwal-ḥayyul-qayyūmu wa atūbu ilayh",
+    french:"Je demande pardon à Allah le Sublime — Celui qu'aucune divinité ne saurait égaler, le Vivant, le Subsistant — et je me repens à Lui.",
+    source:"At-Tirmidhī — récité 3× après chaque Fard selon le madhhab malikite", repetition:3, category:"PRIERE" },
+
+  { id:8, title:"Tasbīḥ après la prière — méthode Mālik",
+    arabic:"سُبْحَانَ اللَّهِ ۞ الْحَمْدُ لِلَّهِ ۞ اللَّهُ أَكْبَرُ ۞ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+    transliteration:"Subḥānallāh (33×) — Al-ḥamdu lillāh (33×) — Allāhu akbar (33×) — puis : lā ilāha illallāhu waḥdahu lā sharīka lah...",
+    french:"Gloire à Allah (33×) — Toute louange à Allah (33×) — Allah est le Plus Grand (33×) — puis : Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent. Imam Mālik complétait le 100 par ce dhikr (Muwatta, Kitab Qasr as-Salat).",
+    source:"Muwatta Malik, Kitab Qasr as-Salat", repetition:100, category:"PRIERE" },
+
+  // ── MATIN ET SOIR — Ajout Cabinet Maher (Image) ──
+  { id:9, title:"Istighfar 100× — Matin et soir",
+    arabic:"أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
+    transliteration:"Astaghfiru-llāha wa atūbu ilayh",
+    french:"Je demande pardon à Allah et je me repens à Lui.",
+    benefice:"Quiconque persévère dans l'istighfār, Allah lui accordera une issue lors de chaque difficulté, un soulagement à toute inquiétude et lui accordera sa subsistance par des moyens sur lesquels il ne comptait pas.",
+    source:"Abū Dāwūd, n°1518 — Hadith authentique — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
+
+  { id:10, title:"Ṣalāt 'ala n-Nabī 100× — Matin et soir",
+    arabic:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَىٰ نَبِيِّنَا مُحَمَّدٍ",
+    transliteration:"Allāhumma ṣalli wa sallim 'alā nabiyyinā Muḥammad",
+    french:"Ô Seigneur ! Prie et salue sur notre prophète Muḥammad ﷺ.",
+    benefice:"Celui qui prie sur le Prophète ﷺ une fois, Allah le bénit dix fois, lui efface dix péchés et l'élève de dix degrés.",
+    source:"Muslim, n°408 — recommandé 100× matin et soir par les maîtres malikites", repetition:100, category:"MATIN_SOIR" },
+];
+
+const QURAN_SURAHS = Array.from({ length: 114 }, (_, i) => ({
+  number: i + 1,
+  name: ["Al-Fātiḥa","Al-Baqara","Āl 'Imrān","An-Nisā","Al-Mā'ida","Al-An'ām","Al-A'rāf","Al-Anfāl","At-Tawba","Yūnus","Hūd","Yūsuf","Ar-Ra'd","Ibrāhīm","Al-Ḥijr","An-Naḥl","Al-Isrā","Al-Kahf","Maryam","Ṭā-Hā","Al-Anbiyā","Al-Ḥajj","Al-Mu'minūn","An-Nūr","Al-Furqān","Ash-Shu'arā","An-Naml","Al-Qaṣaṣ","Al-'Ankabūt","Ar-Rūm","Luqmān","As-Sajda","Al-Aḥzāb","Saba","Fāṭir","Yā-Sīn","Aṣ-Ṣāffāt","Ṣād","Az-Zumar","Ghāfir","Fuṣṣilat","Ash-Shūrā","Az-Zukhruf","Ad-Dukhān","Al-Jāthiya","Al-Aḥqāf","Muḥammad","Al-Fatḥ","Al-Ḥujurāt","Qāf","Adh-Dhāriyāt","Aṭ-Ṭūr","An-Najm","Al-Qamar","Ar-Raḥmān","Al-Wāqi'a","Al-Ḥadīd","Al-Mujādila","Al-Ḥashr","Al-Mumtaḥina","Aṣ-Ṣaff","Al-Jumu'a","Al-Munāfiqūn","At-Taghābun","Aṭ-Ṭalāq","At-Taḥrīm","Al-Mulk","Al-Qalam","Al-Ḥāqqa","Al-Ma'ārij","Nūḥ","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyāma","Al-Insān","Al-Mursalāt","An-Naba","An-Nāzi'āt","'Abasa","At-Takwīr","Al-Infiṭār","Al-Muṭaffifīn","Al-Inshiqāq","Al-Burūj","Aṭ-Ṭāriq","Al-A'lā","Al-Ghāshiya","Al-Fajr","Al-Balad","Ash-Shams","Al-Layl","Aḍ-Ḍuḥā","Ash-Sharḥ","At-Tīn","Al-'Alaq","Al-Qadr","Al-Bayyina","Az-Zalzala","Al-'Ādiyāt","Al-Qāri'a","At-Takāthur","Al-'Aṣr","Al-Humaza","Al-Fīl","Quraysh","Al-Mā'ūn","Al-Kawthar","Al-Kāfirūn","An-Naṣr","Al-Masad","Al-Ikhlāṣ","Al-Falaq","An-Nās"][i],
+  arabic: ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"][i],
+  verses: [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,59,37,37,31,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,44,29,37,31,36,44,43,31,7,29,30,20,21,12,5,11,8,3,5,4,6,3,11,4,5,5,4,5,6,3,5,4][i],
+  juz: [1,1,2,3,4,5,6,7,8,9,10,10,12,12,13,14,15,15,16,16,17,17,18,18,18,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30][i],
+}));
+
+// ════════════════════════════════════════════════════════════════════
+// STORAGE HELPERS — clé unique par donnée pour éviter collisions
+// ════════════════════════════════════════════════════════════════════
+function storage(key, defaultVal) {
+  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : defaultVal; }
+  catch { return defaultVal; }
+}
+function storageSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+// ════════════════════════════════════════════════════════════════════
+// HOOKS
+// ════════════════════════════════════════════════════════════════════
+
+// Marque-pages INDÉPENDANTS : type = "quran" | "khatm"
+function useBookmarks(type) {
+  const KEY = `bookmarks_${type}_v3`;
+  const [bookmarks, setBookmarks] = useState(() => storage(KEY, []));
+
+  const save = useCallback((bm) => {
+    setBookmarks(prev => {
+      const now = new Date();
+      const date = now.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+      const time = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      const next = [{ ...bm, id: now.getTime(), date, time, datetime: `${date} à ${time}`, type }, ...prev].slice(0, 50);
+      storageSet(KEY, next);
+      return next;
+    });
+  }, [KEY, type]);
+
+  const remove = useCallback((id) => {
+    setBookmarks(prev => { const next = prev.filter(b => b.id !== id); storageSet(KEY, next); return next; });
+  }, [KEY]);
+
+  const resetAll = useCallback(() => {
+    storageSet(KEY, []);
+    setBookmarks([]);
+  }, [KEY]);
+
+  return { bookmarks, save, remove, resetAll };
+}
+
+// ── Notifications locales ──
+async function requestAndScheduleNotif(message) {
+  if (!("Notification" in window)) return false;
+  let perm = Notification.permission;
+  if (perm === "default") perm = await Notification.requestPermission();
+  if (perm !== "granted") return false;
+  new Notification("📖 Al-Murshid — Rappel de lecture", {
+    body: message,
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>",
+    badge: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>",
+  });
+  return true;
+}
+
+// ── Sourate Al-Kahf vendredi ──
+function useFridayKahf() {
+  const KEY = "kahf_fridays_v1";
+  const [readFridays, setReadFridays] = useState(() => storage(KEY, [])); // list of "YYYY-WW" strings
+  const today = new Date();
+  const yearWeek = `${today.getFullYear()}-W${String(Math.ceil((today - new Date(today.getFullYear(),0,1)) / 604800000 + 1)).padStart(2,'0')}`;
+  const isReadThisWeek = readFridays.includes(yearWeek);
+
+  const markRead = useCallback(() => {
+    setReadFridays(prev => {
+      if (prev.includes(yearWeek)) return prev;
+      const next = [...prev, yearWeek].slice(-52); // garder 1 an
+      storageSet(KEY, next);
+      return next;
+    });
+  }, [yearWeek]);
+
+  return { readFridays, isReadThisWeek, markRead, totalFridays: readFridays.length };
+}
+
+function scheduleFridayKahfNotif(notifEnabled) {
+  if (!notifEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
+
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=dim, 5=ven
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7; // jours jusqu'au prochain vendredi
+
+  const nextFridayMorning = new Date(now);
+  nextFridayMorning.setDate(now.getDate() + daysUntilFriday);
+  nextFridayMorning.setHours(8, 30, 0, 0); // 8h30 — avant 10h
+
+  // Si aujourd'hui est vendredi et qu'il n'est pas encore 8h30
+  if (dayOfWeek === 5 && now < nextFridayMorning) {
+    nextFridayMorning.setDate(now.getDate()); // ce vendredi
+  }
+
+  const delay = nextFridayMorning.getTime() - now.getTime();
+  const t = setTimeout(() => {
+    new Notification("📖 Vendredi — Sourate Al-Kahf", {
+      body: "Lis la Sourate Al-Kahf aujourd'hui ! Le Prophète ﷺ a dit : « Celui qui lit Al-Kahf le vendredi, une lumière illuminera son chemin jusqu'au vendredi suivant. »",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>",
+    });
+    // Replanifier pour le vendredi suivant (récursif)
+    setTimeout(() => scheduleFridayKahfNotif(true), 1000);
+  }, delay);
+  return t;
+}
+
+function useNotifications(program, completedCount, dailyGoalJuz) {
+  const [notifEnabled, setNotifEnabled] = useState(() => storage("notif_enabled_v2", false));
+  const [notifTimes, setNotifTimes] = useState(() => storage("notif_times_v2", {
+    fajr: true, dhuhr: false, asr: true, maghrib: true
+  }));
+  const scheduledRef = useRef([]);
+
+  // Planifier les rappels dans la session active
+  useEffect(() => {
+    if (!notifEnabled || !program.active) return;
+    // Annuler anciens timers
+    scheduledRef.current.forEach(t => clearTimeout(t));
+    scheduledRef.current = [];
+
+    const now = new Date();
+    const slots = [
+      { key: "fajr",    hour: 6,  min: 0,  label: "Fajr — commence ta lecture du jour !" },
+      { key: "dhuhr",   hour: 13, min: 0,  label: "Dhuhr — as-tu lu ton Juz du jour ?" },
+      { key: "asr",     hour: 16, min: 30, label: "Asr — il reste du temps pour atteindre l'objectif !" },
+      { key: "maghrib", hour: 19, min: 30, label: "Maghrib — dernier rappel de lecture du jour." },
+    ];
+
+    slots.forEach(slot => {
+      if (!notifTimes[slot.key]) return;
+      const target = new Date();
+      target.setHours(slot.hour, slot.min, 0, 0);
+      if (target <= now) target.setDate(target.getDate() + 1); // demain si passé
+      const delay = target.getTime() - now.getTime();
+      const t = setTimeout(() => {
+        const remaining = Math.max(0, dailyGoalJuz - (completedCount % dailyGoalJuz));
+        const msg = remaining > 0
+          ? `${slot.label} Il te reste ${remaining} Juz à lire aujourd'hui.`
+          : `MāshāAllāh ! Objectif du jour atteint — ${completedCount}/30 Juz. Bārakallāhu fīk !`;
+        requestAndScheduleNotif(msg);
+      }, delay);
+      scheduledRef.current.push(t);
+    });
+
+    return () => scheduledRef.current.forEach(t => clearTimeout(t));
+  }, [notifEnabled, notifTimes, program.active, completedCount, dailyGoalJuz]);
+
+  const enableNotifs = useCallback(async () => {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      setNotifEnabled(true);
+      storageSet("notif_enabled_v2", true);
+      requestAndScheduleNotif("Notifications activées ! Nous te rappellerons de lire chaque jour et de lire Al-Kahf le vendredi. Bismillāh 📖");
+      scheduleFridayKahfNotif(true);
+    }
+  }, []);
+
+  const toggleTime = useCallback((key) => {
+    setNotifTimes(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      storageSet("notif_times_v2", next);
+      return next;
+    });
+  }, []);
+
+  return { notifEnabled, notifTimes, enableNotifs, toggleTime };
+}
+
+function useJuzProgram() {
+  const [program, setProgram] = useState(() => storage("juz_program_v3", {
+    active: false,
+    startDate: null,   // ISO string — date choisie par l'utilisateur
+    endDate: null,     // ISO string — date de fin cible choisie
+    completed: {},
+  }));
+
+  // ── Démarrer avec dates choisies ──
+  const start = useCallback(({ startDateISO, endDateISO }) => {
+    const p = { active: true, startDate: startDateISO, endDate: endDateISO, completed: {} };
+    setProgram(p); storageSet("juz_program_v3", p);
+  }, []);
+
+  const reset = useCallback(() => {
+    const p = { active: false, startDate: null, endDate: null, completed: {} };
+    setProgram(p); storageSet("juz_program_v3", p);
+  }, []);
+
+  const manualComplete = useCallback((juzNum) => {
+    setProgram(prev => {
+      const already = prev.completed[juzNum];
+      const updated = { ...prev.completed };
+      if (already) { delete updated[juzNum]; }
+      else { updated[juzNum] = { date: new Date().toISOString(), manual: true }; }
+      const next = { ...prev, completed: updated };
+      storageSet("juz_program_v3", next); return next;
+    });
+  }, []);
+
+  // ── Calculs dynamiques ──
+  const completedCount = Object.keys(program.completed).length;
+  const remaining = 30 - completedCount;
+
+  const now = Date.now();
+  const startMs = program.startDate ? new Date(program.startDate).getTime() : now;
+  const endMs   = program.endDate   ? new Date(program.endDate).getTime()   : now + 30 * 86400000;
+
+  const daysPassed   = Math.max(1, Math.floor((now - startMs) / 86400000) + 1);
+  const daysTotal    = Math.max(1, Math.ceil((endMs - startMs) / 86400000));
+  const daysLeft     = Math.max(1, Math.ceil((endMs - now) / 86400000));
+
+  // Objectif dynamique : Juz restants / jours restants — recalculé à chaque render
+  const dailyGoalJuz = Math.max(1, Math.ceil(remaining / daysLeft));
+
+  // Juz attendus à ce jour selon le plan initial
+  const expectedJuz  = Math.min(30, Math.ceil((daysPassed / daysTotal) * 30));
+  const onTrack      = completedCount >= expectedJuz;
+  const progressPct  = Math.round((completedCount / 30) * 100);
+
+  // Retard en Juz
+  const behindBy = Math.max(0, expectedJuz - completedCount);
+
+  return {
+    program, start, reset, manualComplete,
+    completedCount, remaining, daysPassed, daysTotal, daysLeft,
+    dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
+  };
+}
+
+function useSurahProgress() {
+  const [checked, setChecked] = useState(() => storage("surah_checked_v2", {}));
+  const toggle = useCallback((id) => {
+    setChecked(prev => { const next = { ...prev, [id]: !prev[id] }; storageSet("surah_checked_v2", next); return next; });
+  }, []);
+  const counts = useMemo(() => ({ surahChecked: Object.values(checked).filter(Boolean).length }), [checked]);
+  return { checked, toggle, counts };
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Modal Encouragement (3 styles combinés)
+// ════════════════════════════════════════════════════════════════════
+
+// Particules réutilisables pour l'animation festive
+const CONFETTI_COLORS = ["#F59E0B","#10B981","#3B82F6","#EC4899","#A78BFA","#FBBF24"];
+const confettiParticles = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  size: 4 + Math.random() * 6,
+  delay: Math.random() * 0.8,
+  duration: 1.2 + Math.random() * 0.8,
+}));
+
+function EncouragementModal({ juz, onClose }) {
+  if (!juz) return null;
+  const enc = juz.encouragement;
+  const isKhatm = juz.number === 30;
+  const isMilestone = [10, 15, 20, 25, 30].includes(juz.number);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.75, y: 50, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        className={`relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border ${
+          isKhatm
+            ? "border-yellow-500/50"
+            : isMilestone
+            ? "border-purple-500/40"
+            : "border-emerald-500/30"
+        }`}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ── STYLE 3 : Animation festive (confettis toujours actifs) ── */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Dégradé de fond */}
+          <div className={`absolute inset-0 ${
+            isKhatm
+              ? "bg-gradient-to-br from-yellow-950 via-amber-900/90 to-orange-950"
+              : isMilestone
+              ? "bg-gradient-to-br from-purple-950 via-indigo-900/90 to-slate-900"
+              : "bg-gradient-to-br from-emerald-950 via-teal-900/90 to-slate-900"
+          }`} />
+          {/* Particules animées */}
+          {confettiParticles.map(p => (
+            <motion.div key={p.id}
+              className="absolute rounded-full"
+              style={{ width: p.size, height: p.size, background: p.color, left: `${p.x}%`, top: `${p.y}%` }}
+              animate={{
+                y: [0, -30, 30, -15, 0],
+                x: [0, 10, -10, 5, 0],
+                opacity: [0.8, 1, 0.5, 0.9, 0.3],
+                scale: [1, 1.5, 0.8, 1.2, 0],
+              }}
+              transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, repeatDelay: 1.5 }}
+            />
+          ))}
+          {/* Anneaux de lumière */}
+          <motion.div
+            className={`absolute -top-20 -right-20 w-64 h-64 rounded-full border ${
+              isKhatm ? "border-yellow-500/20" : "border-emerald-500/15"
+            }`}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
+          />
+          <motion.div
+            className={`absolute -bottom-20 -left-20 w-48 h-48 rounded-full border ${
+              isKhatm ? "border-amber-400/15" : "border-teal-500/15"
+            }`}
+            animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.5, 0.2] }}
+            transition={{ duration: 4, repeat: Infinity }}
+          />
+        </div>
+
+        {/* ── CONTENU ── */}
+        <div className="relative z-10 p-7">
+
+          {/* Badge Juz */}
+          <div className="flex justify-between items-center mb-5">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+              isKhatm ? "bg-yellow-500/20 border-yellow-500/40 text-yellow-300"
+              : "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
+            }`}>
+              Juz {juz.number} / 30
+            </span>
+            <motion.span
+              animate={{ rotate: [0, 15, -15, 10, 0], scale: [1, 1.3, 1.1, 1.2, 1] }}
+              transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+              className="text-4xl"
+            >
+              {enc.emoji || (isKhatm ? "🏆" : "✨")}
+            </motion.span>
+          </div>
+
+          {/* ── STYLE 1 : Verset coranique ── */}
+          <div className={`p-4 rounded-2xl mb-4 border text-center ${
+            isKhatm ? "bg-yellow-900/30 border-yellow-600/20" : "bg-white/5 border-white/10"
+          }`}>
+            <p className="text-xs uppercase tracking-widest text-slate-500 mb-2 font-semibold">Verset du Coran</p>
+            <p className="text-xl font-serif leading-loose mb-2 text-white" dir="rtl" lang="ar">
+              {enc.verse}
+            </p>
+            <p className="text-xs text-slate-400 italic">{enc.verseFr}</p>
+          </div>
+
+          {/* ── STYLE 2 : Message motivant arabe + français ── */}
+          <div className="text-center mb-4">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className={`text-2xl font-serif mb-2 ${
+                isKhatm ? "text-yellow-300" : isMilestone ? "text-purple-300" : "text-emerald-300"
+              }`}
+              dir="rtl"
+            >
+              {enc.arabic}
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+              className="text-white font-semibold leading-relaxed text-sm"
+            >
+              {enc.fr}
+            </motion.p>
+          </div>
+
+          {/* ── STYLE 3 : Hadith / Citation malikite ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+            className={`p-4 rounded-2xl text-xs italic text-left border mb-5 ${
+              isKhatm
+                ? "bg-amber-900/30 border-amber-700/25 text-amber-200"
+                : "bg-emerald-900/25 border-emerald-700/20 text-emerald-200"
+            }`}
+          >
+            <p className="font-semibold text-xs uppercase tracking-wider mb-1.5 not-italic opacity-60">Hadith & Tradition malikite</p>
+            {enc.hadith}
+          </motion.div>
+
+          {/* Bouton de fermeture */}
+          <motion.button
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={onClose}
+            className={`w-full py-3.5 rounded-2xl font-bold text-white shadow-lg transition-all ${
+              isKhatm
+                ? "bg-gradient-to-r from-yellow-500 to-amber-500 hover:shadow-yellow-500/30"
+                : isMilestone
+                ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-purple-500/30"
+                : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-emerald-500/30"
+            } hover:shadow-xl`}
+          >
+            {isKhatm ? "🤲 Allāhumma taqabbal — Āmīn" : "Al-ḥamdu lillāh — Continuer"}
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Programme Juz (dates libres + objectif dynamique + notifs)
+// ════════════════════════════════════════════════════════════════════
+function JuzProgram({ onNavigateToJuz }) {
+  const juz = useJuzProgram();
+  const {
+    program, start, reset, manualComplete,
+    completedCount, remaining, daysPassed, daysTotal, daysLeft,
+    dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
+  } = juz;
+
+  const { notifEnabled, notifTimes, enableNotifs, toggleTime } =
+    useNotifications(program, completedCount, dailyGoalJuz);
+
+  // Marque-pages du programme Khatm (indépendants)
+  const khatmBM = useBookmarks("khatm");
+
+  const [encourageJuz, setEncourageJuz] = useState(null);
+  const [confirmReset, setConfirmReset]  = useState(false);
+  const [readingJuz,   setReadingJuz]    = useState(null);
+  const [elapsed,      setElapsed]       = useState(0);
+  const timerRef = useRef(null);
+
+  // ── Formulaire de démarrage ──
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const in30ISO  = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  const [startDate, setStartDate] = useState(todayISO);
+  const [endDate,   setEndDate]   = useState(in30ISO);
+
+  // Calcul préview
+  const previewDays = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
+  const previewJuzPerDay = Math.ceil(30 / previewDays);
+  const previewMinPerDay = previewJuzPerDay * 47;
+
+  // Timer lecture
+  useEffect(() => {
+    if (readingJuz) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [readingJuz]);
+
+  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  const fmtMin  = m => m >= 60 ? `${Math.floor(m/60)}h${m%60||''}` : `${m} min`;
+
+  const handleManual = (j) => {
+    if (!program.completed[j.number]) setEncourageJuz(j);
+    manualComplete(j.number);
+  };
+
+  const handleFinishReading = () => {
+    if (!readingJuz) return;
+    if (!program.completed[readingJuz.number]) setEncourageJuz(readingJuz);
+    manualComplete(readingJuz.number);
+    setReadingJuz(null);
+  };
+
+  // ── FORMULAIRE DE DÉMARRAGE ──
+  if (!program.active) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
+          <div className="text-5xl">📅</div>
+          <h2 className="text-2xl font-black text-white">Programme de Khatm</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Choisis ta date de départ et ta date de fin — l'objectif quotidien s'ajuste automatiquement à ton rythme.
+          </p>
+        </motion.div>
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-5">
+
+          {/* Raccourcis */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "30 jours", icon: "⚡", days: 30 },
+              { label: "60 jours", icon: "🌿", days: 60 },
+              { label: "3 mois",   icon: "🌊", days: 90 },
+            ].map(opt => {
+              const ed = new Date(new Date(startDate).getTime() + opt.days * 86400000).toISOString().slice(0, 10);
+              const active = endDate === ed;
+              return (
+                <button key={opt.days} onClick={() => setEndDate(ed)}
+                  className={`p-3 rounded-2xl border text-center text-sm transition-all ${
+                    active ? "bg-emerald-500/20 border-emerald-500 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:border-white/25"
+                  }`}
+                >
+                  <div className="text-xl mb-0.5">{opt.icon}</div>
+                  <div className="font-bold text-xs">{opt.label}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sélecteurs de dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs text-slate-500 font-semibold uppercase tracking-wide">📅 Date de départ</label>
+              <input type="date" value={startDate}
+                onChange={e => {
+                  setStartDate(e.target.value);
+                  if (e.target.value >= endDate) {
+                    const nd = new Date(e.target.value); nd.setDate(nd.getDate() + 30);
+                    setEndDate(nd.toISOString().slice(0, 10));
+                  }
+                }}
+                className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/60 transition-all [color-scheme:dark]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-slate-500 font-semibold uppercase tracking-wide">🏁 Date de fin</label>
+              <input type="date" value={endDate} min={startDate}
+                onChange={e => setEndDate(e.target.value)}
+                className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/60 transition-all [color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          {/* Résumé du plan */}
+          <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 space-y-1.5 text-sm">
+            <p className="text-emerald-300 font-bold mb-2">📊 Ton plan :</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-white/5 rounded-xl p-2.5 text-center">
+                <p className="text-slate-500">Durée totale</p>
+                <p className="text-white font-black text-lg">{previewDays}j</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-2.5 text-center">
+                <p className="text-slate-500">Juz par jour</p>
+                <p className="text-emerald-400 font-black text-lg">{previewJuzPerDay}</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-2.5 text-center">
+                <p className="text-slate-500">Lecture/jour</p>
+                <p className="text-white font-bold">~{fmtMin(previewMinPerDay)}</p>
+              </div>
+              <div className="bg-white/5 rounded-xl p-2.5 text-center">
+                <p className="text-slate-500">Fin prévue</p>
+                <p className="text-white font-bold text-xs">
+                  {new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "2-digit" })}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 italic mt-1 text-center">
+              ⚡ L'objectif quotidien s'adapte automatiquement si tu prends du retard
+            </p>
+          </div>
+
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => start({ startDateISO: new Date(startDate).toISOString(), endDateISO: new Date(endDate).toISOString() })}
+            disabled={startDate >= endDate}
+            className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            🚀 Commencer mon Programme
+          </motion.button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── TABLEAU DE BORD ──
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
+      <AnimatePresence>
+        {encourageJuz && <EncouragementModal juz={encourageJuz} onClose={() => setEncourageJuz(null)} />}
+      </AnimatePresence>
+
+      {/* ── Bloc statut principal ── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        className={`rounded-3xl p-5 border ${
+          onTrack ? "bg-emerald-900/30 border-emerald-500/30" : "bg-orange-900/30 border-orange-500/30"
+        }`}
+      >
+        {/* Statut + retard */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>
+              {onTrack ? "✅ Dans l'objectif" : `⚠️ ${behindBy} Juz de retard`}
+            </p>
+            <p className="text-white font-bold text-lg">{completedCount} / 30 Juz</p>
+            <p className="text-slate-500 text-xs">Jour {daysPassed} / {daysTotal} · {daysLeft} jours restants</p>
+          </div>
+          <div className="text-right">
+            <p className="text-slate-500 text-xs mb-0.5">Objectif du jour</p>
+            <p className={`font-black text-3xl ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>
+              {dailyGoalJuz}
+            </p>
+            <p className="text-slate-600 text-xs">Juz</p>
+          </div>
+        </div>
+
+        {/* Barre progression */}
+        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+          <motion.div
+            className={`h-full rounded-full ${onTrack ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-orange-500 to-yellow-400"}`}
+            initial={{ width: 0 }} animate={{ width: `${progressPct}%` }} transition={{ duration: 1 }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-slate-500 mb-4">
+          <span>{progressPct}% accompli</span>
+          <span>{remaining} Juz restants</span>
+        </div>
+
+        {/* Mini stats */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "Lecture/jour", value: `~${fmtMin(dailyGoalJuz * 47)}` },
+            { label: "Fin prévue",   value: program.endDate ? new Date(program.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "—" },
+            { label: "Avance/retard", value: onTrack ? `+${completedCount - expectedJuz}` : `-${behindBy}`, color: onTrack ? "text-emerald-400" : "text-orange-400" },
+          ].map(s => (
+            <div key={s.label} className="bg-white/5 rounded-2xl p-2.5 text-center">
+              <p className="text-slate-600 text-[10px]">{s.label}</p>
+              <p className={`font-bold text-sm ${s.color || "text-white"}`}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {!onTrack && (
+          <div className="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-2xl text-xs text-orange-300 text-center">
+            ⏰ Pour rester dans les temps : lis <strong>{dailyGoalJuz} Juz</strong> aujourd'hui (~{fmtMin(dailyGoalJuz * 47)})
+          </div>
+        )}
+      </motion.div>
+
+      {/* ── Notifications ── */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-bold text-white text-sm flex items-center gap-2">
+            <Bell className="w-4 h-4 text-blue-400"/> Rappels de lecture
+          </p>
+          {!notifEnabled ? (
+            <button onClick={enableNotifs}
+              className="px-3 py-1.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold hover:bg-blue-500/30 transition-all"
+            >
+              Activer
+            </button>
+          ) : (
+            <span className="text-emerald-400 text-xs font-semibold">✅ Actif</span>
+          )}
+        </div>
+
+        {notifEnabled && (
+          <div className="space-y-2">
+            <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Rappels quotidiens</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { key: "fajr",    label: "🌅 Fajr",    time: "6h00" },
+                { key: "dhuhr",   label: "☀️ Dhuhr",   time: "13h00" },
+                { key: "asr",     label: "🌤️ Asr",     time: "16h30" },
+                { key: "maghrib", label: "🌙 Maghrib",  time: "19h30" },
+              ].map(slot => (
+                <button key={slot.key} onClick={() => toggleTime(slot.key)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                    notifTimes[slot.key]
+                      ? "bg-blue-500/15 border-blue-500/30 text-blue-300"
+                      : "bg-white/5 border-white/10 text-slate-600"
+                  }`}
+                >
+                  <span>{slot.label}</span>
+                  <span className="text-slate-600">{slot.time}</span>
+                </button>
+              ))}
+            </div>
+            {/* Rappel vendredi Al-Kahf */}
+            <div className="mt-2 p-3 bg-emerald-500/8 border border-emerald-500/20 rounded-2xl flex items-start gap-3">
+              <span className="text-xl shrink-0">🕌</span>
+              <div className="flex-1">
+                <p className="text-emerald-300 font-bold text-xs mb-0.5">Sourate Al-Kahf — chaque vendredi</p>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Rappel automatique tous les vendredis à 8h30. Le Prophète ﷺ a dit que celui qui lit Al-Kahf le vendredi sera illuminé jusqu'au vendredi suivant.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {!notifEnabled && (
+          <p className="text-slate-600 text-xs text-center">Active les notifications pour recevoir des rappels aux heures de prière et le vendredi pour Al-Kahf.</p>
+        )}
+      </div>
+
+      {/* ── Timer de lecture actif ── */}
+      <AnimatePresence>
+        {readingJuz && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+            className="bg-blue-900/40 border border-blue-500/30 rounded-3xl p-5 text-center"
+          >
+            <p className="text-blue-300 text-sm font-semibold mb-1">⏱ Lecture en cours</p>
+            <p className="text-white font-black text-xl mb-1">{readingJuz.name} — {readingJuz.arabicName}</p>
+            <div className="text-4xl font-mono font-black text-blue-300 my-3">{fmtTime(elapsed)}</div>
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-3">
+              <motion.div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                animate={{ width: `${Math.min(100, (elapsed / (readingJuz.readingMinutes * 60)) * 100)}%` }}
+              />
+            </div>
+            <p className="text-slate-500 text-xs mb-4">
+              Durée moyenne : ~{fmtMin(readingJuz.readingMinutes)}
+              {elapsed < readingJuz.readingMinutes * 60
+                ? ` · ${fmtTime(readingJuz.readingMinutes * 60 - elapsed)} restants`
+                : " · ✅ Objectif de temps atteint !"}
+            </p>
+            <button onClick={handleFinishReading}
+              className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-emerald-500/30 transition-all"
+            >
+              ✅ J'ai terminé ce Juz
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Grille 30 Juz ── */}
+      <div>
+        <h3 className="font-bold text-white mb-3 flex items-center gap-2 text-sm">
+          <Target className="w-4 h-4 text-emerald-400"/> Grille des 30 Juz
+        </h3>
+        <div className="grid grid-cols-6 gap-1.5">
+          {JUZ_DATA.map(j => {
+            const done = !!program.completed[j.number];
+            const isReading = readingJuz?.number === j.number;
+            return (
+              <div key={j.number} className="relative">
+                <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
+                  onClick={() => onNavigateToJuz(j.number)}
+                  className={`w-full rounded-xl py-2 text-center transition-all border text-xs font-bold ${
+                    done       ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300"
+                    : isReading ? "bg-blue-500/20 border-blue-500/40 text-blue-300 animate-pulse"
+                    :             "bg-white/4 border-white/8 text-slate-500 hover:border-white/20 hover:text-white"
+                  }`}
+                  title={`Lire ${j.name} · ~${j.readingMinutes} min`}
+                >
+                  <div>{done ? "✓" : j.number}</div>
+                  <div className="text-[9px] opacity-50">{j.readingMinutes}m</div>
+                </motion.button>
+                {/* Bouton validation manuel petit */}
+                <button onClick={e => { e.stopPropagation(); handleManual(j); }}
+                  className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center transition-all ${
+                    done ? "bg-emerald-500 text-white" : "bg-white/15 text-slate-500 hover:bg-emerald-500/50 hover:text-white"
+                  }`}
+                  title="Valider / dévalider ce Juz"
+                >
+                  {done ? "✓" : "M"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-slate-700 mt-1.5 text-center">Appuie pour valider · M = validé manuellement</p>
+      </div>
+
+      {/* ── Juz suivants à lire ── */}
+      <div>
+        <h3 className="font-bold text-white mb-3 text-sm flex items-center gap-2">
+          <Play className="w-4 h-4 text-blue-400"/> Prochains Juz
+        </h3>
+        <div className="space-y-2">
+          {JUZ_DATA.filter(j => !program.completed[j.number]).slice(0, 5).map(j => (
+            <div key={j.number} className="flex items-center gap-3 p-3 bg-white/4 border border-white/8 rounded-2xl">
+              <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center font-black text-white text-sm shrink-0">
+                {j.number}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white text-sm">{j.name} — <span className="font-serif text-slate-400">{j.arabicName}</span></p>
+                <p className="text-xs text-slate-600">~{fmtMin(j.readingMinutes)} · {j.pages} pages</p>
+              </div>
+              <div className="flex gap-1.5">
+                <button onClick={() => onNavigateToJuz(j.number)}
+                  className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-all"
+                  title="Lire ce Juz"
+                >
+                  <BookOpen className="w-3.5 h-3.5"/>
+                </button>
+                <button onClick={() => setReadingJuz(readingJuz?.number === j.number ? null : j)}
+                  className={`p-2 rounded-xl transition-all text-xs font-bold ${
+                    readingJuz?.number === j.number ? "bg-blue-500 text-white" : "bg-blue-500/15 text-blue-400 hover:bg-blue-500/30"
+                  }`}
+                  title="Lancer le chrono"
+                >
+                  {readingJuz?.number === j.number ? <Pause className="w-3.5 h-3.5"/> : <Play className="w-3.5 h-3.5"/>}
+                </button>
+                <button onClick={() => handleManual(j)}
+                  className="p-2 rounded-xl bg-white/8 text-slate-400 hover:bg-white/15 transition-all"
+                  title="Valider manuellement"
+                >
+                  <CheckCircle className="w-3.5 h-3.5"/>
+                </button>
+              </div>
+            </div>
+          ))}
+          {remaining === 0 && (
+            <p className="text-center py-6 text-emerald-400 font-black text-lg">🏆 Khatm accompli ! Al-ḥamdu lillāh !</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Marque-page Khatm ── */}
+      <div className="bg-white/4 border border-amber-500/15 rounded-3xl p-4 space-y-3">
+        <p className="font-bold text-white text-sm flex items-center gap-2">
+          <Bookmark className="w-4 h-4 text-amber-400"/> Marque-pages du Programme
+        </p>
+        <p className="text-xs text-slate-600">Enregistre ta position dans le programme pour y revenir facilement.</p>
+        <button
+          onClick={() => khatmBM.save({ surah: 0, verse: 0, surahName: `Juz en cours`, surahArabic: JUZ_DATA[completedCount]?.arabicName || "", note: `Arrêté après ${completedCount} Juz` })}
+          className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border border-amber-500/20 text-amber-300 rounded-xl text-xs font-semibold hover:bg-amber-500/25 transition-all"
+        >
+          <Bookmark className="w-3.5 h-3.5"/> Sauvegarder ma position actuelle ({completedCount}/30 Juz)
+        </button>
+        {khatmBM.bookmarks.length > 0 && (
+          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+            {khatmBM.bookmarks.map(bm => (
+              <div key={bm.id} className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-xl group">
+                <div>
+                  <p className="text-white text-xs font-semibold">{bm.surahName}</p>
+                  <p className="text-slate-600 text-[10px] flex items-center gap-1"><Clock className="w-2.5 h-2.5"/>{bm.datetime}</p>
+                </div>
+                <button onClick={() => khatmBM.remove(bm.id)} className="text-slate-700 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100">
+                  <Trash2 className="w-3 h-3"/>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Réinitialiser ── */}
+      <div className="pb-6 text-center">
+        {!confirmReset ? (
+          <button onClick={() => setConfirmReset(true)}
+            className="flex items-center gap-2 text-slate-700 hover:text-red-400 transition-colors text-xs mx-auto"
+          >
+            <RotateCcw className="w-3.5 h-3.5"/> Réinitialiser le programme
+          </button>
+        ) : (
+          <div className="flex gap-3 justify-center">
+            <button onClick={() => { reset(); setConfirmReset(false); }}
+              className="px-4 py-2 bg-red-500/15 text-red-400 border border-red-500/25 rounded-xl text-xs font-bold hover:bg-red-500/25 transition-all"
+            >Confirmer</button>
+            <button onClick={() => setConfirmReset(false)}
+              className="px-4 py-2 bg-white/5 text-slate-400 border border-white/10 rounded-xl text-xs hover:bg-white/10 transition-all"
+            >Annuler</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Marque-pages (2 onglets indépendants : Coran / Khatm)
+// ════════════════════════════════════════════════════════════════════
+function BookmarksPage() {
+  const quranBM = useBookmarks("quran");
+  const khatmBM = useBookmarks("khatm");
+  const [activeTab, setActiveTab] = useState("quran");
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const current = activeTab === "quran" ? quranBM : khatmBM;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-white">🔖 Marque-pages</h2>
+          <p className="text-slate-600 text-xs mt-0.5">Coran et Khatm sont séparés et indépendants</p>
+        </div>
+        {current.bookmarks.length > 0 && !confirmReset && (
+          <button onClick={() => setConfirmReset(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 rounded-xl transition-all"
+          >
+            <RotateCcw className="w-3.5 h-3.5"/> Tout effacer
+          </button>
+        )}
+        {confirmReset && (
+          <div className="flex gap-2">
+            <button onClick={() => { current.resetAll(); setConfirmReset(false); }}
+              className="px-3 py-1.5 text-xs font-bold text-white bg-red-500/25 border border-red-500/40 rounded-xl hover:bg-red-500/40 transition-all"
+            >Confirmer</button>
+            <button onClick={() => setConfirmReset(false)}
+              className="px-3 py-1.5 text-xs text-slate-400 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all"
+            >Annuler</button>
+          </div>
+        )}
+      </div>
+
+      {/* Onglets */}
+      <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10">
+        {[
+          { key: "quran", label: "📖 Coran", count: quranBM.bookmarks.length },
+          { key: "khatm", label: "📅 Khatm",  count: khatmBM.bookmarks.length },
+        ].map(tab => (
+          <button key={tab.key} onClick={() => { setActiveTab(tab.key); setConfirmReset(false); }}
+            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+              activeTab === tab.key
+                ? "bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg"
+                : "text-slate-500 hover:text-white"
+            }`}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span className={`text-xs font-black px-1.5 py-0.5 rounded-full ${
+                activeTab === tab.key ? "bg-white/25 text-white" : "bg-white/10 text-slate-500"
+              }`}>{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Info comment ajouter */}
+      <div className="flex items-start gap-3 p-3.5 bg-amber-500/8 border border-amber-500/15 rounded-2xl">
+        <span className="text-lg shrink-0">💡</span>
+        <div>
+          {activeTab === "quran" ? (
+            <>
+              <p className="text-amber-300 font-semibold text-xs">Marque-pages Coran</p>
+              <p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📖 Coran</strong>, appuie sur n'importe quel verset pour l'enregistrer ici instantanément.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-amber-300 font-semibold text-xs">Marque-pages Khatm</p>
+              <p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📅 Programme</strong>, utilise le bouton "Sauvegarder ma position" pour marquer où tu en es dans ton Khatm.</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Liste */}
+      <AnimatePresence mode="wait">
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+          {current.bookmarks.length === 0 ? (
+            <div className="text-center py-14 space-y-2">
+              <p className="text-5xl">🔖</p>
+              <p className="text-slate-500 text-sm">Aucun marque-page {activeTab === "quran" ? "Coran" : "Khatm"}</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <p className="text-slate-700 text-xs">{current.bookmarks.length} marque-page{current.bookmarks.length > 1 ? "s" : ""}</p>
+              <AnimatePresence>
+                {current.bookmarks.map(bm => (
+                  <motion.div key={bm.id}
+                    initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
+                    className="flex items-center gap-3 p-4 bg-white/5 border border-amber-500/15 rounded-2xl group hover:border-amber-500/30 transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/12 border border-amber-500/20 flex flex-col items-center justify-center shrink-0">
+                      {activeTab === "quran" ? (
+                        <>
+                          <span className="text-amber-400 font-black text-base leading-none">{bm.surah}</span>
+                          <span className="text-amber-600/80 text-[10px] font-semibold">v.{bm.verse}</span>
+                        </>
+                      ) : (
+                        <span className="text-amber-400 text-xl">📅</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm">{bm.surahName}</p>
+                      {bm.note && <p className="text-xs text-amber-600/60 italic truncate">"{bm.note}"</p>}
+                      <p className="text-xs text-slate-600 flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3 shrink-0"/>{bm.datetime}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                      {activeTab === "quran" && (
+                        <p className="font-serif text-slate-500 text-base" dir="rtl">{bm.surahArabic}</p>
+                      )}
+                      <button onClick={() => current.remove(bm.id)}
+                        className="p-1.5 text-slate-700 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="w-3.5 h-3.5"/>
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Notification Banner (simulée, push via Service Worker limité en web)
+// ════════════════════════════════════════════════════════════════════
+function NotificationBanner({ onTrack, program, completedCount }) {
+  const [dismissed, setDismissed] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(() => storage("notif_enabled", false));
+
+  const requestNotif = async () => {
+    if ("Notification" in window) {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        setNotifEnabled(true); storageSet("notif_enabled", true);
+        new Notification("📖 Quran Malikite", {
+          body: `Bismillāh ! Ton objectif du jour : ${program.dailyGoalJuz} Juz. Que Allah facilite ta lecture.`,
+          icon: "/favicon.ico"
+        });
+      }
+    }
+  };
+
+  if (dismissed || !program.active) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+      className={`mx-4 mt-2 rounded-2xl p-3 flex items-center gap-3 border text-sm ${
+        !onTrack
+          ? "bg-orange-900/40 border-orange-500/30 text-orange-200"
+          : "bg-emerald-900/30 border-emerald-500/20 text-emerald-200"
+      }`}
+    >
+      <span className="text-xl">{!onTrack ? "⏰" : "✅"}</span>
+      <p className="flex-1">
+        {!onTrack
+          ? `Rattrape ton objectif : encore ${program.dailyGoalJuz - (completedCount % program.dailyGoalJuz)} Juz aujourd'hui.`
+          : `Māshā'Allah ! Tu es dans l'objectif — ${completedCount}/30 Juz.`}
+      </p>
+      {!notifEnabled && (
+        <button onClick={requestNotif} className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-lg text-xs font-semibold hover:bg-white/20 transition-all whitespace-nowrap">
+          <Bell className="w-3 h-3"/> Activer
+        </button>
+      )}
+      <button onClick={() => setDismissed(true)} className="text-white/40 hover:text-white/80 transition-all"><X className="w-4 h-4"/></button>
+    </motion.div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Adhkar (audio TTS, texte complet, onglet Matin&Soir)
+// ════════════════════════════════════════════════════════════════════
+const TAB_LABELS = {
+  matin:      "🌅 Matin",
+  soir:       "🌙 Soir",
+  matin_soir: "☀️🌙 Matin & Soir",
+  priere:     "🕌 Prière",
+};
+
+// Hook audio — voix chargées de façon asynchrone (fix mobile)
+function useArabicSpeech() {
+  const [speaking, setSpeaking] = useState(null);
+  const [voices, setVoices] = useState([]);
+  const utterRef = useRef(null);
+
+  // Charger les voix dès qu'elles sont disponibles
+  useEffect(() => {
+    const load = () => {
+      const v = window.speechSynthesis?.getVoices() || [];
+      if (v.length > 0) setVoices(v);
+    };
+    load();
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = load;
+    }
+    return () => {
+      if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  const speak = useCallback((dhikr) => {
+    if (!("speechSynthesis" in window)) {
+      alert("La synthèse vocale n'est pas supportée sur ce navigateur.");
+      return;
+    }
+    if (speaking === dhikr.id) {
+      window.speechSynthesis.cancel();
+      setSpeaking(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+
+    const doSpeak = (voiceList) => {
+      const utter = new SpeechSynthesisUtterance(dhikr.arabic);
+      utter.lang = "ar-SA";
+      utter.rate = 0.75;
+      utter.pitch = 1;
+      const arabicVoice =
+        voiceList.find(v => v.lang === "ar-SA") ||
+        voiceList.find(v => v.lang === "ar-EG") ||
+        voiceList.find(v => v.lang.startsWith("ar")) ||
+        null;
+      if (arabicVoice) utter.voice = arabicVoice;
+      utter.onstart = () => setSpeaking(dhikr.id);
+      utter.onend   = () => setSpeaking(null);
+      utter.onerror = () => setSpeaking(null);
+      utterRef.current = utter;
+      window.speechSynthesis.speak(utter);
+    };
+
+    // Si voix déjà chargées
+    const currentVoices = window.speechSynthesis.getVoices();
+    if (currentVoices.length > 0) {
+      doSpeak(currentVoices);
+    } else {
+      // Attendre le chargement (iOS)
+      window.speechSynthesis.onvoiceschanged = () => {
+        const v = window.speechSynthesis.getVoices();
+        setVoices(v);
+        doSpeak(v);
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+      // Fallback : tenter sans voix spécifique après 300ms
+      setTimeout(() => {
+        if (speaking !== dhikr.id) doSpeak([]);
+      }, 300);
+    }
+  }, [speaking]);
+
+  const stop = useCallback(() => {
+    window.speechSynthesis.cancel();
+    setSpeaking(null);
+  }, []);
+
+  useEffect(() => () => { window.speechSynthesis?.cancel(); }, []);
+
+  return { speaking, speak, stop, voicesLoaded: voices.length > 0 };
+}
+
+function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, setRecited, speaking, speak }) {
+  const [expanded, setExpanded] = useState(false);
+  const isPlaying = speaking === dhikr.id;
+  const count = recited[dhikr.id] || 0;
+  const done = count >= dhikr.repetition;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-3xl border transition-all overflow-hidden ${
+        done
+          ? "bg-emerald-900/20 border-emerald-500/30"
+          : "bg-white/5 border-white/10 hover:border-emerald-500/20"
+      }`}
+    >
+      {/* ── En-tête ── */}
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-white text-sm leading-snug mb-2">{dhikr.title}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 bg-emerald-500/15 text-emerald-400 rounded-lg text-xs font-bold border border-emerald-500/20">
+                {dhikr.repetition}×
+              </span>
+              {done && <span className="px-2 py-1 bg-emerald-500/25 text-emerald-300 rounded-lg text-xs font-bold">✓ Terminé</span>}
+            </div>
+          </div>
+          <div className="flex gap-1 shrink-0">
+            {/* Bouton audio */}
+            <button onClick={() => speak(dhikr)}
+              title={isPlaying ? "Arrêter" : "Écouter en arabe"}
+              className={`p-2 rounded-xl transition-all border ${
+                isPlaying
+                  ? "bg-blue-500/25 border-blue-500/40 text-blue-300 animate-pulse"
+                  : "bg-white/5 border-white/10 text-slate-500 hover:text-blue-400 hover:border-blue-500/30"
+              }`}
+            >
+              {isPlaying
+                ? <span className="text-base leading-none">⏸</span>
+                : <span className="text-base leading-none">🔊</span>}
+            </button>
+            <button onClick={() => handleCopy(dhikr)}
+              className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-500 hover:text-white border border-transparent"
+            >
+              {copied[dhikr.id] ? <CheckCircle className="w-4 h-4 text-emerald-400"/> : <Copy className="w-4 h-4"/>}
+            </button>
+            <button onClick={() => toggleFav(dhikr.id)}
+              className={`p-2 rounded-xl transition-all border border-transparent ${favorites[dhikr.id] ? "text-rose-400" : "text-slate-500 hover:text-rose-400"}`}
+            >
+              {favorites[dhikr.id] ? "♥" : "♡"}
+            </button>
+          </div>
+        </div>
+
+        {/* ── 1. TRANSLITTÉRATION EN GRAS (en premier) ── */}
+        <div className={`p-4 rounded-2xl mb-3 border transition-all ${
+          isPlaying ? "bg-blue-500/8 border-blue-500/20" : "bg-white/3 border-white/8"
+        }`}>
+          <p className="text-xs text-slate-600 uppercase tracking-wider font-semibold mb-1.5">Translittération</p>
+          <p className="font-bold text-white text-base leading-relaxed break-words select-text">
+            {dhikr.transliteration}
+          </p>
+        </div>
+
+        {/* ── 2. TRADUCTION FRANÇAISE ── */}
+        <div className="bg-emerald-500/8 border border-emerald-500/15 rounded-2xl p-4 mb-3">
+          <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mb-1.5">Traduction</p>
+          <p className="text-slate-300 text-sm leading-relaxed select-text">{dhikr.french}</p>
+        </div>
+
+        {/* ── Bénéfice si présent ── */}
+        {dhikr.benefice && (
+          <div className="bg-amber-500/8 border border-amber-500/20 rounded-2xl p-4 mb-3">
+            <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5">📜 Vertu & bénéfice</p>
+            <p className="text-amber-200/80 text-sm leading-relaxed italic select-text">{dhikr.benefice}</p>
+          </div>
+        )}
+
+        {/* ── 3. TEXTE ARABE COMPLET (en dernier) — cliquable pour audio ── */}
+        <div className={`p-4 rounded-2xl mb-3 border transition-all cursor-pointer ${
+          isPlaying ? "bg-blue-500/8 border-blue-500/25" : "bg-slate-800/60 border-white/10 hover:border-white/20"
+        }`} onClick={() => speak(dhikr)}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-slate-600 uppercase tracking-wider font-semibold">النص العربي</p>
+            <span className={`text-xs ${isPlaying ? "text-blue-400 font-semibold" : "text-slate-600"}`}>
+              {isPlaying ? "⏸ Arrêter" : "🔊 Écouter"}
+            </span>
+          </div>
+          <p className="text-right font-serif text-white leading-[2.4] select-text"
+            dir="rtl" lang="ar"
+            style={{ fontSize: "clamp(1.1rem, 4vw, 1.5rem)", wordBreak: "keep-all" }}
+          >
+            {dhikr.arabic}
+          </p>
+          {isPlaying && (
+            <div className="flex items-center gap-1 justify-center mt-3">
+              {[...Array(4)].map((_, i) => (
+                <motion.div key={i}
+                  className="w-1 rounded-full bg-blue-400"
+                  animate={{ height: ["6px","16px","6px"] }}
+                  transition={{ duration: 0.6, delay: i*0.15, repeat: Infinity }}
+                />
+              ))}
+              <span className="text-blue-400 text-xs ml-2 font-semibold">Récitation en cours…</span>
+            </div>
+          )}
+        </div>
+
+        {/* Source — bouton toggle si long */}
+        <button onClick={() => setExpanded(e => !e)}
+          className="w-full text-left text-slate-700 hover:text-slate-500 text-xs italic transition-all flex items-center justify-between gap-2"
+        >
+          <span className={expanded ? "" : "truncate"}>{dhikr.source}</span>
+          <span className="shrink-0 text-slate-700">{expanded ? "▲" : "▼"}</span>
+        </button>
+      </div>
+
+      {/* ── Compteur de récitation ── */}
+      <div className="px-5 pb-5">
+        {/* Barre de progression */}
+        {dhikr.repetition > 1 && (
+          <div className="h-1.5 bg-white/8 rounded-full overflow-hidden mb-3">
+            <motion.div
+              className={`h-full rounded-full transition-all ${done ? "bg-emerald-500" : "bg-gradient-to-r from-emerald-600 to-teal-400"}`}
+              animate={{ width: `${Math.min(100, (count / dhikr.repetition) * 100)}%` }}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          {/* Bouton reset compteur */}
+          {count > 0 && (
+            <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))}
+              className="p-2 text-slate-700 hover:text-slate-400 hover:bg-white/5 rounded-xl transition-all"
+              title="Remettre à zéro"
+            >
+              <RotateCcw className="w-3.5 h-3.5"/>
+            </button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
+            onClick={() => !done && setRecited(p => ({ ...p, [dhikr.id]: (p[dhikr.id] || 0) + 1 }))}
+            className={`flex-1 py-3 rounded-2xl font-bold text-sm transition-all ${
+              done
+                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 cursor-default"
+                : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:shadow-emerald-500/20"
+            }`}
+          >
+            {done
+              ? `✓ Complété (${dhikr.repetition}/${dhikr.repetition})`
+              : dhikr.repetition === 1
+                ? "Récité ✓"
+                : `Réciter — ${count} / ${dhikr.repetition}`}
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function AdhkarPage() {
+  const [favorites, setFavorites] = useState(() => storage("adhkar_favs", {}));
+  const [copied,    setCopied]    = useState({});
+  const [recited,   setRecited]   = useState(() => storage("adhkar_recited", {}));
+  const [activeTab, setActiveTab] = useState("matin");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const { speaking, speak, voicesLoaded } = useArabicSpeech();
+  const { isReadThisWeek, markRead, totalFridays } = useFridayKahf();
+  const today = new Date();
+  const isFriday = today.getDay() === 5;
+
+  const handleResetRecited = () => {
+    storageSet("adhkar_recited", {});
+    setRecited({});
+    setConfirmReset(false);
+  };
+
+  const handleCopy = useCallback((dhikr) => {
+    navigator.clipboard.writeText(`${dhikr.arabic}\n\n${dhikr.transliteration}\n\n${dhikr.french}\n\nSource : ${dhikr.source}`);
+    setCopied(p => ({ ...p, [dhikr.id]: true }));
+    setTimeout(() => setCopied(p => ({ ...p, [dhikr.id]: false })), 2000);
+  }, []);
+
+  const toggleFav = useCallback((id) => {
+    setFavorites(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      storageSet("adhkar_favs", next);
+      return next;
+    });
+  }, []);
+
+  const handleSetRecited = useCallback((updater) => {
+    setRecited(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      storageSet("adhkar_recited", next);
+      return next;
+    });
+  }, []);
+
+  const filtered = ADHKAR_MALIKITES.filter(d => d.category.toLowerCase() === activeTab);
+  const totalDone = filtered.filter(d => (recited[d.id] || 0) >= d.repetition).length;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/25 uppercase tracking-wider">
+            📿 Madhhab Malikite — Muwatta Mālik
+          </div>
+          <h2 className="text-2xl font-black text-white mt-2">الأذكار اليومية</h2>
+          <p className="text-slate-600 text-xs mt-0.5">
+            {voicesLoaded ? "🔊 Voix arabe prête" : "🔊 Appuie sur le texte arabe pour écouter"}
+          </p>
+        </div>
+        {/* Reset adhkar */}
+        <div className="flex flex-col items-end gap-2">
+          {!confirmReset ? (
+            <button onClick={() => setConfirmReset(true)}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 rounded-xl transition-all"
+            >
+              <RotateCcw className="w-3 h-3"/> Réinitialiser
+            </button>
+          ) : (
+            <div className="flex flex-col gap-1.5 items-end">
+              <p className="text-xs text-slate-500 text-right">Effacer tous les compteurs ?</p>
+              <div className="flex gap-2">
+                <button onClick={handleResetRecited}
+                  className="px-3 py-1.5 text-xs font-bold text-white bg-red-500/25 border border-red-500/40 rounded-xl hover:bg-red-500/40 transition-all"
+                >Confirmer</button>
+                <button onClick={() => setConfirmReset(false)}
+                  className="px-3 py-1.5 text-xs text-slate-400 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all"
+                >Annuler</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Onglets — scrollable horizontalement sur mobile */}
+      <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10 gap-1 overflow-x-auto">
+        {Object.entries(TAB_LABELS).map(([key, label]) => {
+          const tabDhikr = ADHKAR_MALIKITES.filter(d => d.category.toLowerCase() === key);
+          const tabDone  = tabDhikr.filter(d => (recited[d.id] || 0) >= d.repetition).length;
+          return (
+            <button key={key} onClick={() => setActiveTab(key)}
+              className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === key
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg"
+                  : "text-slate-500 hover:text-white"
+              }`}
+            >
+              {label}
+              {tabDhikr.length > 0 && (
+                <span className={`ml-1.5 text-[10px] ${activeTab === key ? "text-white/70" : "text-slate-700"}`}>
+                  {tabDone}/{tabDhikr.length}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Info audio */}
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-500/8 border border-blue-500/15 rounded-2xl">
+        <span className="text-lg">🔊</span>
+        <p className="text-blue-300/70 text-xs">
+          Appuie sur <strong className="text-blue-300">🔊</strong> ou le texte arabe pour entendre la récitation. Vitesse lente pour faciliter le suivi.
+        </p>
+      </div>
+
+      {/* Rappel Al-Kahf vendredi */}
+      {isFriday && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className={`flex items-start gap-3 p-4 rounded-2xl border ${
+            isReadThisWeek
+              ? "bg-emerald-900/30 border-emerald-500/30"
+              : "bg-amber-500/10 border-amber-500/30"
+          }`}
+        >
+          <span className="text-2xl shrink-0">🕌</span>
+          <div className="flex-1">
+            <p className={`font-bold text-sm mb-0.5 ${isReadThisWeek ? "text-emerald-300" : "text-amber-300"}`}>
+              {isReadThisWeek ? "✅ Al-Kahf lu ce vendredi !" : "Aujourd'hui c'est vendredi — Lis la Sourate Al-Kahf !"}
+            </p>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              « Celui qui lit Al-Kahf le vendredi, une lumière l'illuminera jusqu'au vendredi suivant. » — Ṣaḥīḥ al-Jāmi'
+            </p>
+            {totalFridays > 0 && (
+              <p className="text-slate-600 text-xs mt-1">📊 Tu as lu Al-Kahf {totalFridays} vendredi{totalFridays > 1 ? "s" : ""}</p>
+            )}
+          </div>
+          {!isReadThisWeek && (
+            <button onClick={markRead}
+              className="shrink-0 px-3 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-500/30 transition-all"
+            >
+              Marquer lu
+            </button>
+          )}
+        </motion.div>
+      )}
+
+      {/* Progression de l'onglet actif */}
+      {filtered.length > 1 && (
+        <div className="flex items-center gap-3 px-1">
+          <div className="flex-1 h-1 bg-white/8 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+              animate={{ width: `${(totalDone / filtered.length) * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+          <span className="text-xs text-slate-600 shrink-0">{totalDone}/{filtered.length} adhkār</span>
+        </div>
+      )}
+
+      {/* Cartes */}
+      <AnimatePresence mode="wait">
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+          className="space-y-4 pb-6"
+        >
+          {filtered.length === 0 && (
+            <p className="text-center text-slate-600 py-10">Aucun dhikr dans cet onglet.</p>
+          )}
+          {filtered.map(dhikr => (
+            <DhikrCard key={dhikr.id}
+              dhikr={dhikr}
+              favorites={favorites}
+              toggleFav={toggleFav}
+              copied={copied}
+              handleCopy={handleCopy}
+              recited={recited}
+              setRecited={handleSetRecited}
+              speaking={speaking}
+              speak={speak}
+            />
+          ))}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Lecture Coran (swipe fluide, auto-scroll, marque-page rapide)
+// ════════════════════════════════════════════════════════════════════
+function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed }) {
+  const { checked, toggle, counts } = useSurahProgress();
+  const quranBM = useBookmarks("quran");
+  const [currentSurah, setCurrentSurah] = useState(() =>
+    initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null
+  );
+  const [targetVerse, setTargetVerse] = useState(initialVerseNum || null);
+  const verseRefs = useRef({});
+  const { verses, loading: versesLoading, error: versesError } = useVerses(currentSurah?.number);
+  const [filter, setFilter] = useState("");
+  const [autoScroll, setAutoScroll] = useState(false);
+  const [scrollSpeed, setScrollSpeed] = useState(2);
+  const [bookmarkToast, setBookmarkToast] = useState(null);
+  const scrollRef = useRef(null);
+  const autoRef = useRef(null);
+  const holdTimer = useRef(null);
+
+  // État téléchargement manuel par sourate
+  const [dlStatus, setDlStatus] = useState(() => {
+    // Marquer les sourates intégrées comme "done" d'emblée
+    const init = {};
+    Object.keys(EMBEDDED_VERSES).forEach(k => { init[k] = "done"; });
+    // Vérifier aussi le cache mémoire
+    _versesMemCache.forEach((_, k) => { init[k] = "done"; });
+    return init;
+  });
+
+  const downloadSurah = async (surah, e) => {
+    e.stopPropagation();
+    const n = surah.number;
+    if (dlStatus[n] === "done" || dlStatus[n] === "loading") return;
+    setDlStatus(prev => ({ ...prev, [n]: "loading" }));
+    try {
+      const verses = await fetchSurahFromAPI(n, surah);
+      _versesMemCache.set(n, verses);
+      setDlStatus(prev => ({ ...prev, [n]: "done" }));
+    } catch {
+      setDlStatus(prev => ({ ...prev, [n]: "error" }));
+    }
+  };
+
+  // Swipe detection
+  const touchStart = useRef(null);
+  const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (!touchStart.current || !currentSurah) return;
+    const diff = touchStart.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0 && currentSurah.number < 114) setCurrentSurah(QURAN_SURAHS[currentSurah.number]);
+      if (diff < 0 && currentSurah.number > 1) setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2]);
+    }
+    touchStart.current = null;
+  };
+
+  // Auto-scroll
+  useEffect(() => {
+    if (autoScroll && scrollRef.current) {
+      autoRef.current = setInterval(() => {
+        scrollRef.current?.scrollBy({ top: scrollSpeed, behavior: "smooth" });
+      }, 50);
+    } else {
+      clearInterval(autoRef.current);
+    }
+    return () => clearInterval(autoRef.current);
+  }, [autoScroll, scrollSpeed]);
+
+  // Scroll vers le verset cible quand ouvert depuis le programme
+  useEffect(() => {
+    if (targetVerse && scrollRef.current) {
+      const t = setTimeout(() => {
+        const el = verseRefs.current[targetVerse];
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTargetVerse(null);
+        onNavConsumed?.();
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [targetVerse, currentSurah]);
+
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (bookmarkToast) {
+      const t = setTimeout(() => setBookmarkToast(null), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [bookmarkToast]);
+
+  const handleVerseBookmark = useCallback((verseNum) => {
+    if (!currentSurah) return;
+    quranBM.save({
+      surah: currentSurah.number,
+      verse: verseNum,
+      surahName: currentSurah.name,
+      surahArabic: currentSurah.arabic,
+      note: ""
+    });
+    setBookmarkToast({ verse: verseNum, surahName: currentSurah.name });
+  }, [currentSurah, quranBM]);
+
+  const filtered = QURAN_SURAHS.filter(s =>
+    s.name.toLowerCase().includes(filter.toLowerCase()) || s.arabic.includes(filter) || String(s.number).includes(filter)
+  );
+
+  if (currentSurah) {
+    return (
+      <div className="flex flex-col" style={{ height: "calc(100dvh - 60px)" }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+
+        {/* Toast marque-page */}
+        <AnimatePresence>
+          {bookmarkToast && (
+            <motion.div
+              initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-2xl shadow-xl shadow-amber-500/30 whitespace-nowrap"
+            >
+              🔖 Verset {bookmarkToast.verse} sauvegardé !
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Toolbar lecture */}
+        <div className="flex items-center gap-2 px-4 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0">
+          <button onClick={() => { setCurrentSurah(null); setAutoScroll(false); }}
+            className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"
+          >
+            <ChevronLeft className="w-5 h-5"/>
+          </button>
+          <div className="flex-1 text-center">
+            <p className="font-bold text-white text-sm">{currentSurah.name}</p>
+            <p className="text-slate-500 text-xs">
+              {versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}
+            </p>
+          </div>
+          <button onClick={() => toggle(currentSurah.number)}
+            className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`}
+            title="Marquer comme lue"
+          >
+            <CheckCircle className="w-5 h-5"/>
+          </button>
+        </div>
+
+        {/* Contrôle auto-scroll */}
+        <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/80 border-b border-white/5 shrink-0">
+          <button onClick={() => setAutoScroll(a => !a)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              autoScroll ? "bg-blue-500/25 text-blue-300 border border-blue-500/40" : "bg-white/5 text-slate-500 hover:text-white"
+            }`}
+          >
+            {autoScroll ? <Pause className="w-3 h-3"/> : <Play className="w-3 h-3"/>}
+            Auto-scroll
+          </button>
+          {autoScroll && (
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-xs text-slate-600">Vitesse</span>
+              <input type="range" min={1} max={6} value={scrollSpeed} onChange={e => setScrollSpeed(Number(e.target.value))}
+                className="flex-1 accent-blue-500 h-1"
+              />
+            </div>
+          )}
+          {/* Indication tap */}
+          {!autoScroll && (
+            <p className="text-slate-700 text-xs ml-auto italic">Appuie sur un verset pour 🔖</p>
+          )}
+          {/* Nav sourate */}
+          <div className="flex gap-1 ml-auto">
+            <button onClick={() => currentSurah.number > 1 && setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2])}
+              disabled={currentSurah.number === 1}
+              className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-slate-500 hover:text-white disabled:opacity-30"
+            >
+              <ChevronLeft className="w-4 h-4"/>
+            </button>
+            <span className="text-xs text-slate-600 self-center px-1">{currentSurah.number}/114</span>
+            <button onClick={() => currentSurah.number < 114 && setCurrentSurah(QURAN_SURAHS[currentSurah.number])}
+              disabled={currentSurah.number === 114}
+              className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-slate-500 hover:text-white disabled:opacity-30"
+            >
+              <ChevronRight className="w-4 h-4"/>
+            </button>
+          </div>
+        </div>
+
+        {/* Contenu de lecture */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
+          <div className="text-center mb-8">
+            <p className="text-5xl font-serif text-white mb-2" dir="rtl" lang="ar">{currentSurah.arabic}</p>
+            <p className="text-slate-500 text-sm">{currentSurah.name} · {currentSurah.verses} versets · {currentSurah.revelationType}</p>
+            {currentSurah.number !== 9 && (
+              <p className="text-2xl font-serif text-emerald-400 mt-4" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+            )}
+          </div>
+
+          {/* Versets — 3 écritures : arabe + phonétique + français */}
+          {versesLoading && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                <div className="flex gap-1">
+                  {[...Array(3)].map((_,i) => (
+                    <motion.div key={i} className="w-2 h-2 bg-blue-400 rounded-full"
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
+                    />
+                  ))}
+                </div>
+                <div>
+                  <p className="text-blue-300 text-sm font-semibold">Chargement en cours…</p>
+                  <p className="text-slate-600 text-xs">Récupération des versets (arabe · phonétique · français)</p>
+                </div>
+              </div>
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="p-4 rounded-2xl bg-white/3 animate-pulse space-y-3">
+                  <div className="h-8 bg-white/8 rounded-xl"/>
+                  <div className="h-3 bg-blue-500/10 rounded-lg w-3/4"/>
+                  <div className="h-3 bg-white/5 rounded-lg w-2/3"/>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {versesError === "not_embedded" && (
+            <div className="text-center py-10 space-y-4 px-4">
+              <p className="text-4xl">⬇️</p>
+              <p className="text-white font-bold text-sm">Sourate non téléchargée</p>
+              <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
+                Cette sourate doit être téléchargée avant d'être lue. Reviens à la liste et appuie sur ⬇ à côté de son nom.
+              </p>
+              <button onClick={() => setCurrentSurah(null)}
+                className="px-5 py-2.5 bg-blue-500/15 text-blue-300 border border-blue-500/25 rounded-2xl text-sm font-bold hover:bg-blue-500/25 transition-all"
+              >
+                ← Retour à la liste
+              </button>
+            </div>
+          )}
+
+          {versesError === "api_error" && (
+            <div className="text-center py-8 space-y-3 px-4">
+              <p className="text-4xl">⚠️</p>
+              <p className="text-orange-400 text-sm font-semibold">Erreur de chargement</p>
+              <p className="text-slate-500 text-xs">Reviens en arrière et réessaie d'ouvrir la sourate.</p>
+              <button onClick={() => setCurrentSurah(null)}
+                className="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/15 transition-all"
+              >
+                ← Retour à la liste
+              </button>
+            </div>
+          )}
+
+          {!versesLoading && !versesError && verses.length > 0 && (
+            <div className="space-y-3">
+              {verses.map((v, i) => (
+                <motion.div key={v.number}
+                  ref={el => { verseRefs.current[v.number] = el; }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.015, 0.5) }}
+                  onClick={() => handleVerseBookmark(v.number)}
+                  className={`group relative p-4 rounded-2xl cursor-pointer select-none
+                    hover:bg-amber-500/6 active:bg-amber-500/15
+                    border transition-all duration-150 ${
+                      targetVerse === v.number
+                        ? "border-emerald-500/50 bg-emerald-500/8"
+                        : "border-transparent hover:border-amber-500/15"
+                    }`}
+                >
+                  {/* Icône marque-page au survol */}
+                  <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-40 transition-all">
+                    <Bookmark className="w-4 h-4 text-amber-400"/>
+                  </div>
+
+                  {/* Numéro + Arabe */}
+                  <div className="flex items-start gap-3 mb-2">
+                    <span className="w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0 mt-1 select-none">
+                      {v.number}
+                    </span>
+                    <p className="text-right font-serif text-white leading-[2.2] flex-1 select-text"
+                      dir="rtl" lang="ar"
+                      style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.6rem)" }}
+                    >
+                      {v.arabic}
+                    </p>
+                  </div>
+
+                  {/* Phonétique (translittération) en gras */}
+                  {v.transliteration && (
+                    <p className="ml-10 text-sm font-bold text-blue-300 leading-relaxed mb-1.5 select-text">
+                      {v.transliteration}
+                    </p>
+                  )}
+
+                  {/* Traduction française */}
+                  {v.french && (
+                    <p className="ml-10 text-sm text-slate-400 italic leading-relaxed bg-white/3 rounded-xl px-3 py-2 select-text">
+                      {v.french}
+                    </p>
+                  )}
+                </motion.div>
+              ))}
+
+              {/* Fallback si API pas encore chargée (versets statiques) */}
+              {verses.length === 0 && !versesLoading && (
+                <div className="space-y-3">
+                  {Array.from({ length: currentSurah.verses }, (_, i) => (
+                    <motion.div key={i}
+                      ref={el => { verseRefs.current[i + 1] = el; }}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                      onClick={() => handleVerseBookmark(i + 1)}
+                      className="group relative p-4 rounded-2xl cursor-pointer border border-transparent hover:border-amber-500/20 hover:bg-amber-500/6 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0 mt-1">
+                          {i + 1}
+                        </span>
+                        <p className="text-right text-2xl font-serif text-white leading-loose flex-1" dir="rtl" lang="ar">
+                          {getVerseText(currentSurah.number, i + 1)}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Fin de sourate */}
+          <div className="mt-8 pt-8 border-t border-white/10 text-center space-y-4">
+            <p className="text-slate-400 text-sm">Fin de {currentSurah.name}</p>
+            {!checked[currentSurah.number] && (
+              <button onClick={() => toggle(currentSurah.number)}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm hover:shadow-emerald-500/25 transition-all"
+              >
+                ✅ Marquer comme lue
+              </button>
+            )}
+            {currentSurah.number < 114 && (
+              <button onClick={() => setCurrentSurah(QURAN_SURAHS[currentSurah.number])}
+                className="block mx-auto text-slate-500 hover:text-white text-sm transition-all"
+              >
+                Sourate suivante : {QURAN_SURAHS[currentSurah.number].name} →
+              </button>
+            )}
+          </div>
+          <div className="h-10"/>
+        </div>
+      </div>
+    );
+  }
+
+  // Liste sourates
+  const downloadedCount = Object.values(dlStatus).filter(v => v === "done").length;
+  const allDownloaded = downloadedCount >= 114;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+      {/* Barre recherche + stats */}
+      <div className="flex items-center gap-3">
+        <input type="text" value={filter} onChange={e => setFilter(e.target.value)}
+          placeholder="Rechercher une sourate..."
+          className="flex-1 bg-white/5 border border-white/15 rounded-2xl px-4 py-3 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-emerald-500/40 transition-all"
+        />
+        <div className="text-right shrink-0">
+          <p className="text-emerald-400 font-bold text-sm">{counts.surahChecked}/114</p>
+          <p className="text-slate-600 text-xs">lues</p>
+        </div>
+      </div>
+
+      {/* Bandeau téléchargement */}
+      <div className="p-3 bg-blue-500/8 border border-blue-500/20 rounded-2xl flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-blue-300 text-xs font-semibold">
+            📥 {downloadedCount}/114 sourates disponibles hors-ligne
+          </p>
+          <p className="text-slate-600 text-xs mt-0.5">
+            Appuie sur ⬇ pour télécharger une sourate avant de la lire
+          </p>
+        </div>
+        {/* Barre de progression */}
+        <div className="w-16 shrink-0">
+          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-400 rounded-full transition-all duration-500"
+              style={{ width: `${(downloadedCount / 114) * 100}%` }}
+            />
+          </div>
+          <p className="text-blue-400 text-xs text-center mt-1 font-bold">{Math.round((downloadedCount/114)*100)}%</p>
+        </div>
+      </div>
+
+      {/* Liste */}
+      <div className="space-y-2">
+        {filtered.map((s, i) => {
+          const status = dlStatus[s.number];
+          const isDone = status === "done";
+          const isLoading = status === "loading";
+          const isError = status === "error";
+          const isEmbedded = !!EMBEDDED_VERSES[s.number];
+
+          return (
+            <motion.div key={s.number} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(i * 0.01, 0.3) }}
+              className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                checked[s.number]
+                  ? "bg-emerald-500/10 border-emerald-500/25"
+                  : isDone
+                    ? "bg-white/4 border-blue-500/15"
+                    : "bg-white/4 border-white/8"
+              }`}
+            >
+              {/* Checkbox lu */}
+              <div onClick={() => toggle(s.number)}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer transition-all ${
+                  checked[s.number] ? "bg-emerald-500 text-white" : "bg-white/8 text-slate-400 hover:bg-white/15"
+                }`}
+              >
+                {checked[s.number] ? <CheckCircle className="w-5 h-5"/> : s.number}
+              </div>
+
+              {/* Nom + infos */}
+              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setCurrentSurah(s)}>
+                <p className="font-semibold text-white text-sm">{s.name}</p>
+                <p className="text-xs text-slate-600">{s.verses} versets · Juz {s.juz}</p>
+              </div>
+
+              {/* Arabe */}
+              <p className="text-xl font-serif text-slate-400 shrink-0 hidden sm:block" dir="rtl">{s.arabic}</p>
+
+              {/* Bouton téléchargement */}
+              {isDone ? (
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  title={isEmbedded ? "Intégrée" : "Téléchargée"}
+                >
+                  <span className="text-sm">{isEmbedded ? "✨" : "✅"}</span>
+                </div>
+              ) : isLoading ? (
+                <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
+                  <motion.div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full"
+                    animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  />
+                </div>
+              ) : (
+                <button onClick={(e) => downloadSurah(s, e)}
+                  title="Télécharger pour lire hors-ligne"
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                    isError
+                      ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                      : "bg-white/8 text-slate-500 hover:bg-blue-500/20 hover:text-blue-400"
+                  }`}
+                >
+                  <span className="text-sm">{isError ? "↺" : "⬇"}</span>
+                </button>
+              )}
+
+              {/* Ouvrir */}
+              <button onClick={() => setCurrentSurah(s)}
+                className="p-2 text-slate-600 hover:text-white hover:bg-white/10 rounded-xl transition-all shrink-0"
+              >
+                <ChevronRight className="w-4 h-4"/>
+              </button>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DONNÉES VERSETS INTÉGRÉES — toujours disponibles, pas d'API nécessaire
+// ════════════════════════════════════════════════════════════════════
+const EMBEDDED_VERSES = {
+  // ── Al-Fatiha (1) ──
+  1:[
+    {number:1,arabic:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Bismi llāhi r-raḥmāni r-raḥīm",french:"Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux"},
+    {number:2,arabic:"الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",transliteration:"Al-ḥamdu li-llāhi rabbi l-ʿālamīn",french:"Louange à Allah, Seigneur de l'univers"},
+    {number:3,arabic:"الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Ar-raḥmāni r-raḥīm",french:"Le Tout Miséricordieux, le Très Miséricordieux"},
+    {number:4,arabic:"مَالِكِ يَوْمِ الدِّينِ",transliteration:"Māliki yawmi d-dīn",french:"Maître du Jour de la rétribution"},
+    {number:5,arabic:"إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",transliteration:"Iyyāka naʿbudu wa-iyyāka nastaʿīn",french:"C'est Toi Seul que nous adorons, et c'est Toi Seul dont nous implorons le secours"},
+    {number:6,arabic:"اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",transliteration:"Ihdinā ṣ-ṣirāṭa l-mustaqīm",french:"Guide-nous dans le droit chemin"},
+    {number:7,arabic:"صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",transliteration:"Ṣirāṭa lladhīna anʿamta ʿalayhim ġayri l-maġḍūbi ʿalayhim wa-lā ḍ-ḍāllīn",french:"Le chemin de ceux que Tu as comblés de faveurs, non ceux qui ont encouru Ta colère ni des égarés"},
+  ],
+  // ── Ad-Duha (93) ──
+  93:[
+    {number:1,arabic:"وَالضُّحَىٰ",transliteration:"Wa-ḍ-ḍuḥā",french:"Par le matin lumineux !"},
+    {number:2,arabic:"وَاللَّيْلِ إِذَا سَجَىٰ",transliteration:"Wa-l-layli idhā sajā",french:"Par la nuit quand elle est tranquille !"},
+    {number:3,arabic:"مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ",transliteration:"Mā waddaʿaka rabbuka wa-mā qalā",french:"Ton Seigneur ne t'a pas abandonné et ne te hait point"},
+    {number:4,arabic:"وَلَلْآخِرَةُ خَيْرٌ لَّكَ مِنَ الْأُولَىٰ",transliteration:"Wa-la-l-ākhiratu khayrun laka mina l-ūlā",french:"L'au-delà est certainement meilleur pour toi que la vie ici-bas"},
+    {number:5,arabic:"وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",transliteration:"Wa-la-sawfa yuʿṭīka rabbuka fa-tarḍā",french:"Et ton Seigneur te donnera et tu seras satisfait"},
+    {number:6,arabic:"أَلَمْ يَجِدْكَ يَتِيمًا فَآوَىٰ",transliteration:"Alam yajidka yatīman fa-āwā",french:"Ne t'a-t-Il pas trouvé orphelin et recueilli ?"},
+    {number:7,arabic:"وَوَجَدَكَ ضَالًّا فَهَدَىٰ",transliteration:"Wa-wajadaka ḍāllan fa-hadā",french:"Ne t'a-t-Il pas trouvé égaré et guidé ?"},
+    {number:8,arabic:"وَوَجَدَكَ عَائِلًا فَأَغْنَىٰ",transliteration:"Wa-wajadaka ʿāʾilan fa-aġnā",french:"Ne t'a-t-Il pas trouvé pauvre et enrichi ?"},
+    {number:9,arabic:"فَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ",transliteration:"Fa-ammā l-yatīma fa-lā taqhar",french:"Quant à l'orphelin, ne le brime donc pas"},
+    {number:10,arabic:"وَأَمَّا السَّائِلَ فَلَا تَنْهَرْ",transliteration:"Wa-ammā s-sāʾila fa-lā tanhar",french:"Quant au mendiant, ne le rabroue donc pas"},
+    {number:11,arabic:"وَأَمَّا بِنِعْمَةِ رَبِّكَ فَحَدِّثْ",transliteration:"Wa-ammā bi-niʿmati rabbika fa-ḥaddith",french:"Et quant aux bienfaits de ton Seigneur, proclame-les"},
+  ],
+  // ── Ash-Sharh (94) ──
+  94:[
+    {number:1,arabic:"أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ",transliteration:"Alam našraḥ laka ṣadrak",french:"N'avons-Nous pas déployé ta poitrine ?"},
+    {number:2,arabic:"وَوَضَعْنَا عَنكَ وِزْرَكَ",transliteration:"Wa-waḍaʿnā ʿanka wizrak",french:"Et n'avons-Nous pas déposé ton fardeau"},
+    {number:3,arabic:"الَّذِي أَنقَضَ ظَهْرَكَ",transliteration:"Alladhī anqaḍa ẓahrak",french:"qui alourdissait ton dos ?"},
+    {number:4,arabic:"وَرَفَعْنَا لَكَ ذِكْرَكَ",transliteration:"Wa-rafaʿnā laka dhikrak",french:"N'avons-Nous pas élevé pour toi ta renommée ?"},
+    {number:5,arabic:"فَإِنَّ مَعَ الْعُسْرِ يُسْرًا",transliteration:"Fa-inna maʿa l-ʿusri yusrā",french:"En vérité, avec la difficulté vient la facilité"},
+    {number:6,arabic:"إِنَّ مَعَ الْعُسْرِ يُسْرًا",transliteration:"Inna maʿa l-ʿusri yusrā",french:"Oui, avec la difficulté vient la facilité"},
+    {number:7,arabic:"فَإِذَا فَرَغْتَ فَانصَبْ",transliteration:"Fa-idhā faraġta fa-nṣab",french:"Quand tu te libères, travaille ardemment"},
+    {number:8,arabic:"وَإِلَىٰ رَبِّكَ فَارْغَب",transliteration:"Wa-ilā rabbika fa-rġab",french:"et vers ton Seigneur aspire"},
+  ],
+  // ── At-Tin (95) ──
+  95:[
+    {number:1,arabic:"وَالتِّينِ وَالزَّيْتُونِ",transliteration:"Wa-t-tīni wa-z-zaytūn",french:"Par le figuier et l'olivier !"},
+    {number:2,arabic:"وَطُورِ سِينِينَ",transliteration:"Wa-ṭūri sīnīn",french:"Par le Mont Sinaï !"},
+    {number:3,arabic:"وَهَٰذَا الْبَلَدِ الْأَمِينِ",transliteration:"Wa-hādhā l-baladi l-amīn",french:"Par cette Cité sûre !"},
+    {number:4,arabic:"لَقَدْ خَلَقْنَا الْإِنسَانَ فِي أَحْسَنِ تَقْوِيمٍ",transliteration:"Laqad khalaqnā l-insāna fī aḥsani taqwīm",french:"Nous avons certes créé l'homme dans la plus belle forme"},
+    {number:5,arabic:"ثُمَّ رَدَدْنَاهُ أَسْفَلَ سَافِلِينَ",transliteration:"Thumma radadnāhu asfala sāfilīn",french:"puis Nous l'avons ramené au niveau le plus bas"},
+    {number:6,arabic:"إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ فَلَهُمْ أَجْرٌ غَيْرُ مَمْنُونٍ",transliteration:"Illā lladhīna āmanū wa-ʿamilū ṣ-ṣāliḥāti fa-lahum ajrun ġayru mamnūn",french:"sauf ceux qui croient et font de bonnes oeuvres, ils auront une récompense sans fin"},
+    {number:7,arabic:"فَمَا يُكَذِّبُكَ بَعْدُ بِالدِّينِ",transliteration:"Fa-mā yukadhdhibuka baʿdu bi-d-dīn",french:"Alors qu'est-ce qui te fait nier le Jugement ?"},
+    {number:8,arabic:"أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ",transliteration:"A-laysa llāhu bi-aḥkami l-ḥākimīn",french:"Allah n'est-Il pas le plus sage des juges ?"},
+  ],
+  // ── Al-Alaq (96) ──
+  96:[
+    {number:1,arabic:"اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ",transliteration:"Iqraʾ bismi rabbika lladhī khalaq",french:"Lis, au nom de ton Seigneur qui a créé"},
+    {number:2,arabic:"خَلَقَ الْإِنسَانَ مِنْ عَلَقٍ",transliteration:"Khalaqa l-insāna min ʿalaq",french:"qui a créé l'homme d'une adhérence"},
+    {number:3,arabic:"اقْرَأْ وَرَبُّكَ الْأَكْرَمُ",transliteration:"Iqraʾ wa-rabbuka l-akram",french:"Lis ! Ton Seigneur est le Très Généreux"},
+    {number:4,arabic:"الَّذِي عَلَّمَ بِالْقَلَمِ",transliteration:"Alladhī ʿallama bi-l-qalam",french:"qui a enseigné par le calame"},
+    {number:5,arabic:"عَلَّمَ الْإِنسَانَ مَا لَمْ يَعْلَمْ",transliteration:"ʿAllama l-insāna mā lam yaʿlam",french:"a enseigné à l'homme ce qu'il ne savait pas"},
+    {number:6,arabic:"كَلَّا إِنَّ الْإِنسَانَ لَيَطْغَىٰ",transliteration:"Kallā inna l-insāna la-yaṭġā",french:"Mais non ! L'homme transgresse vraiment"},
+    {number:7,arabic:"أَن رَّآهُ اسْتَغْنَىٰ",transliteration:"An raʾāhu staġnā",french:"parce qu'il se voit à l'abri du besoin"},
+    {number:8,arabic:"إِنَّ إِلَىٰ رَبِّكَ الرُّجْعَىٰ",transliteration:"Inna ilā rabbika r-rujʿā",french:"Mais certes c'est vers ton Seigneur que se fera le retour"},
+    {number:9,arabic:"أَرَأَيْتَ الَّذِي يَنْهَىٰ",transliteration:"Araʾayta lladhī yanhā",french:"As-tu vu celui qui interdit"},
+    {number:10,arabic:"عَبْدًا إِذَا صَلَّىٰ",transliteration:"ʿAbdan idhā ṣallā",french:"à un serviteur de prier ?"},
+    {number:11,arabic:"أَرَأَيْتَ إِن كَانَ عَلَى الْهُدَىٰ",transliteration:"Araʾayta in kāna ʿalā l-hudā",french:"Dis-moi s'il était sur la bonne voie"},
+    {number:12,arabic:"أَوْ أَمَرَ بِالتَّقْوَىٰ",transliteration:"Aw amara bi-t-taqwā",french:"ou ordonnait la piété"},
+    {number:13,arabic:"أَرَأَيْتَ إِن كَذَّبَ وَتَوَلَّىٰ",transliteration:"Araʾayta in kadhdhaba wa-tawallā",french:"Dis-moi s'il dément et se détourne"},
+    {number:14,arabic:"أَلَمْ يَعْلَم بِأَنَّ اللَّهَ يَرَىٰ",transliteration:"Alam yaʿlam bi-anna llāha yarā",french:"Ne sait-il pas qu'Allah voit ?"},
+    {number:15,arabic:"كَلَّا لَئِن لَّمْ يَنتَهِ لَنَسْفَعًا بِالنَّاصِيَةِ",transliteration:"Kallā la-in lam yantahi la-nasafaʿan bi-n-nāṣiya",french:"S'il ne cesse pas, Nous le saisirons par la mèche"},
+    {number:16,arabic:"نَاصِيَةٍ كَاذِبَةٍ خَاطِئَةٍ",transliteration:"Nāṣiyatin kādhibatin khāṭiʾa",french:"une mèche menteuse et pécheresse"},
+    {number:17,arabic:"فَلْيَدْعُ نَادِيَهُ",transliteration:"Fa-l-yadʿu nādiyah",french:"Qu'il appelle donc ses complices"},
+    {number:18,arabic:"سَنَدْعُ الزَّبَانِيَةَ",transliteration:"Sa-nadʿu z-zabāniya",french:"Nous appellerons les Gardiens de l'Enfer"},
+    {number:19,arabic:"كَلَّا لَا تُطِعْهُ وَاسْجُدْ وَاقْتَرِب",transliteration:"Kallā lā tuṭiʿhu wa-sjud wa-qtarib",french:"Non ! Ne lui obéis pas, prosterne-toi et rapproche-toi"},
+  ],
+  // ── Al-Qadr (97) ──
+  97:[
+    {number:1,arabic:"إِنَّا أَنزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ",transliteration:"Innā anzalnāhu fī laylati l-qadr",french:"Nous l'avons certes révélé lors de la Nuit du Destin"},
+    {number:2,arabic:"وَمَا أَدْرَاكَ مَا لَيْلَةُ الْقَدْرِ",transliteration:"Wa-mā adrāka mā laylatu l-qadr",french:"Et qui te dira ce qu'est la Nuit du Destin ?"},
+    {number:3,arabic:"لَيْلَةُ الْقَدْرِ خَيْرٌ مِّنْ أَلْفِ شَهْرٍ",transliteration:"Laylatu l-qadri khayrun min alfi šahr",french:"La Nuit du Destin est meilleure que mille mois"},
+    {number:4,arabic:"تَنَزَّلُ الْمَلَائِكَةُ وَالرُّوحُ فِيهَا بِإِذْنِ رَبِّهِم مِّن كُلِّ أَمْرٍ",transliteration:"Tanazzalu l-malāʾikatu wa-r-rūḥu fīhā bi-idhni rabbihim min kulli amr",french:"Les anges et l'Esprit y descendent avec la permission de leur Seigneur pour tout ordre"},
+    {number:5,arabic:"سَلَامٌ هِيَ حَتَّىٰ مَطْلَعِ الْفَجْرِ",transliteration:"Salāmun hiya ḥattā maṭlaʿi l-fajr",french:"Elle est paix et sérénité jusqu'à l'apparition de l'aurore"},
+  ],
+  // ── Az-Zalzalah (99) ──
+  99:[
+    {number:1,arabic:"إِذَا زُلْزِلَتِ الْأَرْضُ زِلْزَالَهَا",transliteration:"Idhā zulzilati l-arḍu zilzālahā",french:"Quand la terre sera secouée d'un violent séisme"},
+    {number:2,arabic:"وَأَخْرَجَتِ الْأَرْضُ أَثْقَالَهَا",transliteration:"Wa-akhrajati l-arḍu athqālahā",french:"et que la terre aura sorti ses fardeaux"},
+    {number:3,arabic:"وَقَالَ الْإِنسَانُ مَا لَهَا",transliteration:"Wa-qāla l-insānu mā lahā",french:"et que l'homme dira : Qu'a-t-elle ?"},
+    {number:4,arabic:"يَوْمَئِذٍ تُحَدِّثُ أَخْبَارَهَا",transliteration:"Yawmaʾidhin tuḥaddithu akhbārahā",french:"En ce jour-là, elle racontera son histoire"},
+    {number:5,arabic:"بِأَنَّ رَبَّكَ أَوْحَىٰ لَهَا",transliteration:"Bi-anna rabbaka awḥā lahā",french:"parce que ton Seigneur le lui aura inspiré"},
+    {number:6,arabic:"يَوْمَئِذٍ يَصْدُرُ النَّاسُ أَشْتَاتًا لِّيُرَوْا أَعْمَالَهُمْ",transliteration:"Yawmaʾidhin yaṣduru n-nāsu aštātan li-yuraw aʿmālahum",french:"En ce jour-là, les hommes sortiront en groupes pour que leur soient montrées leurs oeuvres"},
+    {number:7,arabic:"فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ",transliteration:"Fa-man yaʿmal mithqāla dharratin khayran yarah",french:"Quiconque fait le bien du poids d'un atome le verra"},
+    {number:8,arabic:"وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ",transliteration:"Wa-man yaʿmal mithqāla dharratin šarran yarah",french:"et quiconque fait le mal du poids d'un atome le verra"},
+  ],
+  // ── Al-Adiyat (100) ──
+  100:[
+    {number:1,arabic:"وَالْعَادِيَاتِ ضَبْحًا",transliteration:"Wa-l-ʿādiyāti ḍabḥā",french:"Par les cavales qui courent en soufflant"},
+    {number:2,arabic:"فَالْمُورِيَاتِ قَدْحًا",transliteration:"Fa-l-mūriyāti qadḥā",french:"et font jaillir des étincelles"},
+    {number:3,arabic:"فَالْمُغِيرَاتِ صُبْحًا",transliteration:"Fa-l-muġīrāti ṣubḥā",french:"et attaquent à l'aurore"},
+    {number:4,arabic:"فَأَثَرْنَ بِهِ نَقْعًا",transliteration:"Fa-atharna bihi naqʿā",french:"et soulèvent un nuage de poussière"},
+    {number:5,arabic:"فَوَسَطْنَ بِهِ جَمْعًا",transliteration:"Fa-wasaṭna bihi jamʿā",french:"et se trouvent au centre d'une troupe"},
+    {number:6,arabic:"إِنَّ الْإِنسَانَ لِرَبِّهِ لَكَنُودٌ",transliteration:"Inna l-insāna li-rabbihi la-kanūd",french:"Certes l'homme est vraiment ingrat envers son Seigneur"},
+    {number:7,arabic:"وَإِنَّهُ عَلَىٰ ذَٰلِكَ لَشَهِيدٌ",transliteration:"Wa-innahū ʿalā dhālika la-šahīd",french:"et il en est lui-même témoin"},
+    {number:8,arabic:"وَإِنَّهُ لِحُبِّ الْخَيْرِ لَشَدِيدٌ",transliteration:"Wa-innahū li-ḥubbi l-khayri la-šadīd",french:"et certes il est passionné de l'amour des biens"},
+    {number:9,arabic:"أَفَلَا يَعْلَمُ إِذَا بُعْثِرَ مَا فِي الْقُبُورِ",transliteration:"Afa-lā yaʿlamu idhā buʿthira mā fī l-qubūr",french:"Ne sait-il pas que lorsque le contenu des tombes sera dispersé"},
+    {number:10,arabic:"وَحُصِّلَ مَا فِي الصُّدُورِ",transliteration:"Wa-ḥuṣṣila mā fī ṣ-ṣudūr",french:"et que ce qui est dans les poitrines sera recueilli"},
+    {number:11,arabic:"إِنَّ رَبَّهُم بِهِمْ يَوْمَئِذٍ لَّخَبِيرٌ",transliteration:"Inna rabbahum bihim yawmaʾidhin la-khabīr",french:"leur Seigneur ce jour-là sera Parfaitement Connaisseur"},
+  ],
+  // ── Al-Qari'ah (101) ──
+  101:[
+    {number:1,arabic:"الْقَارِعَةُ",transliteration:"Al-qāriʿa",french:"La Cliquetante !"},
+    {number:2,arabic:"مَا الْقَارِعَةُ",transliteration:"Ma l-qāriʿa",french:"Qu'est-ce que la Cliquetante ?"},
+    {number:3,arabic:"وَمَا أَدْرَاكَ مَا الْقَارِعَةُ",transliteration:"Wa-mā adrāka ma l-qāriʿa",french:"Et qui te dira ce qu'est la Cliquetante ?"},
+    {number:4,arabic:"يَوْمَ يَكُونُ النَّاسُ كَالْفَرَاشِ الْمَبْثُوثِ",transliteration:"Yawma yakūnu n-nāsu ka-l-farāši l-mabthūth",french:"C'est le jour où les gens seront comme des papillons éparpillés"},
+    {number:5,arabic:"وَتَكُونُ الْجِبَالُ كَالْعِهْنِ الْمَنفُوشِ",transliteration:"Wa-takūnu l-jibālu ka-l-ʿihni l-manfūš",french:"et les montagnes comme de la laine cardée"},
+    {number:6,arabic:"فَأَمَّا مَن ثَقُلَتْ مَوَازِينُهُ",transliteration:"Fa-ammā man thaqulat mawāzīnuh",french:"Alors celui dont les balances seront lourdes"},
+    {number:7,arabic:"فَهُوَ فِي عِيشَةٍ رَّاضِيَةٍ",transliteration:"Fa-huwa fī ʿīšatin rāḍiya",french:"celui-là sera dans une vie agréable"},
+    {number:8,arabic:"وَأَمَّا مَنْ خَفَّتْ مَوَازِينُهُ",transliteration:"Wa-ammā man khaffat mawāzīnuh",french:"Et celui dont les balances seront légères"},
+    {number:9,arabic:"فَأُمُّهُ هَاوِيَةٌ",transliteration:"Fa-ummuhū hāwiya",french:"celui-là, sa mère sera un gouffre"},
+    {number:10,arabic:"وَمَا أَدْرَاكَ مَا هِيَهْ",transliteration:"Wa-mā adrāka mā hiyah",french:"Et qui te dira ce que c'est ?"},
+    {number:11,arabic:"نَارٌ حَامِيَةٌ",transliteration:"Nārun ḥāmiya",french:"Un feu ardent !"},
+  ],
+  // ── At-Takathur (102) ──
+  102:[
+    {number:1,arabic:"أَلْهَاكُمُ التَّكَاثُرُ",transliteration:"Alhākumu t-takāthur",french:"La course aux richesses vous distrait"},
+    {number:2,arabic:"حَتَّىٰ زُرْتُمُ الْمَقَابِرَ",transliteration:"Ḥattā zurtumu l-maqābir",french:"jusqu'à ce que vous visitiez les tombes"},
+    {number:3,arabic:"كَلَّا سَوْفَ تَعْلَمُونَ",transliteration:"Kallā sawfa taʿlamūn",french:"Non ! Vous saurez bientôt"},
+    {number:4,arabic:"ثُمَّ كَلَّا سَوْفَ تَعْلَمُونَ",transliteration:"Thumma kallā sawfa taʿlamūn",french:"Puis non ! Vous saurez bientôt"},
+    {number:5,arabic:"كَلَّا لَوْ تَعْلَمُونَ عِلْمَ الْيَقِينِ",transliteration:"Kallā law taʿlamūna ʿilma l-yaqīn",french:"Non ! Si vous saviez avec une science certaine"},
+    {number:6,arabic:"لَتَرَوُنَّ الْجَحِيمَ",transliteration:"La-tarawunna l-jaḥīm",french:"vous verriez certes la Fournaise"},
+    {number:7,arabic:"ثُمَّ لَتَرَوُنَّهَا عَيْنَ الْيَقِينِ",transliteration:"Thumma la-tarawunnahā ʿayna l-yaqīn",french:"Puis vous la verrez avec la certitude absolue"},
+    {number:8,arabic:"ثُمَّ لَتُسْأَلُنَّ يَوْمَئِذٍ عَنِ النَّعِيمِ",transliteration:"Thumma la-tusʾalunna yawmaʾidhin ʿani n-naʿīm",french:"Puis, ce Jour-là, vous serez interrogés sur les délices"},
+  ],
+  // ── Al-Asr (103) ──
+  103:[
+    {number:1,arabic:"وَالْعَصْرِ",transliteration:"Wa-l-ʿaṣr",french:"Par le Temps !"},
+    {number:2,arabic:"إِنَّ الْإِنسَانَ لَفِي خُسْرٍ",transliteration:"Inna l-insāna la-fī khusr",french:"L'être humain est certes en perdition"},
+    {number:3,arabic:"إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",transliteration:"Illā lladhīna āmanū wa-ʿamilū ṣ-ṣāliḥāti wa-tawāṣaw bi-l-ḥaqqi wa-tawāṣaw bi-ṣ-ṣabr",french:"sauf ceux qui ont cru, accompli les bonnes oeuvres, se sont recommandé mutuellement la vérité et la patience"},
+  ],
+  // ── Al-Humazah (104) ──
+  104:[
+    {number:1,arabic:"وَيْلٌ لِّكُلِّ هُمَزَةٍ لُّمَزَةٍ",transliteration:"Waylun li-kulli humazatin lumazah",french:"Malheur à tout diffamateur et calomniateur"},
+    {number:2,arabic:"الَّذِي جَمَعَ مَالًا وَعَدَّدَهُ",transliteration:"Alladhī jamaʿa mālan wa-ʿaddadah",french:"qui amasse des richesses et les compte"},
+    {number:3,arabic:"يَحْسَبُ أَنَّ مَالَهُ أَخْلَدَهُ",transliteration:"Yaḥsabu anna mālahu akhladah",french:"et croit que ses richesses le rendront immortel"},
+    {number:4,arabic:"كَلَّا لَيُنبَذَنَّ فِي الْحُطَمَةِ",transliteration:"Kallā la-yunbadhanna fī l-ḥuṭama",french:"Mais non ! Il sera jeté dans Al-Hutama"},
+    {number:5,arabic:"وَمَا أَدْرَاكَ مَا الْحُطَمَةُ",transliteration:"Wa-mā adrāka ma l-ḥuṭama",french:"Et qui te dira ce qu'est Al-Hutama ?"},
+    {number:6,arabic:"نَارُ اللَّهِ الْمُوقَدَةُ",transliteration:"Nāru llāhi l-mūqada",french:"C'est le feu d'Allah, allumé"},
+    {number:7,arabic:"الَّتِي تَطَّلِعُ عَلَى الْأَفْئِدَةِ",transliteration:"Allatī taṭṭaliʿu ʿalā l-afʾida",french:"qui monte jusqu'aux coeurs"},
+    {number:8,arabic:"إِنَّهَا عَلَيْهِم مُّؤْصَدَةٌ",transliteration:"Innahā ʿalayhim muʾṣada",french:"Il se refermera sur eux"},
+    {number:9,arabic:"فِي عَمَدٍ مُّمَدَّدَةٍ",transliteration:"Fī ʿamadin mumaddada",french:"en colonnes étirées"},
+  ],
+  // ── Al-Fil (105) ──
+  105:[
+    {number:1,arabic:"أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ",transliteration:"Alam tara kayfa faʿala rabbuka bi-aṣḥābi l-fīl",french:"N'as-tu pas vu comment ton Seigneur a agi avec les Compagnons de l'Éléphant ?"},
+    {number:2,arabic:"أَلَمْ يَجْعَلْ كَيْدَهُمْ فِي تَضْلِيلٍ",transliteration:"Alam yajʿal kaydahum fī taḍlīl",french:"N'a-t-Il pas rendu vaine leur ruse ?"},
+    {number:3,arabic:"وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ",transliteration:"Wa-arsala ʿalayhim ṭayran abābīl",french:"Il envoya contre eux des oiseaux par volées"},
+    {number:4,arabic:"تَرْمِيهِم بِحِجَارَةٍ مِّن سِجِّيلٍ",transliteration:"Tarmīhim bi-ḥijāratin min sijjīl",french:"qui leur lançaient des pierres d'argile cuite"},
+    {number:5,arabic:"فَجَعَلَهُمْ كَعَصْفٍ مَّأْكُولٍ",transliteration:"Fa-jaʿalahum ka-ʿaṣfin maʾkūl",french:"et Il les rendit pareils à des feuilles dévorées"},
+  ],
+  // ── Quraysh (106) ──
+  106:[
+    {number:1,arabic:"لِإِيلَافِ قُرَيْشٍ",transliteration:"Li-ʾīlāfi qurayš",french:"Pour la cohésion des Quraysh"},
+    {number:2,arabic:"إِيلَافِهِمْ رِحْلَةَ الشِّتَاءِ وَالصَّيْفِ",transliteration:"Īlāfihim riḥlata š-šitāʾi wa-ṣ-ṣayf",french:"leur cohésion lors des voyages d'hiver et d'été"},
+    {number:3,arabic:"فَلْيَعْبُدُوا رَبَّ هَٰذَا الْبَيْتِ",transliteration:"Fa-l-yaʿbudū rabba hādhā l-bayt",french:"Qu'ils adorent donc le Seigneur de cette Maison"},
+    {number:4,arabic:"الَّذِي أَطْعَمَهُم مِّن جُوعٍ وَآمَنَهُم مِّنْ خَوْفٍ",transliteration:"Alladhī aṭʿamahum min jūʿin wa-āmanahum min khawf",french:"qui les a nourris contre la faim et préservés de la crainte"},
+  ],
+  // ── Al-Ma'un (107) ──
+  107:[
+    {number:1,arabic:"أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ",transliteration:"Araʾayta lladhī yukadhdhibu bi-d-dīn",french:"As-tu vu celui qui traite de mensonge la Rétribution ?"},
+    {number:2,arabic:"فَذَٰلِكَ الَّذِي يَدُعُّ الْيَتِيمَ",transliteration:"Fadhālika lladhī yadhuʿʿu l-yatīm",french:"C'est lui qui repousse l'orphelin brutalement"},
+    {number:3,arabic:"وَلَا يَحُضُّ عَلَىٰ طَعَامِ الْمِسْكِينِ",transliteration:"Wa-lā yaḥuḍḍu ʿalā ṭaʿāmi l-miskīn",french:"et qui n'encourage pas à nourrir le pauvre"},
+    {number:4,arabic:"فَوَيْلٌ لِّلْمُصَلِّينَ",transliteration:"Fa-waylun li-l-muṣallīn",french:"Malheur donc à ceux qui font la Salāt"},
+    {number:5,arabic:"الَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ",transliteration:"Alladhīna hum ʿan ṣalātihim sāhūn",french:"qui sont distraits dans leur Salāt"},
+    {number:6,arabic:"الَّذِينَ هُمْ يُرَاءُونَ",transliteration:"Alladhīna hum yurāʾūn",french:"qui font de l'ostentation"},
+    {number:7,arabic:"وَيَمْنَعُونَ الْمَاعُونَ",transliteration:"Wa-yamnaʿūna l-māʿūn",french:"et refusent l'entraide courante"},
+  ],
+  // ── Al-Kawthar (108) ──
+  108:[
+    {number:1,arabic:"إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ",transliteration:"Innā aʿṭaynāka l-kawthar",french:"Nous t'avons accordé l'Abondance"},
+    {number:2,arabic:"فَصَلِّ لِرَبِّكَ وَانْحَرْ",transliteration:"Faṣalli li-rabbika wa-nḥar",french:"Accomplis donc la Salāt pour ton Seigneur et sacrifie"},
+    {number:3,arabic:"إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ",transliteration:"Inna šāniʾaka huwa l-abtar",french:"C'est bien ton ennemi qui est sans postérité"},
+  ],
+  // ── Al-Kafirun (109) ──
+  109:[
+    {number:1,arabic:"قُلْ يَا أَيُّهَا الْكَافِرُونَ",transliteration:"Qul yā ayyuhā l-kāfirūn",french:"Dis : Ô vous les mécréants"},
+    {number:2,arabic:"لَا أَعْبُدُ مَا تَعْبُدُونَ",transliteration:"Lā aʿbudu mā taʿbudūn",french:"Je n'adore pas ce que vous adorez"},
+    {number:3,arabic:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ",transliteration:"Wa-lā antum ʿābidūna mā aʿbud",french:"Et vous n'adorez pas ce que j'adore"},
+    {number:4,arabic:"وَلَا أَنَا عَابِدٌ مَّا عَبَدتُّمْ",transliteration:"Wa-lā anā ʿābidun mā ʿabadtum",french:"Je ne suis pas adorateur de ce que vous avez adoré"},
+    {number:5,arabic:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ",transliteration:"Wa-lā antum ʿābidūna mā aʿbud",french:"Et vous n'êtes pas adorateurs de ce que j'adore"},
+    {number:6,arabic:"لَكُمْ دِينُكُمْ وَلِيَ دِينِ",transliteration:"Lakum dīnukum wa-liya dīn",french:"À vous votre religion, et à moi la mienne"},
+  ],
+  // ── An-Nasr (110) ──
+  110:[
+    {number:1,arabic:"إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ",transliteration:"Idhā jāʾa naṣru llāhi wa-l-fatḥ",french:"Quand vient le secours d'Allah et la victoire"},
+    {number:2,arabic:"وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا",transliteration:"Wa-raʾayta n-nāsa yadkhulūna fī dīni llāhi afwājā",french:"et que tu vois les gens entrer en foule dans la religion d'Allah"},
+    {number:3,arabic:"فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا",transliteration:"Fasabbiḥ bi-ḥamdi rabbika wa-staġfirhu innahū kāna tawwābā",french:"alors célèbre la gloire de ton Seigneur et implore Son pardon. Certes Il est le Grand Repentant"},
+  ],
+  // ── Al-Masad (111) ──
+  111:[
+    {number:1,arabic:"تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ",transliteration:"Tabbat yadā abī lahabin wa-tabb",french:"Que périssent les deux mains d'Abū Lahab et que lui-même périsse"},
+    {number:2,arabic:"مَا أَغْنَىٰ عَنْهُ مَالُهُ وَمَا كَسَبَ",transliteration:"Mā aġnā ʿanhu māluhu wa-mā kasab",french:"Sa richesse et ce qu'il a acquis ne lui ont servi à rien"},
+    {number:3,arabic:"سَيَصْلَىٰ نَارًا ذَاتَ لَهَبٍ",transliteration:"Sa-yaṣlā nāran dhāta lahab",french:"Il sera brûlé dans un Feu plein de flammes"},
+    {number:4,arabic:"وَامْرَأَتُهُ حَمَّالَةَ الْحَطَبِ",transliteration:"Wa-mraʾatuhu ḥammālata l-ḥaṭab",french:"Et sa femme aussi, porteuse de bois"},
+    {number:5,arabic:"فِي جِيدِهَا حَبْلٌ مِّن مَّسَدٍ",transliteration:"Fī jīdihā ḥablun min masad",french:"à son cou une corde de fibres de palmier"},
+  ],
+  // ── Al-Ikhlas (112) ──
+  112:[
+    {number:1,arabic:"قُلْ هُوَ اللَّهُ أَحَدٌ",transliteration:"Qul huwa llāhu aḥad",french:"Dis : Il est Allah, Unique"},
+    {number:2,arabic:"اللَّهُ الصَّمَدُ",transliteration:"Allāhu ṣ-ṣamad",french:"Allah, le Seul à être imploré pour ce que nous désirons"},
+    {number:3,arabic:"لَمْ يَلِدْ وَلَمْ يُولَدْ",transliteration:"Lam yalid wa-lam yūlad",french:"Il n'a pas engendré, et n'a pas été engendré"},
+    {number:4,arabic:"وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",transliteration:"Wa-lam yakun lahū kufuwan aḥad",french:"Et nul n'est égal à Lui"},
+  ],
+  // ── Al-Falaq (113) ──
+  113:[
+    {number:1,arabic:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",transliteration:"Qul aʿūdhu bi-rabbi l-falaq",french:"Dis : Je cherche refuge auprès du Seigneur de l'aurore"},
+    {number:2,arabic:"مِن شَرِّ مَا خَلَقَ",transliteration:"Min šarri mā khalaq",french:"contre le mal de ce qu'Il a créé"},
+    {number:3,arabic:"وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",transliteration:"Wa-min šarri ġāsiqin idhā waqab",french:"contre le mal de l'obscurité quand elle s'étend"},
+    {number:4,arabic:"وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",transliteration:"Wa-min šarri n-naffāthāti fī l-ʿuqad",french:"contre le mal de celles qui soufflent sur les noeuds"},
+    {number:5,arabic:"وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",transliteration:"Wa-min šarri ḥāsidin idhā ḥasad",french:"contre le mal de l'envieux quand il envie"},
+  ],
+  // ── An-Nas (114) ──
+  114:[
+    {number:1,arabic:"قُلْ أَعُوذُ بِرَبِّ النَّاسِ",transliteration:"Qul aʿūdhu bi-rabbi n-nās",french:"Dis : Je cherche refuge auprès du Seigneur des hommes"},
+    {number:2,arabic:"مَلِكِ النَّاسِ",transliteration:"Maliki n-nās",french:"du Roi des hommes"},
+    {number:3,arabic:"إِلَٰهِ النَّاسِ",transliteration:"Ilāhi n-nās",french:"de la Divinité des hommes"},
+    {number:4,arabic:"مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",transliteration:"Min šarri l-waswāsi l-khannās",french:"contre le mal du tentateur furtif"},
+    {number:5,arabic:"الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",transliteration:"Alladhī yuwaswisu fī ṣudūri n-nās",french:"qui souffle le mal dans les poitrines des hommes"},
+    {number:6,arabic:"مِنَ الْجِنَّةِ وَالنَّاسِ",transliteration:"Mina l-jinnati wa-n-nās",french:"qu'il soit parmi les djinns ou parmi les hommes"},
+  ],
+};
+
+// ════════════════════════════════════════════════════════════════════
+// HOOK — Versets avec cache window.storage + API Claude (lots de 5)
+// ════════════════════════════════════════════════════════════════════
+
+// Cache mémoire session (évite les appels en double)
+const _versesMemCache = new Map();
+
+async function fetchSurahFromAPI(surahNumber, surahInfo) {
+  const CACHE_KEY = "qv3_s" + surahNumber;
+
+  // 1. Essayer window.storage (persistant entre sessions)
+  try {
+    const stored = await window.storage.get(CACHE_KEY);
+    if (stored && stored.value) {
+      const parsed = JSON.parse(stored.value);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+
+  // 2. Charger via API Claude par lots de 5 versets
+  const total = surahInfo.verses;
+  const allVerses = [];
+  const batchSize = 5;
+
+  for (let from = 1; from <= total; from += batchSize) {
+    const to = Math.min(from + batchSize - 1, total);
+    const prompt = `Versets ${from} à ${to} de la sourate ${surahNumber} (${surahInfo.name}) du Coran.\nRéponds UNIQUEMENT avec du JSON valide, sans texte ni backtick:\n[{"number":${from},"arabic":"texte arabe avec tashkil","transliteration":"phonetique latine","french":"traduction Hamidullah"}${to > from ? ",...jusqu'au verset " + to : ""}]`;
+
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = (data.content?.[0]?.text || "").trim();
+
+    // Extraire le JSON robustement
+    let batch = null;
+    try { batch = JSON.parse(raw); }
+    catch {
+      const m = raw.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (m) {
+        try { batch = JSON.parse(m[0]); } catch {}
+      }
+    }
+    if (!Array.isArray(batch) || batch.length === 0) throw new Error("Lot invalide " + from);
+    allVerses.push(...batch);
+  }
+
+  // Sauvegarder dans window.storage
+  try { await window.storage.set(CACHE_KEY, JSON.stringify(allVerses)); } catch {}
+  return allVerses;
+}
+
+function useVerses(surahNumber) {
+  const embedded = surahNumber ? EMBEDDED_VERSES[surahNumber] : null;
+
+  const [state, setState] = useState(() => {
+    if (!surahNumber) return { verses: [], loading: false, error: null };
+    if (embedded) return { verses: embedded, loading: false, error: null };
+    if (_versesMemCache.has(surahNumber)) return { verses: _versesMemCache.get(surahNumber), loading: false, error: null };
+    return { verses: [], loading: true, error: null };
+  });
+
+  useEffect(() => {
+    if (!surahNumber) return;
+    if (embedded) { setState({ verses: embedded, loading: false, error: null }); return; }
+    if (_versesMemCache.has(surahNumber)) { setState({ verses: _versesMemCache.get(surahNumber), loading: false, error: null }); return; }
+
+    const surahInfo = QURAN_SURAHS[surahNumber - 1];
+    if (!surahInfo) return;
+
+    setState({ verses: [], loading: true, error: null });
+
+    fetchSurahFromAPI(surahNumber, surahInfo)
+      .then(verses => {
+        _versesMemCache.set(surahNumber, verses);
+        setState({ verses, loading: false, error: null });
+      })
+      .catch(() => {
+        setState({ verses: [], loading: false, error: "api_error" });
+      });
+  }, [surahNumber]);
+
+  return state;
+}
+
+function getVerseText(surah, verse) {
+  return EMBEDDED_VERSES[surah]?.[verse - 1]?.arabic || "﴿ " + verse + " ﴾";
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — Stats Drawer
+// ════════════════════════════════════════════════════════════════════
+function StatsDrawer({ isOpen, onClose, counts, juzProgram }) {
+  const pct = Math.round((counts.surahChecked / 114) * 100);
+  const recited = storage("adhkar_recited", {});
+  const { totalFridays, isReadThisWeek } = useFridayKahf();
+
+  // Compter les adhkar complétés (toutes catégories)
+  const adhkarDone = ADHKAR_MALIKITES.filter(d => (recited[d.id] || 0) >= d.repetition).length;
+  const adhkarTotal = ADHKAR_MALIKITES.length;
+
+  // Adhkar du jour (matin+soir)
+  const matinSoir = ADHKAR_MALIKITES.filter(d => ["matin","soir","matin_soir"].includes(d.category.toLowerCase()));
+  const matinSoirDone = matinSoir.filter(d => (recited[d.id] || 0) >= d.repetition).length;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm" onClick={onClose}
+          />
+          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 260 }}
+            className="fixed right-0 top-0 h-full w-full max-w-sm bg-slate-900 z-50 shadow-2xl border-l border-white/10 overflow-y-auto"
+          >
+            <div className="p-5 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900/95 backdrop-blur-md">
+              <h2 className="font-bold text-white flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-400"/> Statistiques</h2>
+              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-5 space-y-5">
+              {/* Anneau Coran */}
+              <div className="text-center">
+                <div className="relative w-28 h-28 mx-auto">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8"/>
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="url(#sg)" strokeWidth="8" strokeLinecap="round"
+                      strokeDasharray="327" strokeDashoffset={327*(1-counts.surahChecked/114)}
+                      style={{ transition: "stroke-dashoffset 1s ease" }}
+                    />
+                    <defs><linearGradient id="sg"><stop offset="0%" stopColor="#10B981"/><stop offset="100%" stopColor="#3B82F6"/></linearGradient></defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-emerald-400">{pct}%</span>
+                    <span className="text-xs text-slate-500">Coran</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section Coran */}
+              <div>
+                <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mb-2">📖 Coran</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Sourates lues", value: `${counts.surahChecked}/114`, color: "text-blue-400" },
+                    { label: "Programme Khatm", value: juzProgram.program.active ? `${juzProgram.completedCount}/30 Juz` : "Non démarré", color: "text-emerald-400" },
+                    { label: "Jours de lecture", value: juzProgram.daysPassed > 0 ? `${juzProgram.daysPassed}j` : "—", color: "text-purple-400" },
+                    { label: "Dans l'objectif", value: juzProgram.program.active ? (juzProgram.onTrack ? "✅ Oui" : `⚠️ −${juzProgram.behindBy} Juz`) : "—", color: juzProgram.onTrack ? "text-emerald-400" : "text-orange-400" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
+                      <span className="text-slate-400 text-sm">{label}</span>
+                      <span className={`font-bold text-sm ${color}`}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section Adhkar */}
+              <div>
+                <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mb-2">📿 Adhkār</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Adhkār complétés", value: `${adhkarDone}/${adhkarTotal}`, color: "text-emerald-400" },
+                    { label: "Matin & Soir du jour", value: `${matinSoirDone}/${matinSoir.length}`, color: matinSoirDone === matinSoir.length ? "text-emerald-400" : "text-amber-400" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
+                      <span className="text-slate-400 text-sm">{label}</span>
+                      <span className={`font-bold text-sm ${color}`}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section Al-Kahf vendredi */}
+              <div>
+                <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mb-2">🕌 Al-Kahf — Vendredi</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
+                    <span className="text-slate-400 text-sm">Vendredis lus</span>
+                    <span className="font-bold text-sm text-amber-400">{totalFridays} semaine{totalFridays > 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
+                    <span className="text-slate-400 text-sm">Ce vendredi</span>
+                    <span className={`font-bold text-sm ${isReadThisWeek ? "text-emerald-400" : "text-slate-600"}`}>
+                      {isReadThisWeek ? "✅ Lu" : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-center text-slate-700 text-xs italic">
+                « وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا » — Muzzammil 4
+              </p>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// APP ROOT
+// ════════════════════════════════════════════════════════════════════
+const PAGES = [
+  { key: "quran", label: "📖 Coran", shortLabel: "Coran" },
+  { key: "program", label: "📅 Programme", shortLabel: "Khatm" },
+  { key: "bookmarks", label: "🔖 Marque-pages", shortLabel: "Repères" },
+  { key: "adhkar", label: "📿 Adhkar", shortLabel: "Adhkar" },
+];
+
+export default function App() {
+  const [page, setPage] = useState("quran");
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState(null); // { surahNum, verseNum }
+  const { counts } = useSurahProgress();
+  const juzProgram = useJuzProgram();
+  const khatmBM = useBookmarks("khatm");
+
+  // Navigation depuis le programme Juz → Coran
+  const handleNavigateToJuz = useCallback((juzNumber) => {
+    const juzSurahs = getSurahsForJuz(juzNumber);
+    if (!juzSurahs.length) return;
+
+    // Chercher d'abord un marque-page khatm dans les sourates de ce Juz
+    const bookmark = khatmBM.bookmarks.find(bm =>
+      bm.surah > 0 && juzSurahs.includes(bm.surah)
+    );
+
+    if (bookmark) {
+      setPendingNav({ surahNum: bookmark.surah, verseNum: bookmark.verse || 1 });
+    } else {
+      // Aller au premier verset de la première sourate du Juz
+      setPendingNav({ surahNum: juzSurahs[0], verseNum: 1 });
+    }
+    setPage("quran");
+  }, [khatmBM.bookmarks]);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Background glows */}
+      <div className="fixed top-0 left-0 w-1/2 h-1/2 rounded-full bg-emerald-900/15 blur-3xl pointer-events-none -translate-x-1/4 -translate-y-1/4"/>
+      <div className="fixed bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-blue-900/10 blur-3xl pointer-events-none translate-x-1/4 translate-y-1/4"/>
+
+      {/* Top nav — seulement sur pages non-lecture */}
+      {page !== "quran" || true ? (
+        <nav className="sticky top-0 z-40 px-4 py-3 border-b border-white/8 bg-slate-950/85 backdrop-blur-xl shrink-0">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            <h1 className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 text-base">
+              📖 Al-Murshid
+            </h1>
+            <button onClick={() => setIsStatsOpen(true)}
+              className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"
+            >
+              <Activity className="w-5 h-5"/>
+            </button>
+          </div>
+        </nav>
+      ) : null}
+
+      {/* Main content */}
+      <main className="flex-1 min-h-0">
+        <AnimatePresence mode="wait">
+          {page === "quran" && (
+            <motion.div key="quran" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="h-full"
+            >
+              <QuranReader
+                initialSurahNum={pendingNav?.surahNum}
+                initialVerseNum={pendingNav?.verseNum}
+                onNavConsumed={() => setPendingNav(null)}
+              />
+            </motion.div>
+          )}
+          {page === "program" && (
+            <motion.div key="program" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}
+            >
+              <JuzProgram onNavigateToJuz={handleNavigateToJuz} />
+            </motion.div>
+          )}
+          {page === "bookmarks" && (
+            <motion.div key="bookmarks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}
+            >
+              <BookmarksPage />
+            </motion.div>
+          )}
+          {page === "adhkar" && (
+            <motion.div key="adhkar" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}
+            >
+              <AdhkarPage />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Bottom tab bar — navigation principale mobile */}
+      <nav className="sticky bottom-0 z-40 border-t border-white/8 bg-slate-950/92 backdrop-blur-xl shrink-0 safe-area-bottom">
+        <div className="flex max-w-2xl mx-auto">
+          {PAGES.map(({ key, label, shortLabel }) => (
+            <button key={key} onClick={() => setPage(key)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 transition-all ${
+                page === key ? "text-emerald-400" : "text-slate-600 hover:text-slate-400"
+              }`}
+            >
+              <span className="text-lg leading-none">
+                {key === "quran" && "📖"}
+                {key === "program" && "📅"}
+                {key === "bookmarks" && "🔖"}
+                {key === "adhkar" && "📿"}
+              </span>
+              <span className={`text-[10px] font-semibold tracking-wide ${page === key ? "text-emerald-400" : "text-slate-600"}`}>
+                {shortLabel}
+              </span>
+              {page === key && (
+                <motion.div layoutId="tabIndicator"
+                  className="absolute bottom-0 w-8 h-0.5 bg-emerald-400 rounded-full"
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} juzProgram={juzProgram} />
+    </div>
+  );
+}
