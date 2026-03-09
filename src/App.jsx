@@ -84,73 +84,179 @@ function getEncouragement(juz) {
 // DONNÉES ADHKAR MALIKITES — Muwatta + Cabinet Maher
 // ════════════════════════════════════════════════════════════════════
 const ADHKAR_MALIKITES = [
-  // ── MATIN ──
-  { id:1, title:"Du'a du Réveil — Muwatta Malik",
-    arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ",
-    transliteration:"Aṣbaḥnā wa aṣbaḥal-mulku lillāh, wal-ḥamdu lillāh, lā ilāha illallāhu waḥdahu lā sharīka lah",
-    french:"Nous nous sommes levés et la royauté appartient à Allah. La louange est à Allah. Il n'y a de divinité qu'Allah, Seul, sans associé.",
-    source:"Muwatta Malik, Kitab al-Nida", repetition:1, category:"MATIN" },
+  { id:1, title:"1. Āyat al-Kursī — Verset du Trône",
+    arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
+    transliteration:"Allāhou Lā Ilāha Illā Houwa Al-Ĥayyou Al-Qayyoum...",
+    french:"Allah ! Point de divinité à part Lui, le Vivant. Ni somnolence ni sommeil ne Le saisissent. À Lui appartient tout ce qui est dans les cieux et sur la terre. Son Trône déborde les cieux et la terre. Il est le Très Haut, le Très Grand.",
+    benefice:"Protection contre Satan tout au long de la journée et de la nuit.",
+    source:"Sourate 2 Al-Baqara v.255 — Bukhāri", repetition:1, category:"MATIN_SOIR" },
 
-  { id:2, title:"Sayyid al-Istighfar du Matin",
+  { id:2, title:"2. Al-Ikhlāṣ + Al-Falaq + An-Nās (3×)",
+    arabic:"قُلْ هُوَ اللَّهُ أَحَدٌ ۞ اللَّهُ الصَّمَدُ ۞ لَمْ يَلِدْ وَلَمْ يُولَدْ ۞ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
+    transliteration:"Qoul Hou Allāhou Aĥad — Allāhou Aş-Şamad — Lam Yalid Wa Lam Yoūlad — Walam Yakoun Lahou Kufūan Aĥad (puis Al-Falaq et An-Nās, 3× chacune)",
+    french:"Dis : Il est Allah, Unique. Allah, le Seul à être imploré. Il n'a jamais engendré, n'a pas été engendré. Et nul n'est égal à Lui. (Réciter aussi Al-Falaq et An-Nās 3 fois chacune)",
+    benefice:"Celui qui dit 3 fois ces sourates matin et soir, cela lui suffira et le protégera contre toute chose.",
+    source:"Abū Dāwūd, at-Tirmidhī — Sourates 112, 113, 114", repetition:3, category:"MATIN_SOIR" },
+
+  { id:3, title:"3. Aṣbaḥnā (matin) / Amsaynā (soir)",
+    arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+    transliteration:"Asbahna wa asbahal-mulku lillāh, wal-hamdu lillāh, lā ilāha illallāhu wahdahu lā sharīka lah, lahul-mulku wa lahul-hamdu wa huwa alā kulli shayin qadīr",
+    french:"Nous voilà au matin (soir) et le règne appartient à Allah. Louange à Allah. Il n'y a de divinités sauf Allah Seul, sans associés. À Lui la royauté, à Lui la louange et Il est capable de toute chose.",
+    benefice:"Invocation authentique du matin et du soir.",
+    source:"Muwatta Mālik, Kitab al-Nida", repetition:1, category:"MATIN_SOIR" },
+
+  { id:4, title:"4. Rabbi assalouka khayra… (matin/soir)",
+    arabic:"رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذَا الْيَوْمِ وَخَيْرَ مَا بَعْدَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ، رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
+    transliteration:"Rabbi assalouka khayra ma fi hadha el youmi wa khayra ma bahdah. Wa a'houdoubika min charri ma fi hada el youmi wa charri ma bahdah. Rabbi a'houdou bika min al kassali wa soûilkibar. Rabbi ahoudou bika min adhabine fi nari wa hadabine fil kabr.",
+    french:"Seigneur ! Je te demande le bien de ce jour et le bien qui vient après. Je me mets sous ta protection contre le mal de ce jour et le mal qui vient après. Protection contre la paresse, les maux de la vieillesse, le châtiment de l'enfer et les tourments de la tombe.",
+    benefice:"Protection contre le mal de la journée et de ce qui vient après.",
+    source:"Muslim, n°2723 — matin et soir", repetition:1, category:"MATIN_SOIR" },
+
+  { id:5, title:"5. Allāhumma bika aṣbaḥnā… (matin/soir)",
+    arabic:"اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ",
+    transliteration:"Allāhumma bika asbahna wa bika amsayna, wa bika nahya wa bika namutu wa ilayka n-nushūr (le soir : ...wa ilayka l-masīr)",
+    french:"Ô Seigneur ! C'est par Toi que nous nous retrouvons au matin (soir). C'est par Toi que nous vivons et mourons et c'est vers Toi que se fera la résurrection.",
+    benefice:"Invocation prophétique du matin et du soir.",
+    source:"At-Tirmidhī, n°3391 — matin et soir", repetition:1, category:"MATIN_SOIR" },
+
+  { id:6, title:"6. Sayyid al-Istighfār",
     arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
-    transliteration:"Allāhumma anta rabbī lā ilāha illā anta, khalaqtanī wa anā 'abduk, wa anā 'alā 'ahdika wa wa'dika mas-taṭa't...",
-    french:"Ô Allah, Tu es mon Seigneur. Nul dieu que Toi. Tu m'as créé et je suis Ton serviteur. Je m'en tiens à Ton pacte et Ta promesse autant que je le peux. Je cherche refuge en Toi contre le mal que j'ai commis. Je reconnais Tes bienfaits envers moi et je confesse mes péchés. Pardonne-moi, car nul ne pardonne les péchés que Toi.",
-    source:"Authentifié par Imam al-Bukhāri — récité le matin pour être protégé", repetition:1, category:"MATIN" },
+    transliteration:"Allāhumma anta rabbī lā ilāha illā anta, khalaqtanī wa anā abduk, wa anā alā ahdika wa wadika mastatatu, audhu bika min sharri mā sanatu, abūu laka bi-nimmatika alayya wa abūu bi-dhanbī, faghfir lī fa-innahu lā yaghfiru dh-dhunūba illā ant",
+    french:"Ô Seigneur ! Tu es mon Dieu. Il n'y a de divinités que Toi. Tu m'as créé et je suis Ton serviteur. Je me conforme à mon engagement. Je me mets sous Ta protection contre le mal que j'ai commis. Je reconnais Ton bienfait et mon péché. Pardonne-moi car il n'y a que Toi qui pardonnes.",
+    benefice:"Celui qui le dit le matin et le soir avec conviction et meurt en ce jour entre au paradis.",
+    source:"Bukhāri, n°6306 — matin et soir", repetition:1, category:"MATIN_SOIR" },
 
-  { id:3, title:"Protection du Matin",
+  { id:7, title:"7. Allāhumma innī aṣbaḥtu ushhhiduka… (4×)",
+    arabic:"اللَّهُمَّ إِنِّي أَصْبَحْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّداً عَبْدُكَ وَرَسُولُكَ",
+    transliteration:"Allāhumma innī asbahtu ushhiduka wa ushhidu hamalata arshika, wa malāikataka wa jamīa khalqika, annaka anta Allāhu lā ilāha illā anta wahdaka lā sharīka lak, wa anna Muhammadan abduka wa rasūluk",
+    french:"Ô Seigneur ! Me voici au matin, je Te prends à témoin et prends à témoin les porteurs de Ton Trône, Tes anges et toutes Tes créatures : Tu es Allah, il n'y a de divinité que Toi, Seul, sans associé. Et Muhammad est Ton serviteur et Ton messager.",
+    benefice:"Celui qui dit cette invocation 4 fois le matin ou le soir, Allah l'affranchira de l'enfer.",
+    source:"Abū Dāwūd, n°5069 — 4× matin et soir", repetition:4, category:"MATIN_SOIR" },
+
+  { id:8, title:"8. Allāhumma mā aṣbaḥa bī min niʿmah…",
+    arabic:"اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ، فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ، فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ",
+    transliteration:"Allāhumma mā asbaha bī min nimatin aw bi-ahadin min khalqika, fa-minka wahdaka lā sharīka lak, falakal-hamdu wa lakashshukr",
+    french:"Ô Seigneur ! En ce jour, tout bienfait qui m'arrive ou arrive à toute créature provient de Toi l'Unique, sans associé. À Toi la louange et le remerciement.",
+    benefice:"Celui qui le récite au matin aura accompli le devoir de montrer sa reconnaissance pour la journée.",
+    source:"Abū Dāwūd, n°5073 — matin et soir", repetition:1, category:"MATIN_SOIR" },
+
+  { id:9, title:"9. Allāhumma āfinī fī badanī… (3×)",
+    arabic:"اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ",
+    transliteration:"Allāhumma āfinī fī badanī, Allāhumma āfinī fī samī, Allāhumma āfinī fī basarī, lā ilāha illā ant. Allāhumma innī audhu bika minal-kufri, wal-faqri, wa audhu bika min adhābil-qabri, lā ilāha illā ant",
+    french:"Ô Seigneur ! Accorde-moi la santé dans mon corps, dans mon ouïe, dans ma vue. Je cherche protection contre la mécréance, la pauvreté et les tourments de la tombe.",
+    benefice:"Protection de la santé du corps, de l'ouïe et de la vue.",
+    source:"Abū Dāwūd, n°5090 — 3× matin et soir", repetition:3, category:"MATIN_SOIR" },
+
+  { id:10, title:"10. Hasbiyallāhu lā ilāha illā huw… (7×)",
+    arabic:"حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
+    transliteration:"Hasbiyallāhu lā ilāha illā huwa alayhi tawakkaltu wa huwa rabbul-arshil-azīm",
+    french:"Allah me suffit, il n'y a de divinité que Lui. C'est en Lui que je place ma confiance et Il est le Seigneur du Trône immense.",
+    benefice:"Celui qui le dit 7 fois le matin et le soir, Allah le protégera dans la vie d'ici-bas et dans l'au-delà.",
+    source:"Abū Dāwūd, n°5081 — 7× matin et soir", repetition:7, category:"MATIN_SOIR" },
+
+  { id:11, title:"11. Allāhumma innī as'aluka al-afwa…",
+    arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي، اللَّهُمَّ اسْتُرْ عَوْرَاتِي وَآمِنْ رَوْعَاتِي",
+    transliteration:"Allāhumma innī asaluka al-afwa wal-āfiyata fid-dunyā wal-ākhirah. Allāhumma innī asaluka al-afwa wal-āfiyata fī dīnī wa dunyāya wa ahlī wa mālī. Allāhummastur awrātī wa āmin rawātī...",
+    french:"Ô Seigneur ! Je Te demande le pardon et la santé dans cette vie et dans l'au-delà. Cache mes défauts et mets-moi à l'abri de mes effrois. Protège-moi de toutes les directions.",
+    benefice:"Protection complète de toutes les directions.",
+    source:"Abū Dāwūd, n°5074 — matin et soir", repetition:1, category:"MATIN_SOIR" },
+
+  { id:12, title:"12. Allāhumma ālima l-ghayb…",
+    arabic:"اللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَالْأَرْضِ رَبَّ كُلِّ شَيْءٍ وَمَلِيكَهُ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ",
+    transliteration:"Allāhumma ālimal-ghaybi wash-shahādati fātiras-samāwāti wal-ardi rabba kulli shayin wa malīkah, ashhadu an lā ilāha illā ant, audhu bika min sharri nafsī wa min sharrish-shaytāni wa shirkihi...",
+    french:"Ô Seigneur ! Connaisseur de l'invisible et du visible, créateur des cieux et de la terre. J'atteste qu'il n'y a de divinité que Toi. Je me mets sous Ta protection contre le mal de mon âme, du diable et son polythéisme.",
+    benefice:"Protection contre les maux de l'âme et du diable.",
+    source:"At-Tirmidhī, n°3529 — matin et soir", repetition:1, category:"MATIN_SOIR" },
+
+  { id:13, title:"13. Bismillāhil-ladhī lā yaḍurru… (3×)",
     arabic:"بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
-    transliteration:"Bismillāhil-ladhī lā yaḍurru ma'as-mihi shay'un fil-arḍi wa lā fis-samā'i, wa huwas-samī'ul-'alīm",
-    french:"Au nom d'Allah avec Lequel rien ne peut nuire, ni sur la terre ni dans le ciel — Il est l'Audient, l'Omniscient.",
-    source:"Abū Dāwūd, at-Tirmidhī — récité 3× le matin", repetition:3, category:"MATIN" },
+    transliteration:"Bismillāhil-ladhī lā yadurru maasmihī shaun fil-ardi wa lā fis-samāi, wa huwas-samīul-alīm",
+    french:"Au nom d'Allah, nul ne peut nuire en présence de Son Nom ni sur terre ni dans le ciel et Il est l'Audient et l'Omniscient.",
+    benefice:"Celui qui dira 3 fois le matin et le soir, nul mal ne le touchera.",
+    source:"Abū Dāwūd, n°5088 — 3× matin et soir", repetition:3, category:"MATIN_SOIR" },
 
-  // ── SOIR ──
-  { id:4, title:"Du'a du Soir — Muwatta",
-    arabic:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
-    transliteration:"Amsaynā wa amsal-mulku lillāh, wal-ḥamdu lillāh, lā ilāha illallāhu waḥdahu lā sharīka lah, lahul-mulku wa lahul-ḥamdu wa huwa 'alā kulli shay'in qadīr",
-    french:"Nous avons passé le soir et la royauté appartient à Allah. La louange est à Allah. Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent.",
-    source:"Muwatta Malik, Kitab al-Nida'", repetition:1, category:"SOIR" },
+  { id:14, title:"14. Radītu billāhi rabban… (3×)",
+    arabic:"رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا",
+    transliteration:"Radītu billāhi rabban wa bil-islāmi dīnan wa bi-muhammadin nabiyyan",
+    french:"J'ai agréé Allah comme mon Seigneur, l'islam comme ma religion et Muhammad (sws) comme mon prophète.",
+    benefice:"Celui qui le dit 3 fois matin et soir, Allah se fera un devoir de lui accorder Son agrément.",
+    source:"Abū Dāwūd, n°5072 — 3× matin et soir", repetition:3, category:"MATIN_SOIR" },
 
-  { id:5, title:"Āyat al-Kursī le soir",
-    arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ",
-    transliteration:"Allāhu lā ilāha illā huwal-ḥayyul-qayyūm, lā ta'khudhuhū sinatun wa lā nawm...",
-    french:"Allah — point de divinité que Lui, le Vivant, Celui qui subsiste par Lui-même. Ni somnolence ni sommeil ne Le saisissent. À Lui appartient ce qui est dans les cieux et sur la terre. Qui pourrait intercéder auprès de Lui sans Sa permission ? Il sait ce qui est devant eux et ce qui est derrière eux. Ils n'embrassent de Sa science que ce qu'Il veut. Son Trône s'étend sur les cieux et la terre dont la garde ne Lui pèse pas. Il est le Très Haut, l'Immense.",
-    source:"Coran 2:255 — Imam Mālik recommandait sa récitation chaque soir (Muwatta)", repetition:1, category:"SOIR" },
+  { id:15, title:"15. Yā Hayyu Yā Qayyūm bi-rahmatika astaghīth…",
+    arabic:"يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ، وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ",
+    transliteration:"Yā hayyu yā qayyūmu bi-rahmatika astaghīth, aslih lī shānī kullahu, wa lā takilnī ilā nafsī tarfata ayn",
+    french:"Ô le Vivant, Celui qui veille éternellement ! J'implore secours auprès de Ta miséricorde. Améliore ma situation et ne me laisse pas à mon propre sort ne serait-ce le temps d'un clin d'oeil.",
+    benefice:"Protection et amélioration de la situation du croyant.",
+    source:"Al-Hākim, n°2000 — matin et soir", repetition:1, category:"MATIN_SOIR" },
 
-  { id:6, title:"Al-Mu'awwidhatān le soir",
-    arabic:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۞ مِن شَرِّ مَا خَلَقَ ۞ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۞ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۞ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
-    transliteration:"Qul a'ūdhu bi-rabbil-falaq, min sharri mā khalaq, wa min sharri ghāsiqin idhā waqab...",
-    french:"Dis : Je cherche refuge auprès du Seigneur de l'aurore, contre le mal de ce qu'Il a créé, contre le mal de l'obscurité quand elle s'étend, contre le mal de celles qui soufflent sur les nœuds, contre le mal de l'envieux quand il envie. (Sourates al-Falaq et an-Nās)",
-    source:"Recommandées 3× chaque soir — Abū Dāwūd, Nasā'ī — pratique malikite", repetition:3, category:"SOIR" },
+  { id:16, title:"16. Asbahna wa asbahal-mulku lillāh…",
+    arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذَا الْيَوْمِ فَتْحَهُ وَنَصْرَهُ وَنُورَهُ وَبَرَكَتَهُ وَهُدَاهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهِ وَشَرِّ مَا بَعْدَهُ",
+    transliteration:"Asbahna wa asbahal-mulku lillāhi rabbil-ālamīn, Allāhumma innī asaluka khayra hādhal-yawmi fathahou wa nasrahu wa nūrahu wa barakatahu wa hudāh...",
+    french:"Nous voilà au matin et le règne appartient à Allah le Seigneur de l'univers. Ô Seigneur ! Je Te demande le bien de ce jour : conquêtes, victoires, lumières, bénédiction et guidée.",
+    benefice:"Demande du bien de la journée et protection contre ses maux.",
+    source:"Abū Dāwūd — matin et soir", repetition:1, category:"MATIN_SOIR" },
 
-  // ── PRIÈRE ──
-  { id:7, title:"Après le Fard — Istighfar Malikite",
-    arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
-    transliteration:"Astaghfirullāhal-'aẓīmal-ladhī lā ilāha illā huwal-ḥayyul-qayyūmu wa atūbu ilayh",
-    french:"Je demande pardon à Allah le Sublime — Celui qu'aucune divinité ne saurait égaler, le Vivant, le Subsistant — et je me repens à Lui.",
-    source:"At-Tirmidhī — récité 3× après chaque Fard selon le madhhab malikite", repetition:3, category:"PRIERE" },
+  { id:17, title:"17. Asbahna alā fitrātil-islām…",
+    arabic:"أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ، وَعَلَى كَلِمَةِ الْإِخْلَاصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ، وَعَلَى مِلَّةِ أَبِينَا إِبْرَاهِيمَ حَنِيفاً مُسْلِماً وَمَا كَانَ مِنَ الْمُشْرِكِينَ",
+    transliteration:"Asbahna alā fitrātil-islāmi, wa alā kalimatil-ikhlāsi, wa alā dīni nabiyyinā Muhammadin, wa alā millati abīnā Ibrāhīma hanīfan musliman wa mā kāna minal-mushrikīn",
+    french:"Nous voici au matin en conformité avec la saine disposition qu'est l'Islam, avec la parole du monothéisme, avec la religion de notre Prophète Muhammad (sws) et sur la voie de notre père Ibrāhīm, soumis à Allah.",
+    benefice:"Affirmation de la foi et de l'appartenance à l'Islam.",
+    source:"Ahmad, n°14248 — matin et soir", repetition:1, category:"MATIN_SOIR" },
 
-  { id:8, title:"Tasbīḥ après la prière — méthode Mālik",
-    arabic:"سُبْحَانَ اللَّهِ ۞ الْحَمْدُ لِلَّهِ ۞ اللَّهُ أَكْبَرُ ۞ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
-    transliteration:"Subḥānallāh (33×) — Al-ḥamdu lillāh (33×) — Allāhu akbar (33×) — puis : lā ilāha illallāhu waḥdahu lā sharīka lah...",
-    french:"Gloire à Allah (33×) — Toute louange à Allah (33×) — Allah est le Plus Grand (33×) — puis : Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent. Imam Mālik complétait le 100 par ce dhikr (Muwatta, Kitab Qasr as-Salat).",
-    source:"Muwatta Malik, Kitab Qasr as-Salat", repetition:100, category:"PRIERE" },
+  { id:18, title:"18. Subhān Allāhi wa bihamdih (100×)",
+    arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+    transliteration:"Subhānallāhi wa bihamdih",
+    french:"Gloire et louange sont à Allah.",
+    benefice:"Celui qui dit 100 fois dans la journée aura ses péchés effacés même s'ils sont aussi nombreux que l'écume de la mer. (Bukhāri n°6405, Muslim n°2691)",
+    source:"Bukhāri n°6405 — Muslim n°2691 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
 
-  // ── MATIN ET SOIR — Ajout Cabinet Maher (Image) ──
-  { id:9, title:"Istighfar 100× — Matin et soir",
+  { id:19, title:"19. Lā ilāha illallāhu wahdahu… (100×)",
+    arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+    transliteration:"Lā ilāha illallāhu wahdahu lā sharīka lah, lahul-mulku wa lahul-hamdu wa huwa alā kulli shayin qadīr",
+    french:"Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté et la louange, et Il est capable de toute chose.",
+    benefice:"Récompense de celui qui a affranchi 10 esclaves. 100 bonnes actions inscrites, 100 péchés effacés. Protection contre Satan.",
+    source:"Bukhāri n°3293 — Muslim n°2691 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
+
+  { id:20, title:"20. Subhānallāhi wa bihamdih, adada khalqih… (3×)",
+    arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ",
+    transliteration:"Subhānallāhi wa bihamdih, adada khalqih, wa ridā nafsih, wa zinata arshih, wa midāda kalimātih",
+    french:"Gloire et louange à Allah autant de fois que l'univers compte de créatures, autant pour Le satisfaire, égal au poids de Son Trône et au nombre de Ses paroles.",
+    benefice:"Cette formule surpasse en mérite toutes les autres formes de dhikr.",
+    source:"Muslim, n°2726 — 3× le matin", repetition:3, category:"MATIN" },
+
+  { id:21, title:"21. Allāhumma innī asaluka ilman nāfian…",
+    arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْماً نَافِعاً، وَرِزْقاً طَيِّباً، وَعَمَلاً مُتَقَبَّلاً",
+    transliteration:"Allāhumma innī asaluka ilman nāfian, wa rizqan tayyiban, wa amalan mutaqabbalan",
+    french:"Ô Seigneur ! Je Te demande un savoir utile, une bonne subsistance et des oeuvres agréées par Toi.",
+    benefice:"Demande des trois fondements : savoir, provision et actes agréés.",
+    source:"Ibn Mājah, n°925 — le matin", repetition:1, category:"MATIN" },
+
+  { id:22, title:"22. Astaghfirullāha wa atūbu ilayh (100×)",
     arabic:"أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
-    transliteration:"Astaghfiru-llāha wa atūbu ilayh",
+    transliteration:"Astaghfirullāha wa atūbu ilayh",
     french:"Je demande pardon à Allah et je me repens à Lui.",
-    benefice:"Quiconque persévère dans l'istighfār, Allah lui accordera une issue lors de chaque difficulté, un soulagement à toute inquiétude et lui accordera sa subsistance par des moyens sur lesquels il ne comptait pas.",
-    source:"Abū Dāwūd, n°1518 — Hadith authentique — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
+    benefice:"Quiconque persévère dans l'istighfār, Allah lui accordera une issue lors de chaque difficulté, un soulagement à toute inquiétude et lui accordera sa subsistance par des moyens inattendus.",
+    source:"Abū Dāwūd, n°1518 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
 
-  { id:10, title:"Ṣalāt 'ala n-Nabī 100× — Matin et soir",
+  { id:23, title:"23. Allāhumma salli wa sallim alā nabiyyinā Muhammad (100×)",
     arabic:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَىٰ نَبِيِّنَا مُحَمَّدٍ",
-    transliteration:"Allāhumma ṣalli wa sallim 'alā nabiyyinā Muḥammad",
-    french:"Ô Seigneur ! Prie et salue sur notre prophète Muḥammad ﷺ.",
-    benefice:"Celui qui prie sur le Prophète ﷺ une fois, Allah le bénit dix fois, lui efface dix péchés et l'élève de dix degrés.",
-    source:"Muslim, n°408 — recommandé 100× matin et soir par les maîtres malikites", repetition:100, category:"MATIN_SOIR" },
-];
+    transliteration:"Allāhumma salli wa sallim alā nabiyyinā Muhammad",
+    french:"Ô Seigneur ! Prie et salue sur notre prophète Muhammad (sws).",
+    benefice:"Celui qui prie sur le Prophète une fois, Allah le bénit dix fois, lui efface dix péchés et l'élève de dix degrés.",
+    source:"Muslim, n°408 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
 
+  { id:24, title:"Après le Fard — Istighfar Malikite",
+    arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
+    transliteration:"Astaghfirullāhal-azīmal-ladhī lā ilāha illā huwal-hayyul-qayyūmu wa atūbu ilayh",
+    french:"Je demande pardon à Allah le Sublime — le Vivant, le Subsistant — et je me repens à Lui.",
+    source:"At-Tirmidhī — 3× après chaque Fard selon le madhhab malikite", repetition:3, category:"PRIERE" },
+
+  { id:25, title:"Tasbīh après la prière — méthode Mālik",
+    arabic:"سُبْحَانَ اللَّهِ ۞ الْحَمْدُ لِلَّهِ ۞ اللَّهُ أَكْبَرُ",
+    transliteration:"Subhānallāh (33×) — Al-hamdu lillāh (33×) — Allāhu akbar (33×) — puis : Lā ilāha illallāhu wahdahu lā sharīka lah...",
+    french:"Gloire à Allah (33×) — Toute louange à Allah (33×) — Allah est le Plus Grand (33×) — puis : Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent.",
+    source:"Muwatta Mālik, Kitab Qasr as-Salat", repetition:100, category:"PRIERE" },
+];
 const QURAN_SURAHS = Array.from({ length: 114 }, (_, i) => ({
   number: i + 1,
   name: ["Al-Fātiḥa","Al-Baqara","Āl 'Imrān","An-Nisā","Al-Mā'ida","Al-An'ām","Al-A'rāf","Al-Anfāl","At-Tawba","Yūnus","Hūd","Yūsuf","Ar-Ra'd","Ibrāhīm","Al-Ḥijr","An-Naḥl","Al-Isrā","Al-Kahf","Maryam","Ṭā-Hā","Al-Anbiyā","Al-Ḥajj","Al-Mu'minūn","An-Nūr","Al-Furqān","Ash-Shu'arā","An-Naml","Al-Qaṣaṣ","Al-'Ankabūt","Ar-Rūm","Luqmān","As-Sajda","Al-Aḥzāb","Saba","Fāṭir","Yā-Sīn","Aṣ-Ṣāffāt","Ṣād","Az-Zumar","Ghāfir","Fuṣṣilat","Ash-Shūrā","Az-Zukhruf","Ad-Dukhān","Al-Jāthiya","Al-Aḥqāf","Muḥammad","Al-Fatḥ","Al-Ḥujurāt","Qāf","Adh-Dhāriyāt","Aṭ-Ṭūr","An-Najm","Al-Qamar","Ar-Raḥmān","Al-Wāqi'a","Al-Ḥadīd","Al-Mujādila","Al-Ḥashr","Al-Mumtaḥina","Aṣ-Ṣaff","Al-Jumu'a","Al-Munāfiqūn","At-Taghābun","Aṭ-Ṭalāq","At-Taḥrīm","Al-Mulk","Al-Qalam","Al-Ḥāqqa","Al-Ma'ārij","Nūḥ","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyāma","Al-Insān","Al-Mursalāt","An-Naba","An-Nāzi'āt","'Abasa","At-Takwīr","Al-Infiṭār","Al-Muṭaffifīn","Al-Inshiqāq","Al-Burūj","Aṭ-Ṭāriq","Al-A'lā","Al-Ghāshiya","Al-Fajr","Al-Balad","Ash-Shams","Al-Layl","Aḍ-Ḍuḥā","Ash-Sharḥ","At-Tīn","Al-'Alaq","Al-Qadr","Al-Bayyina","Az-Zalzala","Al-'Ādiyāt","Al-Qāri'a","At-Takāthur","Al-'Aṣr","Al-Humaza","Al-Fīl","Quraysh","Al-Mā'ūn","Al-Kawthar","Al-Kāfirūn","An-Naṣr","Al-Masad","Al-Ikhlāṣ","Al-Falaq","An-Nās"][i],
@@ -1624,8 +1730,7 @@ function AdhkarPage() {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Lecture Coran (swipe fluide, auto-scroll, marque-page rapide)
 // ════════════════════════════════════════════════════════════════════
-function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed }) {
-  const { checked, toggle, counts } = useSurahProgress();
+function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, checked, toggle, counts, juzBounds }) {
   const quranBM = useBookmarks("quran");
   const [currentSurah, setCurrentSurah] = useState(() =>
     initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null
@@ -2499,7 +2604,7 @@ export default function App() {
   const [page, setPage] = useState("quran");
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [pendingNav, setPendingNav] = useState(null); // { surahNum, verseNum }
-  const { counts } = useSurahProgress();
+  const { checked, toggle, counts } = useSurahProgress();
   const juzProgram = useJuzProgram();
   const khatmBM = useBookmarks("khatm");
 
@@ -2554,7 +2659,11 @@ export default function App() {
               <QuranReader
                 initialSurahNum={pendingNav?.surahNum}
                 initialVerseNum={pendingNav?.verseNum}
+                juzBounds={pendingNav?.juzBounds}
                 onNavConsumed={() => setPendingNav(null)}
+                checked={checked}
+                toggle={toggle}
+                counts={counts}
               />
             </motion.div>
           )}
