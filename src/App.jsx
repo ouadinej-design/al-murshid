@@ -2316,7 +2316,7 @@ const EMBEDDED_VERSES = {
 // HOOK — Versets avec cache window.storage + API Claude (lots de 5)
 // ════════════════════════════════════════════════════════════════════
 
-// Cache mémoire session (évite les appels en double)
+// Cache mémoire session
 const _versesMemCache = new Map();
 
 async function fetchSurahFromAPI(surahNumber, surahInfo) {
