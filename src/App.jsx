@@ -2320,55 +2320,19 @@ const EMBEDDED_VERSES = {
 const _versesMemCache = new Map();
 
 async function fetchSurahFromAPI(surahNumber, surahInfo) {
-  const CACHE_KEY = "qv3_s" + surahNumber;
-
-  // 1. Essayer window.storage (persistant entre sessions)
-  try {
-    const stored = await window.storage.get(CACHE_KEY);
-    if (stored && stored.value) {
-      const parsed = JSON.parse(stored.value);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {}
-
-  // 2. Charger via API Claude par lots de 5 versets
-  const total = surahInfo.verses;
-  const allVerses = [];
-  const batchSize = 5;
-
-  for (let from = 1; from <= total; from += batchSize) {
-    const to = Math.min(from + batchSize - 1, total);
-    const prompt = `Versets ${from} à ${to} de la sourate ${surahNumber} (${surahInfo.name}) du Coran.\nRéponds UNIQUEMENT avec du JSON valide, sans texte ni backtick:\n[{"number":${from},"arabic":"texte arabe avec tashkil","transliteration":"phonetique latine","french":"traduction Hamidullah"}${to > from ? ",...jusqu'au verset " + to : ""}]`;
-
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-
-    const data = await resp.json();
-    const raw = (data.content?.[0]?.text || "").trim();
-
-    // Extraire le JSON robustement
-    let batch = null;
-    try { batch = JSON.parse(raw); }
-    catch {
-      const m = raw.match(/\[\s*\{[\s\S]*\}\s*\]/);
-      if (m) {
-        try { batch = JSON.parse(m[0]); } catch {}
-      }
-    }
-    if (!Array.isArray(batch) || batch.length === 0) throw new Error("Lot invalide " + from);
-    allVerses.push(...batch);
-  }
-
-  // Sauvegarder dans window.storage
-  try { await window.storage.set(CACHE_KEY, JSON.stringify(allVerses)); } catch {}
-  return allVerses;
+  const [arabicResp, frenchResp] = await Promise.all([
+    fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/quran-uthmani`),
+    fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/fr.hamidullah`)
+  ]);
+  if (!arabicResp.ok || !frenchResp.ok) throw new Error("API indisponible");
+  const [arabicData, frenchData] = await Promise.all([arabicResp.json(), frenchResp.json()]);
+  if (arabicData.code !== 200 || frenchData.code !== 200) throw new Error("Erreur API");
+  return arabicData.data.ayahs.map((a, i) => ({
+    number: a.numberInSurah,
+    arabic: a.text,
+    transliteration: "",
+    french: frenchData.data.ayahs[i]?.text || ""
+  }));
 }
 
 function useVerses(surahNumber) {
