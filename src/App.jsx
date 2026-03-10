@@ -1730,7 +1730,7 @@ function AdhkarPage() {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Lecture Coran (swipe fluide, auto-scroll, marque-page rapide)
 // ════════════════════════════════════════════════════════════════════
-function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, checked, toggle, counts, juzBounds }) {
+function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBounds, checked, toggle, counts }) {
   const quranBM = useBookmarks("quran");
   const [currentSurah, setCurrentSurah] = useState(() =>
     initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null
@@ -1831,6 +1831,19 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, checked,
   const filtered = QURAN_SURAHS.filter(s =>
     s.name.toLowerCase().includes(filter.toLowerCase()) || s.arabic.includes(filter) || String(s.number).includes(filter)
   );
+
+
+  const getJuzFilteredVerses = (rawVerses) => {
+    if (!juzBounds || !currentSurah) return rawVerses;
+    const { startSurah, startVerse, endSurah, endVerse } = juzBounds;
+    return rawVerses.filter(v => {
+      const sn = currentSurah.number;
+      if (sn === startSurah && sn === endSurah) return v.number >= startVerse && v.number < endVerse;
+      if (sn === startSurah) return v.number >= startVerse;
+      if (sn === endSurah)   return v.number < endVerse;
+      return true;
+    });
+  };
 
   if (currentSurah) {
     return (
@@ -1976,7 +1989,7 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, checked,
 
           {!versesLoading && !versesError && verses.length > 0 && (
             <div className="space-y-3">
-              {verses.map((v, i) => (
+              {getJuzFilteredVerses(verses).map((v, i) => (
                 <motion.div key={v.number}
                   ref={el => { verseRefs.current[v.number] = el; }}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.015, 0.5) }}
@@ -2481,7 +2494,8 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts, juzProgram }) {
+function StatsDrawer({ isOpen, onClose, counts }) {
+  const juzProgram = useJuzProgram();
   const pct = Math.round((counts.surahChecked / 114) * 100);
   const recited = storage("adhkar_recited", {});
   const { totalFridays, isReadThisWeek } = useFridayKahf();
@@ -2609,20 +2623,27 @@ export default function App() {
   const khatmBM = useBookmarks("khatm");
 
   // Navigation depuis le programme Juz → Coran
+  // Bornes exactes de chaque Juz selon tableau officiel
+  const JUZ_START = [
+    {s:1,v:1},   {s:2,v:142}, {s:2,v:253}, {s:3,v:93},  {s:4,v:24},
+    {s:4,v:148}, {s:5,v:82},  {s:6,v:111}, {s:7,v:88},  {s:8,v:41},
+    {s:9,v:93},  {s:11,v:6},  {s:12,v:53}, {s:15,v:1},  {s:17,v:1},
+    {s:18,v:75}, {s:21,v:1},  {s:23,v:1},  {s:25,v:22}, {s:27,v:56},
+    {s:29,v:46}, {s:33,v:31}, {s:36,v:28}, {s:39,v:32}, {s:41,v:47},
+    {s:46,v:1},  {s:51,v:31}, {s:58,v:1},  {s:67,v:1},  {s:78,v:1},
+  ];
+
   const handleNavigateToJuz = useCallback((juzNumber) => {
     const juzSurahs = getSurahsForJuz(juzNumber);
     if (!juzSurahs.length) return;
-
-    // Chercher d'abord un marque-page khatm dans les sourates de ce Juz
-    const bookmark = khatmBM.bookmarks.find(bm =>
-      bm.surah > 0 && juzSurahs.includes(bm.surah)
-    );
-
+    const startInfo = JUZ_START[juzNumber - 1] || { s: juzSurahs[0], v: 1 };
+    const endInfo   = JUZ_START[juzNumber]     || { s: 115, v: 1 };
+    const bounds = { juzNum: juzNumber, startSurah: startInfo.s, startVerse: startInfo.v, endSurah: endInfo.s, endVerse: endInfo.v };
+    const bookmark = khatmBM.bookmarks.find(bm => bm.surah > 0 && juzSurahs.includes(bm.surah));
     if (bookmark) {
-      setPendingNav({ surahNum: bookmark.surah, verseNum: bookmark.verse || 1 });
+      setPendingNav({ surahNum: bookmark.surah, verseNum: bookmark.verse || 1, juzBounds: bounds });
     } else {
-      // Aller au premier verset de la première sourate du Juz
-      setPendingNav({ surahNum: juzSurahs[0], verseNum: 1 });
+      setPendingNav({ surahNum: startInfo.s, verseNum: startInfo.v, juzBounds: bounds });
     }
     setPage("quran");
   }, [khatmBM.bookmarks]);
