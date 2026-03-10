@@ -1067,7 +1067,17 @@ function JuzProgram({ onNavigateToJuz }) {
         </p>
         <p className="text-xs text-slate-600">Enregistre ta position dans le programme pour y revenir facilement.</p>
         <button
-          onClick={() => khatmBM.save({ surah: 0, verse: 0, surahName: `Juz en cours`, surahArabic: JUZ_DATA[completedCount]?.arabicName || "", note: `Arrêté après ${completedCount} Juz` })}
+          onClick={() => {
+            const nextJuz = JUZ_DATA.find(j => !program.completed[j.number]);
+            khatmBM.save({
+              surah: nextJuz ? nextJuz.number : completedCount,
+              verse: nextJuz ? nextJuz.number : completedCount,
+              surahName: nextJuz ? `Juz ${nextJuz.number} — ${nextJuz.name}` : `Khatm terminé`,
+              surahArabic: nextJuz?.arabicName || "",
+              note: `Position: ${completedCount}/30 Juz complétés`,
+              juzNum: nextJuz?.number || 0
+            });
+          }}
           className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border border-amber-500/20 text-amber-300 rounded-xl text-xs font-semibold hover:bg-amber-500/25 transition-all"
         >
           <Bookmark className="w-3.5 h-3.5"/> Sauvegarder ma position actuelle ({completedCount}/30 Juz)
@@ -1076,11 +1086,11 @@ function JuzProgram({ onNavigateToJuz }) {
           <div className="space-y-1.5 max-h-32 overflow-y-auto">
             {khatmBM.bookmarks.map(bm => (
               <div key={bm.id} className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-xl group">
-                <div>
+                <button className="flex-1 text-left" onClick={() => bm.juzNum && onNavigateToJuz(bm.juzNum)}>
                   <p className="text-white text-xs font-semibold">{bm.surahName}</p>
                   <p className="text-slate-600 text-[10px] flex items-center gap-1"><Clock className="w-2.5 h-2.5"/>{bm.datetime}</p>
-                </div>
-                <button onClick={() => khatmBM.remove(bm.id)} className="text-slate-700 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100">
+                </button>
+                <button onClick={() => khatmBM.remove(bm.id)} className="text-slate-700 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 ml-2">
                   <Trash2 className="w-3 h-3"/>
                 </button>
               </div>
@@ -1797,16 +1807,21 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
 
   // Scroll vers le verset cible quand ouvert depuis le programme
   useEffect(() => {
-    if (targetVerse && scrollRef.current) {
-      const t = setTimeout(() => {
-        const el = verseRefs.current[targetVerse];
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!targetVerse) return;
+    // Attendre que les versets soient chargés dans le DOM
+    const t = setTimeout(() => {
+      const el = verseRefs.current[targetVerse];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
         setTargetVerse(null);
         onNavConsumed?.();
-      }, 400);
-      return () => clearTimeout(t);
-    }
-  }, [targetVerse, currentSurah]);
+      } else if (versesLoading) {
+        // Versets pas encore chargés, on réessaie
+        setTargetVerse(v => v);
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [targetVerse, currentSurah, verses]);
 
   // Toast auto-dismiss
   useEffect(() => {
@@ -2494,8 +2509,7 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts }) {
-  const juzProgram = useJuzProgram();
+function StatsDrawer({ isOpen, onClose, counts, juzProgram }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
   const recited = storage("adhkar_recited", {});
   const { totalFridays, isReadThisWeek } = useFridayKahf();
