@@ -1,4 +1,11 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+
+// Désinscrire les Service Workers qui bloquent le réseau
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister());
+  });
+}
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   BookOpen, Bookmark, Activity, ArrowRight, Star, Heart,
@@ -86,7 +93,7 @@ function getEncouragement(juz) {
 const ADHKAR_MALIKITES = [
   { id:1, title:"1. Āyat al-Kursī — Verset du Trône",
     arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
-    transliteration:"Allāhou Lā Ilāha Illā Houwa Al-Ĥayyou Al-Qayyoum...",
+    transliteration:"Allāhou Lā Ilāha Illā Houwa Al-Ĥayyou Al-Qayyoum. Lā ta'khoudzouhou sinatoun wa lā nawm. Lahou mā fis-samāwāti wa mā fil-ard. Man dhal-ladhī yashfa'ou 'indahou illā bi-idznih. Ya'lamou mā bayna aydīhim wa mā khalfahum. Wasi'a koursiyyouhou s-samāwāti wal-ard. Wa lā ya'oudouhou hifdzouhoumā. Wa houwa l-'Aliyyou l-'Azīm.",
     french:"Allah ! Point de divinité à part Lui, le Vivant. Ni somnolence ni sommeil ne Le saisissent. À Lui appartient tout ce qui est dans les cieux et sur la terre. Son Trône déborde les cieux et la terre. Il est le Très Haut, le Très Grand.",
     benefice:"Protection contre Satan tout au long de la journée et de la nuit.",
     source:"Sourate 2 Al-Baqara v.255 — Bukhāri", repetition:1, category:"MATIN_SOIR" },
@@ -156,14 +163,14 @@ const ADHKAR_MALIKITES = [
 
   { id:11, title:"11. Allāhumma innī as'aluka al-afwa…",
     arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي، اللَّهُمَّ اسْتُرْ عَوْرَاتِي وَآمِنْ رَوْعَاتِي",
-    transliteration:"Allāhumma innī asaluka al-afwa wal-āfiyata fid-dunyā wal-ākhirah. Allāhumma innī asaluka al-afwa wal-āfiyata fī dīnī wa dunyāya wa ahlī wa mālī. Allāhummastur awrātī wa āmin rawātī...",
+    transliteration:"Allāhumma innī asaluka al-afwa wal-āfiyata fid-dunyā wal-ākhirah. Allāhumma innī asaluka al-afwa wal-āfiyata fī dīnī wa dunyāya wa ahlī wa mālī. Allāhummastur awrātī wa āmin rawātī.",
     french:"Ô Seigneur ! Je Te demande le pardon et la santé dans cette vie et dans l'au-delà. Cache mes défauts et mets-moi à l'abri de mes effrois. Protège-moi de toutes les directions.",
     benefice:"Protection complète de toutes les directions.",
     source:"Abū Dāwūd, n°5074 — matin et soir", repetition:1, category:"MATIN_SOIR" },
 
   { id:12, title:"12. Allāhumma ālima l-ghayb…",
     arabic:"اللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَالْأَرْضِ رَبَّ كُلِّ شَيْءٍ وَمَلِيكَهُ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ",
-    transliteration:"Allāhumma ālimal-ghaybi wash-shahādati fātiras-samāwāti wal-ardi rabba kulli shayin wa malīkah, ashhadu an lā ilāha illā ant, audhu bika min sharri nafsī wa min sharrish-shaytāni wa shirkihi...",
+    transliteration:"Allāhumma ālimal-ghaybi wash-shahādati fātiras-samāwāti wal-ardi rabba kulli shayin wa malīkah, ashhadu an lā ilāha illā ant, audhu bika min sharri nafsī wa min sharrish-shaytāni wa shirkihi.",
     french:"Ô Seigneur ! Connaisseur de l'invisible et du visible, créateur des cieux et de la terre. J'atteste qu'il n'y a de divinité que Toi. Je me mets sous Ta protection contre le mal de mon âme, du diable et son polythéisme.",
     benefice:"Protection contre les maux de l'âme et du diable.",
     source:"At-Tirmidhī, n°3529 — matin et soir", repetition:1, category:"MATIN_SOIR" },
@@ -191,7 +198,7 @@ const ADHKAR_MALIKITES = [
 
   { id:16, title:"16. Asbahna wa asbahal-mulku lillāh…",
     arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذَا الْيَوْمِ فَتْحَهُ وَنَصْرَهُ وَنُورَهُ وَبَرَكَتَهُ وَهُدَاهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهِ وَشَرِّ مَا بَعْدَهُ",
-    transliteration:"Asbahna wa asbahal-mulku lillāhi rabbil-ālamīn, Allāhumma innī asaluka khayra hādhal-yawmi fathahou wa nasrahu wa nūrahu wa barakatahu wa hudāh...",
+    transliteration:"Asbahna wa asbahal-mulku lillāhi rabbil-ālamīn, Allāhumma innī asaluka khayra hādhal-yawmi fathahou wa nasrahu wa nūrahu wa barakatahu wa hudāh, wa audhu bika min sharri mā fīhi wa sharri mā ba'dahu.",
     french:"Nous voilà au matin et le règne appartient à Allah le Seigneur de l'univers. Ô Seigneur ! Je Te demande le bien de ce jour : conquêtes, victoires, lumières, bénédiction et guidée.",
     benefice:"Demande du bien de la journée et protection contre ses maux.",
     source:"Abū Dāwūd — matin et soir", repetition:1, category:"MATIN_SOIR" },
@@ -253,7 +260,7 @@ const ADHKAR_MALIKITES = [
 
   { id:25, title:"Tasbīh après la prière — méthode Mālik",
     arabic:"سُبْحَانَ اللَّهِ ۞ الْحَمْدُ لِلَّهِ ۞ اللَّهُ أَكْبَرُ",
-    transliteration:"Subhānallāh (33×) — Al-hamdu lillāh (33×) — Allāhu akbar (33×) — puis : Lā ilāha illallāhu wahdahu lā sharīka lah...",
+    transliteration:"Subhānallāh (33×) — Al-hamdu lillāh (33×) — Allāhu akbar (33×) — puis : Lā ilāha illallāhu wahdahu lā sharīka lahu, lahul-mulku wa lahul-hamdu wa huwa 'alā kulli shay'in qadīr.",
     french:"Gloire à Allah (33×) — Toute louange à Allah (33×) — Allah est le Plus Grand (33×) — puis : Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent.",
     source:"Muwatta Mālik, Kitab Qasr as-Salat", repetition:100, category:"PRIERE" },
 ];
@@ -375,7 +382,10 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
   const [notifTimes, setNotifTimes] = useState(() => storage("notif_times_v2", {
     fajr: true, dhuhr: false, asr: true, maghrib: true
   }));
+  const [juzReminderEnabled, setJuzReminderEnabled] = useState(() => storage("juz_reminder_enabled_v1", false));
+  const [juzReminderTime, setJuzReminderTime] = useState(() => storage("juz_reminder_time_v1", "08:00"));
   const scheduledRef = useRef([]);
+  const juzTimerRef = useRef(null);
 
   // Planifier les rappels dans la session active
   useEffect(() => {
@@ -430,7 +440,41 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
     });
   }, []);
 
-  return { notifEnabled, notifTimes, enableNotifs, toggleTime };
+  // Rappel quotidien Juz à heure choisie
+  useEffect(() => {
+    if (juzTimerRef.current) clearTimeout(juzTimerRef.current);
+    if (!notifEnabled || !juzReminderEnabled || !program.active) return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const scheduleNext = () => {
+      const now = new Date();
+      const [h, m] = juzReminderTime.split(":").map(Number);
+      const target = new Date(); target.setHours(h, m, 0, 0);
+      if (target <= now) target.setDate(target.getDate() + 1);
+      juzTimerRef.current = setTimeout(() => {
+        const startMs = program.startDate ? new Date(program.startDate).getTime() : Date.now();
+        const endMs = program.endDate ? new Date(program.endDate).getTime() : Date.now() + 30*86400000;
+        const daysPassed = Math.max(1, Math.floor((Date.now()-startMs)/86400000)+1);
+        const daysTotal = Math.max(1, Math.ceil((endMs-startMs)/86400000));
+        const todayJuz = Math.min(30, Math.ceil((daysPassed/daysTotal)*30));
+        const msg = completedCount >= todayJuz
+          ? `MāshāAllāh ! Tu es en avance — ${completedCount}/30 Juz lus !`
+          : `📖 N'oublie pas ta lecture du jour — Juz ${todayJuz} (${completedCount}/30 lus)`;
+        requestAndScheduleNotif(msg);
+        scheduleNext();
+      }, target.getTime() - now.getTime());
+    };
+    scheduleNext();
+    return () => { if (juzTimerRef.current) clearTimeout(juzTimerRef.current); };
+  }, [notifEnabled, juzReminderEnabled, juzReminderTime, program.active, program.startDate, program.endDate, completedCount]);
+
+  const toggleJuzReminder = useCallback(() => {
+    setJuzReminderEnabled(prev => { const n = !prev; storageSet("juz_reminder_enabled_v1", n); return n; });
+  }, []);
+  const updateJuzReminderTime = useCallback((t) => {
+    setJuzReminderTime(t); storageSet("juz_reminder_time_v1", t);
+  }, []);
+
+  return { notifEnabled, notifTimes, enableNotifs, toggleTime, juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime };
 }
 
 function useJuzProgram() {
@@ -678,7 +722,7 @@ function JuzProgram({ onNavigateToJuz }) {
     dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
   } = juz;
 
-  const { notifEnabled, notifTimes, enableNotifs, toggleTime } =
+  const { notifEnabled, notifTimes, enableNotifs, toggleTime, juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime } =
     useNotifications(program, completedCount, dailyGoalJuz);
 
   // Marque-pages du programme Khatm (indépendants)
@@ -939,6 +983,29 @@ function JuzProgram({ onNavigateToJuz }) {
                   Rappel automatique tous les vendredis à 8h30. Le Prophète ﷺ a dit que celui qui lit Al-Kahf le vendredi sera illuminé jusqu'au vendredi suivant.
                 </p>
               </div>
+            </div>
+            {/* Rappel quotidien Juz */}
+            <div className="mt-2 p-3 bg-blue-500/8 border border-blue-500/20 rounded-2xl">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📖</span>
+                  <p className="text-blue-300 font-bold text-xs">Rappel lecture du Juz</p>
+                </div>
+                <button onClick={toggleJuzReminder}
+                  className={`w-10 h-5 rounded-full transition-all relative ${juzReminderEnabled ? "bg-blue-500" : "bg-slate-600"}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${juzReminderEnabled ? "left-5" : "left-0.5"}`} />
+                </button>
+              </div>
+              {juzReminderEnabled ? (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <p className="text-slate-500 text-xs">Heure :</p>
+                  <input type="time" value={juzReminderTime} onChange={e => updateJuzReminderTime(e.target.value)}
+                    className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-white text-xs" />
+                </div>
+              ) : (
+                <p className="text-slate-500 text-xs">Rappel quotidien avec ton Juz du jour.</p>
+              )}
             </div>
           </div>
         )}
@@ -1745,9 +1812,12 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
   const [currentSurah, setCurrentSurah] = useState(() =>
     initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null
   );
+  // juzBounds actif — se réinitialise si l'utilisateur navigue manuellement
+  const [activeJuzBounds, setActiveJuzBounds] = useState(juzBounds || null);
   const [targetVerse, setTargetVerse] = useState(initialVerseNum || null);
   const verseRefs = useRef({});
-  const { verses, loading: versesLoading, error: versesError } = useVerses(currentSurah?.number);
+  const [retryKey, setRetryKey] = useState(0);
+  const { verses, loading: versesLoading, error: versesError } = useVerses(currentSurah?.number, retryKey);
   const [filter, setFilter] = useState("");
   const [autoScroll, setAutoScroll] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(2);
@@ -1780,6 +1850,15 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     }
   };
 
+  // Sync activeJuzBounds quand une nouvelle nav Juz arrive
+  useEffect(() => { setActiveJuzBounds(juzBounds || null); }, [juzBounds]);
+
+  // Helper : changer de sourate et effacer le filtre Juz
+  const navigateToSurah = useCallback((surah) => {
+    setCurrentSurah(surah);
+    setActiveJuzBounds(null); // plus de filtre Juz si navigation manuelle
+  }, []);
+
   // Swipe detection
   const touchStart = useRef(null);
   const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
@@ -1787,8 +1866,8 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     if (!touchStart.current || !currentSurah) return;
     const diff = touchStart.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 60) {
-      if (diff > 0 && currentSurah.number < 114) setCurrentSurah(QURAN_SURAHS[currentSurah.number]);
-      if (diff < 0 && currentSurah.number > 1) setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2]);
+      if (diff > 0 && currentSurah.number < 114) navigateToSurah(QURAN_SURAHS[currentSurah.number]);
+      if (diff < 0 && currentSurah.number > 1) navigateToSurah(QURAN_SURAHS[currentSurah.number - 2]);
     }
     touchStart.current = null;
   };
@@ -1849,8 +1928,8 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
 
 
   const getJuzFilteredVerses = (rawVerses) => {
-    if (!juzBounds || !currentSurah) return rawVerses;
-    const { startSurah, startVerse, endSurah, endVerse } = juzBounds;
+    if (!activeJuzBounds || !currentSurah) return rawVerses;
+    const { startSurah, startVerse, endSurah, endVerse } = activeJuzBounds;
     return rawVerses.filter(v => {
       const sn = currentSurah.number;
       if (sn === startSurah && sn === endSurah) return v.number >= startVerse && v.number < endVerse;
@@ -1890,10 +1969,11 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             </p>
           </div>
           <button onClick={() => toggle(currentSurah.number)}
-            className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`}
             title="Marquer comme lue"
           >
             <CheckCircle className="w-5 h-5"/>
+            <span className="text-xs font-bold">{counts.surahChecked}/114</span>
           </button>
         </div>
 
@@ -1921,14 +2001,14 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
           )}
           {/* Nav sourate */}
           <div className="flex gap-1 ml-auto">
-            <button onClick={() => currentSurah.number > 1 && setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2])}
+            <button onClick={() => currentSurah.number > 1 && navigateToSurah(QURAN_SURAHS[currentSurah.number - 2])}
               disabled={currentSurah.number === 1}
               className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-slate-500 hover:text-white disabled:opacity-30"
             >
               <ChevronLeft className="w-4 h-4"/>
             </button>
             <span className="text-xs text-slate-600 self-center px-1">{currentSurah.number}/114</span>
-            <button onClick={() => currentSurah.number < 114 && setCurrentSurah(QURAN_SURAHS[currentSurah.number])}
+            <button onClick={() => currentSurah.number < 114 && navigateToSurah(QURAN_SURAHS[currentSurah.number])}
               disabled={currentSurah.number === 114}
               className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-slate-500 hover:text-white disabled:opacity-30"
             >
@@ -1989,16 +2069,23 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             </div>
           )}
 
-          {versesError === "api_error" && (
-            <div className="text-center py-8 space-y-3 px-4">
-              <p className="text-4xl">⚠️</p>
-              <p className="text-orange-400 text-sm font-semibold">Erreur de chargement</p>
-              <p className="text-slate-500 text-xs">Reviens en arrière et réessaie d'ouvrir la sourate.</p>
+          {versesError && versesError !== "not_embedded" && (
+            <div className="text-center py-10 space-y-4 px-5">
+              <p className="text-5xl">⚠️</p>
+              <p className="text-orange-400 text-sm font-bold">Erreur de chargement</p>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-xs mx-auto">Impossible de charger les versets. Vérifie ta connexion puis réessaie.</p>
+              {versesError !== "api_error" && (
+                <details className="text-left max-w-xs mx-auto bg-slate-900/60 rounded-xl p-3">
+                  <summary className="text-slate-500 text-xs cursor-pointer">▶ Détails techniques</summary>
+                  <p className="text-slate-500 text-xs mt-2 break-all font-mono">{versesError}</p>
+                </details>
+              )}
+              <button onClick={() => setRetryKey(k => k + 1)}
+                className="w-full max-w-xs mx-auto flex items-center justify-center gap-2 py-3 px-5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-2xl text-sm font-bold hover:bg-emerald-500/30 active:scale-95 transition-all"
+              >🔄 Réessayer</button>
               <button onClick={() => setCurrentSurah(null)}
-                className="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/15 transition-all"
-              >
-                ← Retour à la liste
-              </button>
+                className="block mx-auto text-slate-500 text-xs hover:text-slate-300 transition-colors pt-1"
+              >← Retour à la liste</button>
             </div>
           )}
 
@@ -2079,15 +2166,20 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
           {/* Fin de sourate */}
           <div className="mt-8 pt-8 border-t border-white/10 text-center space-y-4">
             <p className="text-slate-400 text-sm">Fin de {currentSurah.name}</p>
-            {!checked[currentSurah.number] && (
-              <button onClick={() => toggle(currentSurah.number)}
-                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm hover:shadow-emerald-500/25 transition-all"
+            {!checked[currentSurah.number] ? (
+              <button onClick={() => { toggle(currentSurah.number); setTimeout(() => setCurrentSurah(null), 800); }}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm hover:shadow-emerald-500/25 transition-all active:scale-95"
               >
                 ✅ Marquer comme lue
               </button>
+            ) : (
+              <div className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl">
+                <CheckCircle className="w-4 h-4 text-emerald-400"/>
+                <span className="text-emerald-400 font-bold text-sm">Sourate lue — {counts.surahChecked}/114 ✨</span>
+              </div>
             )}
             {currentSurah.number < 114 && (
-              <button onClick={() => setCurrentSurah(QURAN_SURAHS[currentSurah.number])}
+              <button onClick={() => navigateToSurah(QURAN_SURAHS[currentSurah.number])}
                 className="block mx-auto text-slate-500 hover:text-white text-sm transition-all"
               >
                 Sourate suivante : {QURAN_SURAHS[currentSurah.number].name} →
@@ -2452,23 +2544,64 @@ const EMBEDDED_VERSES = {
 // Cache mémoire session
 const _versesMemCache = new Map();
 
-async function fetchSurahFromAPI(surahNumber, surahInfo) {
-  const [arabicResp, frenchResp] = await Promise.all([
-    fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/quran-uthmani`),
-    fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/fr.hamidullah`)
-  ]);
-  if (!arabicResp.ok || !frenchResp.ok) throw new Error("API indisponible");
-  const [arabicData, frenchData] = await Promise.all([arabicResp.json(), frenchResp.json()]);
-  if (arabicData.code !== 200 || frenchData.code !== 200) throw new Error("Erreur API");
-  return arabicData.data.ayahs.map((a, i) => ({
-    number: a.numberInSurah,
-    arabic: a.text,
-    transliteration: "",
-    french: frenchData.data.ayahs[i]?.text || ""
-  }));
+function _ft(url, ms = 15000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(tid));
+}
+const _px = (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`;
+
+async function _srcA(n) {
+  const r = await _ft(`https://api.alquran.cloud/v1/surah/${n}/editions/quran-uthmani,fr.hamidullah`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const d = await r.json();
+  if (d.code !== 200) throw new Error(`code=${d.code}`);
+  return d.data[0].ayahs.map((a,i) => ({ number: a.numberInSurah, arabic: a.text, transliteration:"", french: d.data[1].ayahs[i]?.text||"" }));
+}
+async function _srcB(n) {
+  const r = await _ft(_px(`https://api.alquran.cloud/v1/surah/${n}/editions/quran-uthmani,fr.hamidullah`));
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const d = await r.json();
+  if (d.code !== 200) throw new Error(`code=${d.code}`);
+  return d.data[0].ayahs.map((a,i) => ({ number: a.numberInSurah, arabic: a.text, transliteration:"", french: d.data[1].ayahs[i]?.text||"" }));
+}
+async function _srcC(n) {
+  const r = await _ft(`https://cdn.jsdelivr.net/gh/semarketir/quranjson@master/source/surah/surah_${String(n).padStart(3,"0")}.json`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const d = await r.json();
+  const keys = Object.keys(d.verse||{}).sort((a,b)=>+a.split("_")[1] - +b.split("_")[1]);
+  if (!keys.length) throw new Error("0 versets");
+  return keys.map((k,i) => ({ number:i+1, arabic:d.verse[k], transliteration:"", french:"" }));
+}
+async function _srcD(n) {
+  const r = await _ft(_px(`https://api.quran.com/api/v4/verses/by_chapter/${n}?translations=136&fields=text_uthmani&per_page=300`));
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const d = await r.json();
+  if (!d.verses?.length) throw new Error("0 versets");
+  return d.verses.map((v,i) => ({ number:i+1, arabic:v.text_uthmani||"", transliteration:"", french:(v.translations?.[0]?.text||"").replace(/<[^>]+>/g,"") }));
 }
 
-function useVerses(surahNumber) {
+const _fetchLog = [];
+async function fetchSurahFromAPI(surahNumber) {
+  _fetchLog.length = 0;
+  for (const [label, fn] of [
+    ["alquran.cloud direct", () => _srcA(surahNumber)],
+    ["alquran.cloud+proxy",  () => _srcB(surahNumber)],
+    ["quranjson CDN",        () => _srcC(surahNumber)],
+    ["quran.com+proxy",      () => _srcD(surahNumber)],
+  ]) {
+    try {
+      const v = await fn();
+      if (v?.length > 0) return v;
+      _fetchLog.push(`${label}: 0 versets`);
+    } catch(e) {
+      _fetchLog.push(`${label}: ${e.message}`);
+    }
+  }
+  throw new Error(_fetchLog.join(" || "));
+}
+
+function useVerses(surahNumber, retryKey = 0) {
   const embedded = surahNumber ? EMBEDDED_VERSES[surahNumber] : null;
 
   const [state, setState] = useState(() => {
@@ -2481,6 +2614,7 @@ function useVerses(surahNumber) {
   useEffect(() => {
     if (!surahNumber) return;
     if (embedded) { setState({ verses: embedded, loading: false, error: null }); return; }
+    if (retryKey > 0) _versesMemCache.delete(surahNumber);
     if (_versesMemCache.has(surahNumber)) { setState({ verses: _versesMemCache.get(surahNumber), loading: false, error: null }); return; }
 
     const surahInfo = QURAN_SURAHS[surahNumber - 1];
@@ -2493,10 +2627,10 @@ function useVerses(surahNumber) {
         _versesMemCache.set(surahNumber, verses);
         setState({ verses, loading: false, error: null });
       })
-      .catch(() => {
-        setState({ verses: [], loading: false, error: "api_error" });
+      .catch((e) => {
+        setState({ verses: [], loading: false, error: e.message || "api_error" });
       });
-  }, [surahNumber]);
+  }, [surahNumber, retryKey]);
 
   return state;
 }
@@ -2628,10 +2762,201 @@ const PAGES = [
   { key: "adhkar", label: "📿 Adhkar", shortLabel: "Adhkar" },
 ];
 
+
+// ════════════════════════════════════════════════════════════════════
+// DONNÉES — Bornes exactes des 30 Juz (start inclusif, end inclusif)
+// ════════════════════════════════════════════════════════════════════
+const JUZ_BOUNDS = [
+  { juz:1,  ss:1,  sv:1,   es:2,  ev:141 },
+  { juz:2,  ss:2,  sv:142, es:2,  ev:252 },
+  { juz:3,  ss:2,  sv:253, es:3,  ev:92  },
+  { juz:4,  ss:3,  sv:93,  es:4,  ev:23  },
+  { juz:5,  ss:4,  sv:24,  es:4,  ev:147 },
+  { juz:6,  ss:4,  sv:148, es:5,  ev:81  },
+  { juz:7,  ss:5,  sv:82,  es:6,  ev:110 },
+  { juz:8,  ss:6,  sv:111, es:7,  ev:87  },
+  { juz:9,  ss:7,  sv:88,  es:8,  ev:40  },
+  { juz:10, ss:8,  sv:41,  es:9,  ev:92  },
+  { juz:11, ss:9,  sv:93,  es:11, ev:5   },
+  { juz:12, ss:11, sv:6,   es:12, ev:52  },
+  { juz:13, ss:12, sv:53,  es:14, ev:52  },
+  { juz:14, ss:15, sv:1,   es:16, ev:128 },
+  { juz:15, ss:17, sv:1,   es:18, ev:74  },
+  { juz:16, ss:18, sv:75,  es:20, ev:135 },
+  { juz:17, ss:21, sv:1,   es:22, ev:78  },
+  { juz:18, ss:23, sv:1,   es:25, ev:20  },
+  { juz:19, ss:25, sv:21,  es:27, ev:55  },
+  { juz:20, ss:27, sv:56,  es:29, ev:45  },
+  { juz:21, ss:29, sv:46,  es:33, ev:30  },
+  { juz:22, ss:33, sv:31,  es:36, ev:27  },
+  { juz:23, ss:36, sv:28,  es:39, ev:31  },
+  { juz:24, ss:39, sv:32,  es:41, ev:46  },
+  { juz:25, ss:41, sv:47,  es:45, ev:37  },
+  { juz:26, ss:46, sv:1,   es:51, ev:30  },
+  { juz:27, ss:51, sv:31,  es:57, ev:29  },
+  { juz:28, ss:58, sv:1,   es:66, ev:12  },
+  { juz:29, ss:67, sv:1,   es:77, ev:50  },
+  { juz:30, ss:78, sv:1,   es:114,ev:6   },
+];
+
+// ════════════════════════════════════════════════════════════════════
+// COMPOSANT — JuzReader : lecteur dédié Juz (vue continue multi-sourates)
+// ════════════════════════════════════════════════════════════════════
+function JuzReader({ juzNumber, onClose, onComplete, alreadyDone }) {
+  const bounds = JUZ_BOUNDS[juzNumber - 1];
+  const [verses, setVerses] = useState([]);   // [{ surah, surahName, surahArabic, number, arabic, french }]
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
+  const [done, setDone]       = useState(alreadyDone || false);
+
+  // Lister toutes les sourates du Juz
+  const surahNums = useMemo(() => {
+    const list = [];
+    for (let s = bounds.ss; s <= bounds.es; s++) list.push(s);
+    return list;
+  }, [bounds]);
+
+  useEffect(() => {
+    if (!bounds) return;
+    setLoading(true); setError(null); setVerses([]);
+
+    Promise.all(
+      surahNums.map(n => fetchSurahFromAPI(n).then(vs => ({ n, vs })).catch(() => ({ n, vs: [] })))
+    ).then(results => {
+      const flat = [];
+      results.forEach(({ n, vs }) => {
+        const surah = QURAN_SURAHS[n - 1];
+        vs.forEach(v => {
+          // Filtrer selon les bornes exactes du Juz
+          if (n === bounds.ss && n === bounds.es) {
+            if (v.number < bounds.sv || v.number > bounds.ev) return;
+          } else if (n === bounds.ss) {
+            if (v.number < bounds.sv) return;
+          } else if (n === bounds.es) {
+            if (v.number > bounds.ev) return;
+          }
+          flat.push({ surah: n, surahName: surah?.name || `Sourate ${n}`, surahArabic: surah?.arabic || "", number: v.number, arabic: v.arabic, french: v.french });
+        });
+      });
+      setVerses(flat);
+      setLoading(false);
+    }).catch(e => { setError(e.message); setLoading(false); });
+  }, [juzNumber, retryKey]);
+
+  const handleComplete = () => {
+    setDone(true);
+    onComplete?.();
+  };
+
+  const juzInfo = JUZ_DATA[juzNumber - 1];
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-slate-950 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/80 shrink-0">
+        <button onClick={onClose} className="p-2 text-slate-400 hover:text-white transition-colors">
+          <ChevronLeft className="w-5 h-5"/>
+        </button>
+        <div className="text-center">
+          <p className="text-white font-bold text-sm">Juz {juzNumber} — {juzInfo?.arabicName}</p>
+          <p className="text-slate-500 text-xs">
+            S.{bounds.ss}:{bounds.sv} → S.{bounds.es}:{bounds.ev}
+          </p>
+        </div>
+        {done
+          ? <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold"><CheckCircle className="w-4 h-4"/> Lu</div>
+          : <button onClick={handleComplete} className="text-xs text-emerald-400 font-bold hover:text-emerald-300 transition-colors">✓ Marquer lu</button>
+        }
+      </div>
+
+      {/* Contenu */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+        {loading && (
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+              className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full"
+            />
+            <p className="text-slate-400 text-sm">Chargement du Juz {juzNumber}…</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="text-center py-10 space-y-4 px-5">
+            <p className="text-5xl">⚠️</p>
+            <p className="text-orange-400 text-sm font-bold">Erreur de chargement</p>
+            <p className="text-slate-400 text-xs">Vérifie ta connexion puis réessaie.</p>
+            <button onClick={() => setRetryKey(k => k + 1)}
+              className="w-full max-w-xs mx-auto flex items-center justify-center gap-2 py-3 px-5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-2xl text-sm font-bold"
+            >🔄 Réessayer</button>
+          </div>
+        )}
+
+        {!loading && !error && verses.length > 0 && (() => {
+          // Grouper par sourate pour afficher les headers
+          const groups = [];
+          let currentSurah = null;
+          verses.forEach(v => {
+            if (v.surah !== currentSurah) {
+              currentSurah = v.surah;
+              groups.push({ surah: v.surah, surahName: v.surahName, surahArabic: v.surahArabic, verses: [] });
+            }
+            groups[groups.length - 1].verses.push(v);
+          });
+          return groups.map(g => (
+            <div key={g.surah} className="mb-6">
+              {/* Header sourate */}
+              <div className="text-center py-4 mb-3">
+                <p className="text-emerald-400 text-xl font-bold">{g.surahArabic}</p>
+                <p className="text-slate-400 text-sm">{g.surahName}</p>
+                {g.surah !== 1 && g.surah !== 9 && (
+                  <p className="text-emerald-300/60 text-base mt-2">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+                )}
+              </div>
+              {/* Versets */}
+              {g.verses.map(v => (
+                <div key={`${g.surah}-${v.number}`} className="mb-4 p-3 rounded-2xl bg-white/3 border border-white/6">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="text-emerald-500/70 text-xs font-mono shrink-0 mt-1">{g.surah}:{v.number}</span>
+                    <p className="text-white text-lg leading-loose text-right flex-1" style={{ fontFamily: "'Scheherazade New', serif", direction: "rtl" }}>
+                      {v.arabic}
+                    </p>
+                  </div>
+                  {v.french && (
+                    <p className="text-slate-400 text-xs leading-relaxed border-t border-white/5 pt-2 mt-2">{v.french}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ));
+        })()}
+
+        {/* Fin du Juz */}
+        {!loading && !error && verses.length > 0 && (
+          <div className="mt-8 pt-8 border-t border-white/10 text-center space-y-4 pb-8">
+            <p className="text-slate-400 text-sm">Fin du Juz {juzNumber}</p>
+            {!done ? (
+              <button onClick={handleComplete}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm active:scale-95 transition-all"
+              >✅ Marquer le Juz comme lu</button>
+            ) : (
+              <div className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl max-w-xs mx-auto">
+                <CheckCircle className="w-4 h-4 text-emerald-400"/>
+                <span className="text-emerald-400 font-bold text-sm">Juz {juzNumber} complété ✨</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState("quran");
   const [isStatsOpen, setIsStatsOpen] = useState(false);
-  const [pendingNav, setPendingNav] = useState(null); // { surahNum, verseNum }
+  const [pendingNav, setPendingNav] = useState(null);
+  const [juzReaderOpen, setJuzReaderOpen] = useState(null); // numéro du Juz ouvert // { surahNum, verseNum }
   const { checked, toggle, counts } = useSurahProgress();
   const juzProgram = useJuzProgram();
   const khatmBM = useBookmarks("khatm");
@@ -2642,25 +2967,14 @@ export default function App() {
     {s:1,v:1},   {s:2,v:142}, {s:2,v:253}, {s:3,v:93},  {s:4,v:24},
     {s:4,v:148}, {s:5,v:82},  {s:6,v:111}, {s:7,v:88},  {s:8,v:41},
     {s:9,v:93},  {s:11,v:6},  {s:12,v:53}, {s:15,v:1},  {s:17,v:1},
-    {s:18,v:75}, {s:21,v:1},  {s:23,v:1},  {s:25,v:22}, {s:27,v:56},
+    {s:18,v:75}, {s:21,v:1},  {s:23,v:1},  {s:25,v:21}, {s:27,v:56},
     {s:29,v:46}, {s:33,v:31}, {s:36,v:28}, {s:39,v:32}, {s:41,v:47},
     {s:46,v:1},  {s:51,v:31}, {s:58,v:1},  {s:67,v:1},  {s:78,v:1},
   ];
 
   const handleNavigateToJuz = useCallback((juzNumber) => {
-    const juzSurahs = getSurahsForJuz(juzNumber);
-    if (!juzSurahs.length) return;
-    const startInfo = JUZ_START[juzNumber - 1] || { s: juzSurahs[0], v: 1 };
-    const endInfo   = JUZ_START[juzNumber]     || { s: 115, v: 1 };
-    const bounds = { juzNum: juzNumber, startSurah: startInfo.s, startVerse: startInfo.v, endSurah: endInfo.s, endVerse: endInfo.v };
-    const bookmark = khatmBM.bookmarks.find(bm => bm.surah > 0 && juzSurahs.includes(bm.surah));
-    if (bookmark) {
-      setPendingNav({ surahNum: bookmark.surah, verseNum: bookmark.verse || 1, juzBounds: bounds });
-    } else {
-      setPendingNav({ surahNum: startInfo.s, verseNum: startInfo.v, juzBounds: bounds });
-    }
-    setPage("quran");
-  }, [khatmBM.bookmarks]);
+    setJuzReaderOpen(juzNumber);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -2753,6 +3067,26 @@ export default function App() {
           ))}
         </div>
       </nav>
+
+      {/* ── Lecteur Juz dédié ── */}
+      <AnimatePresence>
+        {juzReaderOpen && (
+          <motion.div key="juzreader" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="fixed inset-0 z-[85]"
+          >
+            <JuzReader
+              juzNumber={juzReaderOpen}
+              alreadyDone={!!juzProgram.program.completed[juzReaderOpen]}
+              onClose={() => setJuzReaderOpen(null)}
+              onComplete={() => {
+                juzProgram.manualComplete(juzReaderOpen);
+                setTimeout(() => setJuzReaderOpen(null), 1200);
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} juzProgram={juzProgram} />
     </div>
