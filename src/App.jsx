@@ -422,6 +422,9 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
     }
   }, []);
 
+  const [juzReminderEnabled, setJuzReminderEnabled] = useState(() => storage("juz_reminder_enabled_v1", false));
+  const [juzReminderTime, setJuzReminderTime]       = useState(() => storage("juz_reminder_time_v1", "08:00"));
+
   const toggleTime = useCallback((key) => {
     setNotifTimes(prev => {
       const next = { ...prev, [key]: !prev[key] };
@@ -430,7 +433,21 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
     });
   }, []);
 
-  return { notifEnabled, notifTimes, enableNotifs, toggleTime };
+  const disableNotifs = useCallback(() => {
+    setNotifEnabled(false);
+    storageSet("notif_enabled_v2", false);
+  }, []);
+
+  const toggleJuzReminder = useCallback(() => {
+    setJuzReminderEnabled(prev => { const n = !prev; storageSet("juz_reminder_enabled_v1", n); return n; });
+  }, []);
+
+  const updateJuzReminderTime = useCallback((t) => {
+    setJuzReminderTime(t); storageSet("juz_reminder_time_v1", t);
+  }, []);
+
+  return { notifEnabled, notifTimes, enableNotifs, disableNotifs, toggleTime,
+           juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime };
 }
 
 function useJuzProgram() {
@@ -678,7 +695,8 @@ function JuzProgram({ onNavigateToJuz }) {
     dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
   } = juz;
 
-  const { notifEnabled, notifTimes, enableNotifs, toggleTime } =
+  const { notifEnabled, notifTimes, enableNotifs, disableNotifs, toggleTime,
+          juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime } =
     useNotifications(program, completedCount, dailyGoalJuz);
 
   // Marque-pages du programme Khatm (indépendants)
@@ -904,7 +922,11 @@ function JuzProgram({ onNavigateToJuz }) {
               Activer
             </button>
           ) : (
-            <span className="text-emerald-400 text-xs font-semibold">✅ Actif</span>
+            <button onClick={disableNotifs}
+              className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all"
+            >
+              ✅ Actif — désactiver
+            </button>
           )}
         </div>
 
@@ -939,6 +961,31 @@ function JuzProgram({ onNavigateToJuz }) {
                   Rappel automatique tous les vendredis à 8h30. Le Prophète ﷺ a dit que celui qui lit Al-Kahf le vendredi sera illuminé jusqu'au vendredi suivant.
                 </p>
               </div>
+            </div>
+            {/* Rappel quotidien Juz */}
+            <div className="mt-2 p-3 bg-blue-500/8 border border-blue-500/20 rounded-2xl">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📖</span>
+                  <p className="text-blue-300 font-bold text-xs">Rappel lecture du Juz</p>
+                </div>
+                <button onClick={toggleJuzReminder}
+                  className={`w-10 h-5 rounded-full transition-all relative shrink-0 ${juzReminderEnabled ? "bg-blue-500" : "bg-slate-600"}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${juzReminderEnabled ? "left-5" : "left-0.5"}`}/>
+                </button>
+              </div>
+              {juzReminderEnabled ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-slate-500 text-xs shrink-0">Heure :</p>
+                  <input type="time" value={juzReminderTime}
+                    onChange={e => updateJuzReminderTime(e.target.value)}
+                    className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-white text-xs flex-1"
+                  />
+                </div>
+              ) : (
+                <p className="text-slate-500 text-xs">Active pour recevoir un rappel quotidien de ta lecture.</p>
+              )}
             </div>
           </div>
         )}
