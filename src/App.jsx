@@ -370,23 +370,37 @@ function scheduleFridayKahfNotif(notifEnabled) {
   return t;
 }
 
-// ── Helper : envoyer un message au Service Worker ───────────────
-async function sendToSW(type, payload = {}) {
-  if (!("serviceWorker" in navigator)) return;
-  const reg = await navigator.serviceWorker.ready.catch(() => null);
-  if (!reg?.active) return;
-  reg.active.postMessage({ type, payload });
-}
+// ── OneSignal App ID ─────────────────────────────────────────────
+const ONESIGNAL_APP_ID = "302baca4-a9f1-40c4-848a-b09cb9eea179";
 
-// ── Enregistrement du Service Worker ─────────────────────────────
+// ── Initialisation OneSignal ──────────────────────────────────────
 function useServiceWorker() {
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw.js", { scope: "/" })
-      .then(reg => console.log("✅ SW enregistré:", reg.scope))
-      .catch(e => console.warn("⚠️ SW échec:", e.message));
+    if (typeof window === "undefined") return;
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: ONESIGNAL_APP_ID,
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true,
+      });
+    });
   }, []);
 }
+
+// ── Demander permission via OneSignal ────────────────────────────
+async function subscribeToPush() {
+  try {
+    if (!window.OneSignal) return;
+    await window.OneSignal.Notifications.requestPermission();
+    console.log("✅ OneSignal permission accordée");
+  } catch(e) {
+    console.warn("OneSignal error:", e.message);
+  }
+}
+
+// ── Helper SW (fallback inutilisé avec OneSignal) ────────────────
+async function sendToSW(type, payload = {}) {}
 
 function useNotifications(program, completedCount, dailyGoalJuz) {
   const [notifEnabled, setNotifEnabled] = useState(() => storage("notif_enabled_v2", false));
@@ -427,18 +441,11 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
       program.active, program.startDate, program.endDate, completedCount, dailyGoalJuz]);
 
   const enableNotifs = useCallback(async () => {
-    if (!("Notification" in window)) return;
-    const perm = await Notification.requestPermission();
-    if (perm === "granted") {
-      setNotifEnabled(true);
-      storageSet("notif_enabled_v2", true);
-      // Notif de confirmation immédiate via SW
-      sendToSW("SHOW_NOW", {
-        title: "Al-Murshid",
-        body: "Notifications activées ! Nous te rappellerons de lire chaque jour et de lire Al-Kahf le vendredi. Bismillāh 📖",
-        tag: "welcome"
-      });
-    }
+    if (typeof window === "undefined") return;
+    // OneSignal gère la permission
+    await subscribeToPush();
+    setNotifEnabled(true);
+    storageSet("notif_enabled_v2", true);
   }, []);
 
   const toggleTime = useCallback((key) => {
