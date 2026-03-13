@@ -1767,8 +1767,11 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null
   );
   const [targetVerse, setTargetVerse] = useState(initialVerseNum || null);
+  // Copie locale des bornes Juz — persiste même après effacement de pendingNav
+  const [activeJuzBounds, setActiveJuzBounds] = useState(juzBounds || null);
 
-  // Réagir aux changements de navigation (ex: clic sur Juz 2, 3, etc.)
+  // Réagir aux changements de navigation (clic sur Juz)
+  // Ne rien faire si les props redeviennent null (onNavConsumed efface pendingNav)
   useEffect(() => {
     if (!initialSurahNum) return;
     const surah = QURAN_SURAHS[initialSurahNum - 1];
@@ -1778,6 +1781,21 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
       setTargetVerse(initialVerseNum);
     }
   }, [initialSurahNum, initialVerseNum]);
+
+  // Empêcher le scroll de remonter en haut quand les props changent
+  const lastScrollPos = useRef(0);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const save = () => { lastScrollPos.current = el.scrollTop; };
+    el.addEventListener("scroll", save, { passive: true });
+    return () => el.removeEventListener("scroll", save);
+  }, []);
+
+  // Mettre à jour les bornes Juz quand la prop change
+  useEffect(() => {
+    if (juzBounds) setActiveJuzBounds(juzBounds);
+  }, [juzBounds]);
   const verseRefs = useRef({});
   const { verses, loading: versesLoading, error: versesError } = useVerses(currentSurah?.number);
   const [filter, setFilter] = useState("");
@@ -1819,8 +1837,8 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     if (!touchStart.current || !currentSurah) return;
     const diff = touchStart.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 60) {
-      if (diff > 0 && currentSurah.number < 114) setCurrentSurah(QURAN_SURAHS[currentSurah.number]);
-      if (diff < 0 && currentSurah.number > 1) setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2]);
+      if (diff > 0 && currentSurah.number < 114) { setCurrentSurah(QURAN_SURAHS[currentSurah.number]); setActiveJuzBounds(null); }
+      if (diff < 0 && currentSurah.number > 1) { setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2]); setActiveJuzBounds(null); }
     }
     touchStart.current = null;
   };
@@ -1841,17 +1859,19 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
   useEffect(() => {
     if (!targetVerse) return;
     // Attendre que les versets soient chargés dans le DOM
-    const t = setTimeout(() => {
+    // Attendre que les versets soient dans le DOM (Al-Baqara peut prendre + de temps)
+    const attempt = (tries = 0) => {
       const el = verseRefs.current[targetVerse];
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
         setTargetVerse(null);
-        onNavConsumed?.();
-      } else if (versesLoading) {
-        // Versets pas encore chargés, on réessaie
-        setTargetVerse(v => v);
+        // Appeler onNavConsumed APRÈS le scroll pour éviter le re-render prématuré
+        setTimeout(() => onNavConsumed?.(), 1500);
+      } else if (tries < 20) {
+        setTimeout(() => attempt(tries + 1), 300);
       }
-    }, 600);
+    };
+    const t = setTimeout(() => attempt(), 500);
     return () => clearTimeout(t);
   }, [targetVerse, currentSurah, verses]);
 
@@ -1881,8 +1901,8 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
 
 
   const getJuzFilteredVerses = (rawVerses) => {
-    if (!juzBounds || !currentSurah) return rawVerses;
-    const { startSurah, startVerse, endSurah, endVerse } = juzBounds;
+    if (!activeJuzBounds || !currentSurah) return rawVerses;
+    const { startSurah, startVerse, endSurah, endVerse } = activeJuzBounds;
     return rawVerses.filter(v => {
       const sn = currentSurah.number;
       if (sn === startSurah && sn === endSurah) return v.number >= startVerse && v.number <= endVerse;
