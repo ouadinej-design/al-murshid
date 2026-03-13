@@ -21,7 +21,14 @@
           appId: "302baca4-a9f1-40c4-848a-b09cb9eea179",
           notifyButton: { enable: false },
           allowLocalhostAsSecureOrigin: true,
+          autoResubscribe: true,
+          serviceWorkerParam: { scope: "/" },
+          serviceWorkerPath: "OneSignalSDKWorker.js",
         });
+        // Auto opt-in si permission déjà accordée
+        if (Notification.permission === "granted") {
+          await OneSignal.User.PushSubscription.optIn();
+        }
       });
     </script>
   </head>
