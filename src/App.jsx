@@ -308,7 +308,25 @@ function useBookmarks(type) {
   return { bookmarks, save, remove, resetAll };
 }
 
+// ── Sourate Al-Kahf vendredi ──
+function useFridayKahf() {
+  const KEY = "kahf_fridays_v1";
+  const [readFridays, setReadFridays] = useState(() => storage(KEY, []));
+  const today = new Date();
+  const yearWeek = `${today.getFullYear()}-W${String(Math.ceil((today - new Date(today.getFullYear(),0,1)) / 604800000 + 1)).padStart(2,'0')}`;
+  const isReadThisWeek = readFridays.includes(yearWeek);
 
+  const markRead = useCallback(() => {
+    setReadFridays(prev => {
+      if (prev.includes(yearWeek)) return prev;
+      const next = [...prev, yearWeek].slice(-52);
+      storageSet(KEY, next);
+      return next;
+    });
+  }, [yearWeek]);
+
+  return { readFridays, isReadThisWeek, markRead, totalFridays: readFridays.length };
+}
 
 function useJuzProgram() {
   const [program, setProgram] = useState(() => storage("juz_program_v3", {
