@@ -2402,11 +2402,16 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp }) {
+function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzProgram: juzProp }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
-  const [recited] = useState(() => storage("adhkar_recited", {}) || {});
+  const [recited, setRecited] = useState(() => storage("adhkar_recited", {}) || {});
   const { totalFridays, isReadThisWeek } = fridayKahfProp || useFridayKahf();
-  const juzProgram = useJuzProgram();
+  const juzProgram = juzProp || useJuzProgram();
+
+  // Relire le localStorage à chaque ouverture du drawer
+  useEffect(() => {
+    if (isOpen) setRecited(storage("adhkar_recited", {}) || {});
+  }, [isOpen]);
 
   // Compter les adhkar complétés (toutes catégories)
   const adhkarDone = ADHKAR_MALIKITES.filter(d => (recited[d.id] || 0) >= d.repetition).length;
@@ -2668,7 +2673,7 @@ export default function App() {
         </div>
       </nav>
 
-      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} />
+      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} />
     </div>
   );
 }
