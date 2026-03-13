@@ -2334,11 +2334,10 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts, juzProgram = {program:{active:false},completedCount:0,daysPassed:0,onTrack:false,behindBy:0}, fridayKahf }) {
+function StatsDrawer({ isOpen, onClose, counts }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
   const [recited] = useState(() => storage("adhkar_recited", {}) || {});
-  const { totalFridays, isReadThisWeek } = fridayKahf || useFridayKahf();
-  // Lire directement depuis le hook pour avoir les données fraîches
+  const { totalFridays, isReadThisWeek } = useFridayKahf();
   const juzProgram = useJuzProgram();
 
   // Compter les adhkar complétés (toutes catégories)
@@ -2601,7 +2600,7 @@ export default function App() {
         </div>
       </nav>
 
-      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} juzProgram={juzProgram} fridayKahf={fridayKahf} />
+      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} />
     </div>
   );
 }
