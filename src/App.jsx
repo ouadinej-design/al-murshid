@@ -373,7 +373,7 @@ function scheduleFridayKahfNotif(notifEnabled) {
 function useNotifications(program, completedCount, dailyGoalJuz) {
   const [notifEnabled, setNotifEnabled] = useState(() => storage("notif_enabled_v2", false));
   const [notifTimes, setNotifTimes] = useState(() => storage("notif_times_v2", {
-    fajr: true, dhuhr: false, asr: true, maghrib: true
+    fajr: false, dhuhr: false, asr: false, maghrib: false
   }));
   const scheduledRef = useRef([]);
 
@@ -683,7 +683,8 @@ function JuzProgram({ onNavigateToJuz }) {
     dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
   } = juz;
 
-  const { notifEnabled, notifTimes, enableNotifs, toggleTime } =
+  const { notifEnabled, notifTimes, enableNotifs, disableNotifs, toggleTime,
+          juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime } =
     useNotifications(program, completedCount, dailyGoalJuz);
 
   // Marque-pages du programme Khatm (indépendants)
@@ -1858,9 +1859,9 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     const { startSurah, startVerse, endSurah, endVerse } = juzBounds;
     return rawVerses.filter(v => {
       const sn = currentSurah.number;
-      if (sn === startSurah && sn === endSurah) return v.number >= startVerse && v.number < endVerse;
+      if (sn === startSurah && sn === endSurah) return v.number >= startVerse && v.number <= endVerse;
       if (sn === startSurah) return v.number >= startVerse;
-      if (sn === endSurah)   return v.number < endVerse;
+      if (sn === endSurah)   return v.number <= endVerse;
       return true;
     });
   };
@@ -2635,6 +2636,30 @@ const PAGES = [
 
 export default function App() {
   const [page, setPage] = useState("quran");
+
+  // ── OneSignal : enregistrer le device dès que la page charge ──
+  useEffect(() => {
+    const tryOptIn = async () => {
+      try {
+        if (!window.OneSignalDeferred) return;
+        window.OneSignalDeferred.push(async (OneSignal) => {
+          await OneSignal.init({
+            appId: "302baca4-a9f1-40c4-848a-b09cb9eea179",
+            notifyButton: { enable: false },
+            allowLocalhostAsSecureOrigin: true,
+            autoResubscribe: true,
+          });
+          if (Notification.permission === "granted") {
+            await OneSignal.User.PushSubscription.optIn();
+            console.log("OneSignal: abonné ✅", OneSignal.User.PushSubscription.id);
+          }
+        });
+      } catch(e) { console.warn("OneSignal init:", e); }
+    };
+    // Attendre que le SDK soit chargé
+    if (document.readyState === "complete") { tryOptIn(); }
+    else { window.addEventListener("load", tryOptIn); return () => window.removeEventListener("load", tryOptIn); }
+  }, []);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [pendingNav, setPendingNav] = useState(null); // { surahNum, verseNum }
   const { checked, toggle, counts } = useSurahProgress();
@@ -2647,22 +2672,40 @@ export default function App() {
     {s:1,v:1},   {s:2,v:142}, {s:2,v:253}, {s:3,v:93},  {s:4,v:24},
     {s:4,v:148}, {s:5,v:82},  {s:6,v:111}, {s:7,v:88},  {s:8,v:41},
     {s:9,v:93},  {s:11,v:6},  {s:12,v:53}, {s:15,v:1},  {s:17,v:1},
-    {s:18,v:75}, {s:21,v:1},  {s:23,v:1},  {s:25,v:22}, {s:27,v:56},
+    {s:18,v:75}, {s:21,v:1},  {s:23,v:1},  {s:25,v:21}, {s:27,v:56},
     {s:29,v:46}, {s:33,v:31}, {s:36,v:28}, {s:39,v:32}, {s:41,v:47},
     {s:46,v:1},  {s:51,v:31}, {s:58,v:1},  {s:67,v:1},  {s:78,v:1},
   ];
 
+  // Bornes exactes des 30 Juz (start inclusif, end inclusif)
+  const JUZ_EXACT = [
+    { ss:1,  sv:1,   es:2,  ev:141 }, { ss:2,  sv:142, es:2,  ev:252 },
+    { ss:2,  sv:253, es:3,  ev:92  }, { ss:3,  sv:93,  es:4,  ev:23  },
+    { ss:4,  sv:24,  es:4,  ev:147 }, { ss:4,  sv:148, es:5,  ev:81  },
+    { ss:5,  sv:82,  es:6,  ev:110 }, { ss:6,  sv:111, es:7,  ev:87  },
+    { ss:7,  sv:88,  es:8,  ev:40  }, { ss:8,  sv:41,  es:9,  ev:92  },
+    { ss:9,  sv:93,  es:11, ev:5   }, { ss:11, sv:6,   es:12, ev:52  },
+    { ss:12, sv:53,  es:14, ev:52  }, { ss:15, sv:1,   es:16, ev:128 },
+    { ss:17, sv:1,   es:18, ev:74  }, { ss:18, sv:75,  es:20, ev:135 },
+    { ss:21, sv:1,   es:22, ev:78  }, { ss:23, sv:1,   es:25, ev:20  },
+    { ss:25, sv:21,  es:27, ev:55  }, { ss:27, sv:56,  es:29, ev:45  },
+    { ss:29, sv:46,  es:33, ev:30  }, { ss:33, sv:31,  es:36, ev:27  },
+    { ss:36, sv:28,  es:39, ev:31  }, { ss:39, sv:32,  es:41, ev:46  },
+    { ss:41, sv:47,  es:45, ev:37  }, { ss:46, sv:1,   es:51, ev:30  },
+    { ss:51, sv:31,  es:57, ev:29  }, { ss:58, sv:1,   es:66, ev:12  },
+    { ss:67, sv:1,   es:77, ev:50  }, { ss:78, sv:1,   es:114,ev:6   },
+  ];
+
   const handleNavigateToJuz = useCallback((juzNumber) => {
+    const b = JUZ_EXACT[juzNumber - 1];
+    if (!b) return;
+    const bounds = { juzNum: juzNumber, startSurah: b.ss, startVerse: b.sv, endSurah: b.es, endVerse: b.ev };
     const juzSurahs = getSurahsForJuz(juzNumber);
-    if (!juzSurahs.length) return;
-    const startInfo = JUZ_START[juzNumber - 1] || { s: juzSurahs[0], v: 1 };
-    const endInfo   = JUZ_START[juzNumber]     || { s: 115, v: 1 };
-    const bounds = { juzNum: juzNumber, startSurah: startInfo.s, startVerse: startInfo.v, endSurah: endInfo.s, endVerse: endInfo.v };
     const bookmark = khatmBM.bookmarks.find(bm => bm.surah > 0 && juzSurahs.includes(bm.surah));
     if (bookmark) {
       setPendingNav({ surahNum: bookmark.surah, verseNum: bookmark.verse || 1, juzBounds: bounds });
     } else {
-      setPendingNav({ surahNum: startInfo.s, verseNum: startInfo.v, juzBounds: bounds });
+      setPendingNav({ surahNum: b.ss, verseNum: b.sv, juzBounds: bounds });
     }
     setPage("quran");
   }, [khatmBM.bookmarks]);
