@@ -313,7 +313,10 @@ function useFridayKahf() {
   const KEY = "kahf_fridays_v1";
   const [readFridays, setReadFridays] = useState(() => storage(KEY, []));
   const today = new Date();
-  const yearWeek = `${today.getFullYear()}-W${String(Math.ceil((today - new Date(today.getFullYear(),0,1)) / 604800000 + 1)).padStart(2,'0')}`;
+  // ISO week: lundi=début de semaine
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((today - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  const yearWeek = `${today.getFullYear()}-W${String(weekNum).padStart(2,'0')}`;
   const isReadThisWeek = readFridays.includes(yearWeek);
 
   const markRead = useCallback(() => {
@@ -1818,9 +1821,20 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             <div className="text-center py-8 space-y-3 px-4">
               <p className="text-4xl">⚠️</p>
               <p className="text-orange-400 text-sm font-semibold">Erreur de chargement</p>
-              <p className="text-slate-500 text-xs">Reviens en arrière et réessaie d'ouvrir la sourate.</p>
+              <p className="text-slate-500 text-xs">Vérifie ta connexion et réessaie.</p>
+              <button onClick={() => {
+                  if (!currentSurah) return;
+                  const n = currentSurah.number;
+                  _versesMemCache.delete(n);
+                  setCurrentSurah(null);
+                  setTimeout(() => setCurrentSurah(QURAN_SURAHS[n - 1]), 100);
+                }}
+                className="px-5 py-2.5 bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 rounded-2xl text-sm font-bold hover:bg-emerald-500/25 transition-all"
+              >
+                🔄 Réessayer
+              </button>
               <button onClick={() => setCurrentSurah(null)}
-                className="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/15 transition-all"
+                className="block mx-auto px-4 py-2 bg-white/8 text-slate-400 rounded-xl text-xs hover:bg-white/15 transition-all"
               >
                 ← Retour à la liste
               </button>
@@ -2277,20 +2291,68 @@ const EMBEDDED_VERSES = {
 // Cache mémoire session
 const _versesMemCache = new Map();
 
-async function fetchSurahFromAPI(surahNumber, surahInfo) {
-  const [arabicResp, frenchResp] = await Promise.all([
-    fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/quran-uthmani`),
-    fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/fr.hamidullah`)
-  ]);
-  if (!arabicResp.ok || !frenchResp.ok) throw new Error("API indisponible");
-  const [arabicData, frenchData] = await Promise.all([arabicResp.json(), frenchResp.json()]);
-  if (arabicData.code !== 200 || frenchData.code !== 200) throw new Error("Erreur API");
-  return arabicData.data.ayahs.map((a, i) => ({
-    number: a.numberInSurah,
-    arabic: a.text,
-    transliteration: "",
-    french: frenchData.data.ayahs[i]?.text || ""
-  }));
+const _fetchWithTimeout = (url, ms = 8000) => {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(tid));
+};
+
+async function fetchSurahFromAPI(surahNumber) {
+  // Source A : alquran.cloud direct
+  try {
+    const [a, f] = await Promise.all([
+      _fetchWithTimeout(`https://api.alquran.cloud/v1/surah/${surahNumber}/quran-uthmani`),
+      _fetchWithTimeout(`https://api.alquran.cloud/v1/surah/${surahNumber}/fr.hamidullah`)
+    ]);
+    if (a.ok && f.ok) {
+      const [ad, fd] = await Promise.all([a.json(), f.json()]);
+      if (ad.code === 200 && fd.code === 200) {
+        return ad.data.ayahs.map((v, i) => ({
+          number: v.numberInSurah, arabic: v.text,
+          transliteration: "", french: fd.data.ayahs[i]?.text || ""
+        }));
+      }
+    }
+  } catch {}
+
+  // Source B : via corsproxy
+  try {
+    const base = `https://corsproxy.io/?https://api.alquran.cloud/v1/surah/${surahNumber}`;
+    const [a, f] = await Promise.all([
+      _fetchWithTimeout(`${base}/quran-uthmani`),
+      _fetchWithTimeout(`${base}/fr.hamidullah`)
+    ]);
+    if (a.ok && f.ok) {
+      const [ad, fd] = await Promise.all([a.json(), f.json()]);
+      if (ad.code === 200 && fd.code === 200) {
+        return ad.data.ayahs.map((v, i) => ({
+          number: v.numberInSurah, arabic: v.text,
+          transliteration: "", french: fd.data.ayahs[i]?.text || ""
+        }));
+      }
+    }
+  } catch {}
+
+  // Source C : CDN jsdelivr (JSON statique)
+  try {
+    const r = await _fetchWithTimeout(
+      `https://cdn.jsdelivr.net/npm/quran-json@3.1.2/data/surah/surah_${surahNumber}.json`
+    );
+    if (r.ok) {
+      const d = await r.json();
+      const verses = Array.isArray(d) ? d : (d.verses || d.ayahs || []);
+      if (verses.length > 0) {
+        return verses.map((v, i) => ({
+          number: v.id || v.numberInSurah || (i + 1),
+          arabic: v.text || v.arabic || "",
+          transliteration: v.transliteration || "",
+          french: v.translation || v.french || ""
+        }));
+      }
+    }
+  } catch {}
+
+  throw new Error("Toutes les sources ont échoué");
 }
 
 function useVerses(surahNumber) {
@@ -2313,14 +2375,20 @@ function useVerses(surahNumber) {
 
     setState({ verses: [], loading: true, error: null });
 
-    fetchSurahFromAPI(surahNumber, surahInfo)
-      .then(verses => {
+    const tryLoad = async (attempts = 0) => {
+      try {
+        const verses = await fetchSurahFromAPI(surahNumber);
         _versesMemCache.set(surahNumber, verses);
         setState({ verses, loading: false, error: null });
-      })
-      .catch(() => {
-        setState({ verses: [], loading: false, error: "api_error" });
-      });
+      } catch {
+        if (attempts < 2) {
+          setTimeout(() => tryLoad(attempts + 1), 1500);
+        } else {
+          setState({ verses: [], loading: false, error: "api_error" });
+        }
+      }
+    };
+    tryLoad();
   }, [surahNumber]);
 
   return state;
@@ -2334,10 +2402,10 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts }) {
+function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
   const [recited] = useState(() => storage("adhkar_recited", {}) || {});
-  const { totalFridays, isReadThisWeek } = useFridayKahf();
+  const { totalFridays, isReadThisWeek } = fridayKahfProp || useFridayKahf();
   const juzProgram = useJuzProgram();
 
   // Compter les adhkar complétés (toutes catégories)
@@ -2600,7 +2668,7 @@ export default function App() {
         </div>
       </nav>
 
-      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} />
+      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} />
     </div>
   );
 }
