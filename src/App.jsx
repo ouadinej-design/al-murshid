@@ -413,12 +413,22 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
 
   const enableNotifs = useCallback(async () => {
     if (!("Notification" in window)) return;
+
+    // Tenter via OneSignal pour enregistrer le device
+    try {
+      if (window.OneSignal) {
+        await window.OneSignal.Notifications.requestPermission();
+        const opted = window.OneSignal.User.PushSubscription.optedIn;
+        if (opted) { setNotifEnabled(true); storageSet("notif_enabled_v2", true); return; }
+      }
+    } catch(e) { console.warn("OneSignal:", e); }
+
+    // Fallback navigateur
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
       setNotifEnabled(true);
       storageSet("notif_enabled_v2", true);
-      requestAndScheduleNotif("Notifications activées ! Nous te rappellerons de lire chaque jour et de lire Al-Kahf le vendredi. Bismillāh 📖");
-      scheduleFridayKahfNotif(true);
+      try { if (window.OneSignal) await window.OneSignal.User.PushSubscription.optIn(); } catch(e) {}
     }
   }, []);
 
