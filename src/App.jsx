@@ -1469,31 +1469,7 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
           </div>
         </div>
 
-        {/* ── 1. TRANSLITTÉRATION EN GRAS (en premier) ── */}
-        <div className={`p-4 rounded-2xl mb-3 border transition-all ${
-          isPlaying ? "bg-blue-500/8 border-blue-500/20" : "bg-white/3 border-white/8"
-        }`}>
-          <p className="text-xs text-slate-600 uppercase tracking-wider font-semibold mb-1.5">Translittération</p>
-          <p className="font-bold text-white text-base leading-relaxed break-words select-text">
-            {dhikr.transliteration}
-          </p>
-        </div>
-
-        {/* ── 2. TRADUCTION FRANÇAISE ── */}
-        <div className="bg-emerald-500/8 border border-emerald-500/15 rounded-2xl p-4 mb-3">
-          <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mb-1.5">Traduction</p>
-          <p className="text-slate-300 text-sm leading-relaxed select-text">{dhikr.french}</p>
-        </div>
-
-        {/* ── Bénéfice si présent ── */}
-        {dhikr.benefice && (
-          <div className="bg-amber-500/8 border border-amber-500/20 rounded-2xl p-4 mb-3">
-            <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5">📜 Vertu & bénéfice</p>
-            <p className="text-amber-200/80 text-sm leading-relaxed italic select-text">{dhikr.benefice}</p>
-          </div>
-        )}
-
-        {/* ── 3. TEXTE ARABE COMPLET (en dernier) — cliquable pour audio ── */}
+        {/* ── 1. TEXTE ARABE (en premier) — cliquable pour audio ── */}
         <div className={`p-4 rounded-2xl mb-3 border transition-all cursor-pointer ${
           isPlaying ? "bg-blue-500/8 border-blue-500/25" : "bg-slate-800/60 border-white/10 hover:border-white/20"
         }`} onClick={() => speak(dhikr)}>
@@ -1523,7 +1499,30 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
           )}
         </div>
 
-        {/* Source — bouton toggle si long */}
+{/* ── 2. TRADUCTION FRANÇAISE ── */}
+        <div className="bg-emerald-500/8 border border-emerald-500/15 rounded-2xl p-4 mb-3">
+          <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mb-1.5">Traduction</p>
+          <p className="text-slate-300 text-sm leading-relaxed select-text">{dhikr.french}</p>
+        </div>
+
+{/* ── Bénéfice si présent ── */}
+        {dhikr.benefice && (
+          <div className="bg-amber-500/8 border border-amber-500/20 rounded-2xl p-4 mb-3">
+            <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5">📜 Vertu & bénéfice</p>
+            <p className="text-amber-200/80 text-sm leading-relaxed italic select-text">{dhikr.benefice}</p>
+          </div>
+        )}
+
+{/* ── 3. TRANSLITTÉRATION (en dernier) ── */}
+        <div className={`p-4 rounded-2xl mb-3 border transition-all ${
+          isPlaying ? "bg-blue-500/8 border-blue-500/20" : "bg-white/3 border-white/8"
+        }`}>
+          <p className="text-xs text-slate-600 uppercase tracking-wider font-semibold mb-1.5">Translittération</p>
+          <p className="font-bold text-white text-base leading-relaxed break-words select-text">
+            {dhikr.transliteration}
+          </p>
+        </div>
+    {/* Source — bouton toggle si long */}
         <button onClick={() => setExpanded(e => !e)}
           className="w-full text-left text-slate-700 hover:text-slate-500 text-xs italic transition-all flex items-center justify-between gap-2"
         >
