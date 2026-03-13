@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   BookOpen, Bookmark, Activity, ArrowRight, Star, Heart,
-  Timer, X, Clock, Award, Copy, CheckCircle, Bell, BellOff,
+  Timer, X, Clock, Award, Copy, CheckCircle,
   RotateCcw, ChevronLeft, ChevronRight, Play, Pause,
   Plus, Trash2, Target, TrendingUp, Calendar, Zap
 } from "lucide-react";
@@ -308,150 +308,7 @@ function useBookmarks(type) {
   return { bookmarks, save, remove, resetAll };
 }
 
-// ── Notifications locales ──
-async function requestAndScheduleNotif(message) {
-  if (!("Notification" in window)) return false;
-  let perm = Notification.permission;
-  if (perm === "default") perm = await Notification.requestPermission();
-  if (perm !== "granted") return false;
-  new Notification("📖 Al-Murshid — Rappel de lecture", {
-    body: message,
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>",
-    badge: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>",
-  });
-  return true;
-}
 
-// ── Sourate Al-Kahf vendredi ──
-function useFridayKahf() {
-  const KEY = "kahf_fridays_v1";
-  const [readFridays, setReadFridays] = useState(() => storage(KEY, [])); // list of "YYYY-WW" strings
-  const today = new Date();
-  const yearWeek = `${today.getFullYear()}-W${String(Math.ceil((today - new Date(today.getFullYear(),0,1)) / 604800000 + 1)).padStart(2,'0')}`;
-  const isReadThisWeek = readFridays.includes(yearWeek);
-
-  const markRead = useCallback(() => {
-    setReadFridays(prev => {
-      if (prev.includes(yearWeek)) return prev;
-      const next = [...prev, yearWeek].slice(-52); // garder 1 an
-      storageSet(KEY, next);
-      return next;
-    });
-  }, [yearWeek]);
-
-  return { readFridays, isReadThisWeek, markRead, totalFridays: readFridays.length };
-}
-
-function scheduleFridayKahfNotif(notifEnabled) {
-  if (!notifEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
-
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=dim, 5=ven
-  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7; // jours jusqu'au prochain vendredi
-
-  const nextFridayMorning = new Date(now);
-  nextFridayMorning.setDate(now.getDate() + daysUntilFriday);
-  nextFridayMorning.setHours(8, 30, 0, 0); // 8h30 — avant 10h
-
-  // Si aujourd'hui est vendredi et qu'il n'est pas encore 8h30
-  if (dayOfWeek === 5 && now < nextFridayMorning) {
-    nextFridayMorning.setDate(now.getDate()); // ce vendredi
-  }
-
-  const delay = nextFridayMorning.getTime() - now.getTime();
-  const t = setTimeout(() => {
-    new Notification("📖 Vendredi — Sourate Al-Kahf", {
-      body: "Lis la Sourate Al-Kahf aujourd'hui ! Le Prophète ﷺ a dit : « Celui qui lit Al-Kahf le vendredi, une lumière illuminera son chemin jusqu'au vendredi suivant. »",
-      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>",
-    });
-    // Replanifier pour le vendredi suivant (récursif)
-    setTimeout(() => scheduleFridayKahfNotif(true), 1000);
-  }, delay);
-  return t;
-}
-
-function useNotifications(program, completedCount, dailyGoalJuz) {
-  const [notifEnabled, setNotifEnabled] = useState(() => storage("notif_enabled_v2", false));
-  const [notifTimes, setNotifTimes] = useState(() => storage("notif_times_v2", {
-    fajr: false, dhuhr: false, asr: false, maghrib: false
-  }));
-  const scheduledRef = useRef([]);
-
-  // Planifier les rappels dans la session active
-  useEffect(() => {
-    if (!notifEnabled || !program.active) return;
-    // Annuler anciens timers
-    scheduledRef.current.forEach(t => clearTimeout(t));
-    scheduledRef.current = [];
-
-    const now = new Date();
-    const slots = [
-      { key: "fajr",    hour: 6,  min: 0,  label: "Fajr — commence ta lecture du jour !" },
-      { key: "dhuhr",   hour: 13, min: 0,  label: "Dhuhr — as-tu lu ton Juz du jour ?" },
-      { key: "asr",     hour: 16, min: 30, label: "Asr — il reste du temps pour atteindre l'objectif !" },
-      { key: "maghrib", hour: 19, min: 30, label: "Maghrib — dernier rappel de lecture du jour." },
-    ];
-
-    slots.forEach(slot => {
-      if (!notifTimes[slot.key]) return;
-      const target = new Date();
-      target.setHours(slot.hour, slot.min, 0, 0);
-      if (target <= now) target.setDate(target.getDate() + 1); // demain si passé
-      const delay = target.getTime() - now.getTime();
-      const t = setTimeout(() => {
-        const remaining = Math.max(0, dailyGoalJuz - (completedCount % dailyGoalJuz));
-        const msg = remaining > 0
-          ? `${slot.label} Il te reste ${remaining} Juz à lire aujourd'hui.`
-          : `MāshāAllāh ! Objectif du jour atteint — ${completedCount}/30 Juz. Bārakallāhu fīk !`;
-        requestAndScheduleNotif(msg);
-      }, delay);
-      scheduledRef.current.push(t);
-    });
-
-    return () => scheduledRef.current.forEach(t => clearTimeout(t));
-  }, [notifEnabled, notifTimes, program.active, completedCount, dailyGoalJuz]);
-
-  const enableNotifs = useCallback(async () => {
-    if (!("Notification" in window)) {
-      alert("Ton navigateur ne supporte pas les notifications.");
-      return;
-    }
-    let perm = Notification.permission;
-    if (perm === "default") perm = await Notification.requestPermission();
-    if (perm === "granted") {
-      setNotifEnabled(true);
-      storageSet("notif_enabled_v2", true);
-      try { if (window.OneSignal) await window.OneSignal.User.PushSubscription.optIn(); } catch(e) {}
-    } else if (perm === "denied") {
-      alert("Notifications bloquées. Va dans les réglages du navigateur pour autoriser ce site.");
-    }
-  }, []);
-
-  const toggleTime = useCallback((key) => {
-    setNotifTimes(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      storageSet("notif_times_v2", next);
-      return next;
-    });
-  }, []);
-
-  const disableNotifs = useCallback(() => {
-    setNotifEnabled(false);
-    storageSet("notif_enabled_v2", false);
-  }, []);
-
-  const [juzReminderEnabled, setJuzReminderEnabled] = useState(() => storage("juz_reminder_enabled_v1", false));
-  const [juzReminderTime, setJuzReminderTime] = useState(() => storage("juz_reminder_time_v1", "08:00"));
-  const toggleJuzReminder = useCallback(() => {
-    setJuzReminderEnabled(prev => { const n = !prev; storageSet("juz_reminder_enabled_v1", n); return n; });
-  }, []);
-  const updateJuzReminderTime = useCallback((t) => {
-    setJuzReminderTime(t); storageSet("juz_reminder_time_v1", t);
-  }, []);
-
-  return { notifEnabled, notifTimes, enableNotifs, disableNotifs, toggleTime,
-           juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime };
-}
 
 function useJuzProgram() {
   const [program, setProgram] = useState(() => storage("juz_program_v3", {
@@ -698,9 +555,6 @@ function JuzProgram({ onNavigateToJuz }) {
     dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
   } = juz;
 
-  const { notifEnabled, notifTimes, enableNotifs, disableNotifs, toggleTime,
-          juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime } =
-    useNotifications(program, completedCount, dailyGoalJuz);
 
   // Marque-pages du programme Khatm (indépendants)
   const khatmBM = useBookmarks("khatm");
@@ -912,61 +766,6 @@ function JuzProgram({ onNavigateToJuz }) {
         )}
       </motion.div>
 
-      {/* ── Notifications ── */}
-      <div className="bg-white/5 border border-white/10 rounded-3xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="font-bold text-white text-sm flex items-center gap-2">
-            <Bell className="w-4 h-4 text-blue-400"/> Rappels de lecture
-          </p>
-          {!notifEnabled ? (
-            <button onClick={enableNotifs}
-              className="px-3 py-1.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold hover:bg-blue-500/30 transition-all"
-            >
-              Activer
-            </button>
-          ) : (
-            <button onClick={disableNotifs} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all">✅ Actif — désactiver</button>
-          )}
-        </div>
-
-        {notifEnabled && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">Rappels quotidiens</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { key: "fajr",    label: "🌅 Fajr",    time: "6h00" },
-                { key: "dhuhr",   label: "☀️ Dhuhr",   time: "13h00" },
-                { key: "asr",     label: "🌤️ Asr",     time: "16h30" },
-                { key: "maghrib", label: "🌙 Maghrib",  time: "19h30" },
-              ].map(slot => (
-                <button key={slot.key} onClick={() => toggleTime(slot.key)}
-                  className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
-                    notifTimes[slot.key]
-                      ? "bg-blue-500/15 border-blue-500/30 text-blue-300"
-                      : "bg-white/5 border-white/10 text-slate-600"
-                  }`}
-                >
-                  <span>{slot.label}</span>
-                  <span className="text-slate-600">{slot.time}</span>
-                </button>
-              ))}
-            </div>
-            {/* Rappel vendredi Al-Kahf */}
-            <div className="mt-2 p-3 bg-emerald-500/8 border border-emerald-500/20 rounded-2xl flex items-start gap-3">
-              <span className="text-xl shrink-0">🕌</span>
-              <div className="flex-1">
-                <p className="text-emerald-300 font-bold text-xs mb-0.5">Sourate Al-Kahf — chaque vendredi</p>
-                <p className="text-slate-500 text-xs leading-relaxed">
-                  Rappel automatique tous les vendredis à 8h30. Le Prophète ﷺ a dit que celui qui lit Al-Kahf le vendredi sera illuminé jusqu'au vendredi suivant.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        {!notifEnabled && (
-          <p className="text-slate-600 text-xs text-center">Active les notifications pour recevoir des rappels aux heures de prière et le vendredi pour Al-Kahf.</p>
-        )}
-      </div>
 
       {/* ── Timer de lecture actif ── */}
       <AnimatePresence>
@@ -1280,48 +1079,6 @@ function BookmarksPage() {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Notification Banner (simulée, push via Service Worker limité en web)
 // ════════════════════════════════════════════════════════════════════
-function NotificationBanner({ onTrack, program, completedCount }) {
-  const [dismissed, setDismissed] = useState(false);
-  const [notifEnabled, setNotifEnabled] = useState(() => storage("notif_enabled", false));
-
-  const requestNotif = async () => {
-    if ("Notification" in window) {
-      const perm = await Notification.requestPermission();
-      if (perm === "granted") {
-        setNotifEnabled(true); storageSet("notif_enabled", true);
-        new Notification("📖 Quran Malikite", {
-          body: `Bismillāh ! Ton objectif du jour : ${program.dailyGoalJuz} Juz. Que Allah facilite ta lecture.`,
-          icon: "/favicon.ico"
-        });
-      }
-    }
-  };
-
-  if (dismissed || !program.active) return null;
-
-  return (
-    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-      className={`mx-4 mt-2 rounded-2xl p-3 flex items-center gap-3 border text-sm ${
-        !onTrack
-          ? "bg-orange-900/40 border-orange-500/30 text-orange-200"
-          : "bg-emerald-900/30 border-emerald-500/20 text-emerald-200"
-      }`}
-    >
-      <span className="text-xl">{!onTrack ? "⏰" : "✅"}</span>
-      <p className="flex-1">
-        {!onTrack
-          ? `Rattrape ton objectif : encore ${program.dailyGoalJuz - (completedCount % program.dailyGoalJuz)} Juz aujourd'hui.`
-          : `Māshā'Allah ! Tu es dans l'objectif — ${completedCount}/30 Juz.`}
-      </p>
-      {!notifEnabled && (
-        <button onClick={requestNotif} className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-lg text-xs font-semibold hover:bg-white/20 transition-all whitespace-nowrap">
-          <Bell className="w-3 h-3"/> Activer
-        </button>
-      )}
-      <button onClick={() => setDismissed(true)} className="text-white/40 hover:text-white/80 transition-all"><X className="w-4 h-4"/></button>
-    </motion.div>
-  );
-}
 
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Adhkar (audio TTS, texte complet, onglet Matin&Soir)
@@ -2682,29 +2439,6 @@ const PAGES = [
 export default function App() {
   const [page, setPage] = useState("quran");
 
-  // ── OneSignal : enregistrer le device dès que la page charge ──
-  useEffect(() => {
-    const tryOptIn = async () => {
-      try {
-        if (!window.OneSignalDeferred) return;
-        window.OneSignalDeferred.push(async (OneSignal) => {
-          await OneSignal.init({
-            appId: "302baca4-a9f1-40c4-848a-b09cb9eea179",
-            notifyButton: { enable: false },
-            allowLocalhostAsSecureOrigin: true,
-            autoResubscribe: true,
-          });
-          if (Notification.permission === "granted") {
-            await OneSignal.User.PushSubscription.optIn();
-            console.log("OneSignal: abonné ✅", OneSignal.User.PushSubscription.id);
-          }
-        });
-      } catch(e) { console.warn("OneSignal init:", e); }
-    };
-    // Attendre que le SDK soit chargé
-    if (document.readyState === "complete") { tryOptIn(); }
-    else { window.addEventListener("load", tryOptIn); return () => window.removeEventListener("load", tryOptIn); }
-  }, []);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [pendingNav, setPendingNav] = useState(null); // { surahNum, verseNum }
   const { checked, toggle, counts } = useSurahProgress();
