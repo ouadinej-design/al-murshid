@@ -435,7 +435,22 @@ function useNotifications(program, completedCount, dailyGoalJuz) {
     });
   }, []);
 
-  return { notifEnabled, notifTimes, enableNotifs, toggleTime };
+  const disableNotifs = useCallback(() => {
+    setNotifEnabled(false);
+    storageSet("notif_enabled_v2", false);
+  }, []);
+
+  const [juzReminderEnabled, setJuzReminderEnabled] = useState(() => storage("juz_reminder_enabled_v1", false));
+  const [juzReminderTime, setJuzReminderTime] = useState(() => storage("juz_reminder_time_v1", "08:00"));
+  const toggleJuzReminder = useCallback(() => {
+    setJuzReminderEnabled(prev => { const n = !prev; storageSet("juz_reminder_enabled_v1", n); return n; });
+  }, []);
+  const updateJuzReminderTime = useCallback((t) => {
+    setJuzReminderTime(t); storageSet("juz_reminder_time_v1", t);
+  }, []);
+
+  return { notifEnabled, notifTimes, enableNotifs, disableNotifs, toggleTime,
+           juzReminderEnabled, juzReminderTime, toggleJuzReminder, updateJuzReminderTime };
 }
 
 function useJuzProgram() {
@@ -910,7 +925,7 @@ function JuzProgram({ onNavigateToJuz }) {
               Activer
             </button>
           ) : (
-            <span className="text-emerald-400 text-xs font-semibold">✅ Actif</span>
+            <button onClick={disableNotifs} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all">✅ Actif — désactiver</button>
           )}
         </div>
 
@@ -1752,6 +1767,17 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null
   );
   const [targetVerse, setTargetVerse] = useState(initialVerseNum || null);
+
+  // Réagir aux changements de navigation (ex: clic sur Juz 2, 3, etc.)
+  useEffect(() => {
+    if (!initialSurahNum) return;
+    const surah = QURAN_SURAHS[initialSurahNum - 1];
+    if (!surah) return;
+    setCurrentSurah(surah);
+    if (initialVerseNum && initialVerseNum > 1) {
+      setTargetVerse(initialVerseNum);
+    }
+  }, [initialSurahNum, initialVerseNum]);
   const verseRefs = useRef({});
   const { verses, loading: versesLoading, error: versesError } = useVerses(currentSurah?.number);
   const [filter, setFilter] = useState("");
