@@ -86,7 +86,7 @@ function getEncouragement(juz) {
 const ADHKAR_MALIKITES = [
   { id:1, title:"1. Āyat al-Kursī — Verset du Trône",
     arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
-    transliteration:"Allāhou Lā Ilāha Illā Houwa Al-Ĥayyou Al-Qayyoum...",
+    transliteration:"Allāhou Lā Ilāha Illā Houwa Al-Ĥayyou Al-Qayyoum. Lā ta'khoudzouhou sinatoun wa lā nawm. Lahou mā fis-samāwāti wa mā fil-ard. Man dhal-ladhī yashfa'ou 'indahou illā bi-idznih. Ya'lamou mā bayna aydīhim wa mā khalfahum. Wa lā youhīthouna bi-shay'in min 'ilmihi illā bi-mā shā'a. Wasi'a koursiyyouhou s-samāwāti wal-ard. Wa lā ya'oudouhou hifdzouhoumā. Wa houwa l-'Aliyyou l-'Azīm.",
     french:"Allah ! Point de divinité à part Lui, le Vivant. Ni somnolence ni sommeil ne Le saisissent. À Lui appartient tout ce qui est dans les cieux et sur la terre. Son Trône déborde les cieux et la terre. Il est le Très Haut, le Très Grand.",
     benefice:"Protection contre Satan tout au long de la journée et de la nuit.",
     source:"Sourate 2 Al-Baqara v.255 — Bukhāri", repetition:1, category:"MATIN_SOIR" },
@@ -156,14 +156,14 @@ const ADHKAR_MALIKITES = [
 
   { id:11, title:"11. Allāhumma innī as'aluka al-afwa…",
     arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي، اللَّهُمَّ اسْتُرْ عَوْرَاتِي وَآمِنْ رَوْعَاتِي",
-    transliteration:"Allāhumma innī asaluka al-afwa wal-āfiyata fid-dunyā wal-ākhirah. Allāhumma innī asaluka al-afwa wal-āfiyata fī dīnī wa dunyāya wa ahlī wa mālī. Allāhummastur awrātī wa āmin rawātī...",
+    transliteration:"Allāhumma innī asaluka al-afwa wal-āfiyata fid-dunyā wal-ākhirah. Allāhumma innī asaluka al-afwa wal-āfiyata fī dīnī wa dunyāya wa ahlī wa mālī. Allāhummastur awrātī wa āmin rawātī. Allāhumma hfadznī min bayni yadayya wa min khalfī wa 'an yamīnī wa 'an shimālī wa min fawqī. Wa a'oudhu bi-'adhamatika an ughtāla min tahtī.",
     french:"Ô Seigneur ! Je Te demande le pardon et la santé dans cette vie et dans l'au-delà. Cache mes défauts et mets-moi à l'abri de mes effrois. Protège-moi de toutes les directions.",
     benefice:"Protection complète de toutes les directions.",
     source:"Abū Dāwūd, n°5074 — matin et soir", repetition:1, category:"MATIN_SOIR" },
 
   { id:12, title:"12. Allāhumma ālima l-ghayb…",
     arabic:"اللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَالْأَرْضِ رَبَّ كُلِّ شَيْءٍ وَمَلِيكَهُ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ",
-    transliteration:"Allāhumma ālimal-ghaybi wash-shahādati fātiras-samāwāti wal-ardi rabba kulli shayin wa malīkah, ashhadu an lā ilāha illā ant, audhu bika min sharri nafsī wa min sharrish-shaytāni wa shirkihi...",
+    transliteration:"Allāhumma ālimal-ghaybi wash-shahādati fātiras-samāwāti wal-ardi, rabba kulli shay'in wa malīkah, ashhadu an lā ilāha illā ant. A'oudhu bika min sharri nafsī wa min sharrish-shaytāni wa shirkihi.",
     french:"Ô Seigneur ! Connaisseur de l'invisible et du visible, créateur des cieux et de la terre. J'atteste qu'il n'y a de divinité que Toi. Je me mets sous Ta protection contre le mal de mon âme, du diable et son polythéisme.",
     benefice:"Protection contre les maux de l'âme et du diable.",
     source:"At-Tirmidhī, n°3529 — matin et soir", repetition:1, category:"MATIN_SOIR" },
@@ -191,7 +191,7 @@ const ADHKAR_MALIKITES = [
 
   { id:16, title:"16. Asbahna wa asbahal-mulku lillāh…",
     arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذَا الْيَوْمِ فَتْحَهُ وَنَصْرَهُ وَنُورَهُ وَبَرَكَتَهُ وَهُدَاهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهِ وَشَرِّ مَا بَعْدَهُ",
-    transliteration:"Asbahna wa asbahal-mulku lillāhi rabbil-ālamīn, Allāhumma innī asaluka khayra hādhal-yawmi fathahou wa nasrahu wa nūrahu wa barakatahu wa hudāh...",
+    transliteration:"Asbahna wa asbahal-mulku lillāhi rabbil-ālamīn. Allāhumma innī asaluka khayra hādhal-yawmi: fathahou wa nasrahou wa nūrahou wa barakatahu wa hudāh. Wa a'oudhu bika min sharri mā fīhi wa sharri mā ba'dahou.",
     french:"Nous voilà au matin et le règne appartient à Allah le Seigneur de l'univers. Ô Seigneur ! Je Te demande le bien de ce jour : conquêtes, victoires, lumières, bénédiction et guidée.",
     benefice:"Demande du bien de la journée et protection contre ses maux.",
     source:"Abū Dāwūd — matin et soir", repetition:1, category:"MATIN_SOIR" },
@@ -253,7 +253,7 @@ const ADHKAR_MALIKITES = [
 
   { id:25, title:"Tasbīh après la prière — méthode Mālik",
     arabic:"سُبْحَانَ اللَّهِ ۞ الْحَمْدُ لِلَّهِ ۞ اللَّهُ أَكْبَرُ",
-    transliteration:"Subhānallāh (33×) — Al-hamdu lillāh (33×) — Allāhu akbar (33×) — puis : Lā ilāha illallāhu wahdahu lā sharīka lah...",
+    transliteration:"Subhānallāh (33×) — Al-hamdu lillāh (33×) — Allāhu akbar (33×) — puis : Lā ilāha illallāhu wahdahu lā sharīka lahu, lahul-mulku wa lahul-hamdu wa huwa 'alā kulli shay'in qadīr.",
     french:"Gloire à Allah (33×) — Toute louange à Allah (33×) — Allah est le Plus Grand (33×) — puis : Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent.",
     source:"Muwatta Mālik, Kitab Qasr as-Salat", repetition:100, category:"PRIERE" },
 ];
