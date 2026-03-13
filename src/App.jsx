@@ -1861,22 +1861,30 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
                     <Bookmark className="w-4 h-4 text-amber-400"/>
                   </div>
 
-                  {/* Numéro + Arabe */}
+                  {/* Numéro + Arabe tajweed */}
                   <div className="flex items-start gap-3 mb-2">
                     <span className="w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0 mt-1 select-none">
                       {v.number}
                     </span>
-                    <p className="text-right font-serif text-white leading-[2.2] flex-1 select-text"
-                      dir="rtl" lang="ar"
-                      style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.6rem)" }}
-                    >
-                      {v.arabic}
-                    </p>
+                    {v.tajweed ? (
+                      <p className="text-right leading-[2.5] flex-1 select-text"
+                        dir="rtl" lang="ar"
+                        style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.7rem)", fontFamily: "'Amiri Quran','Scheherazade New',serif" }}
+                        dangerouslySetInnerHTML={{ __html: v.tajweed }}
+                      />
+                    ) : (
+                      <p className="text-right font-serif text-white leading-[2.4] flex-1 select-text"
+                        dir="rtl" lang="ar"
+                        style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.6rem)" }}
+                      >
+                        {v.arabic}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Phonétique (translittération) en gras */}
+                  {/* Translittération phonétique */}
                   {v.transliteration && (
-                    <p className="ml-10 text-sm font-bold text-blue-300 leading-relaxed mb-1.5 select-text">
+                    <p className="ml-10 text-xs text-slate-400 italic leading-relaxed mb-1.5 select-text" dir="ltr">
                       {v.transliteration}
                     </p>
                   )}
@@ -2291,14 +2299,62 @@ const EMBEDDED_VERSES = {
 // Cache mémoire session
 const _versesMemCache = new Map();
 
-const _fetchWithTimeout = (url, ms = 8000) => {
+const _fetchWithTimeout = (url, ms = 10000) => {
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(tid));
 };
 
+// ── Convertir le HTML tajweed quran.com en spans colorés ──
+function parseTajweedHtml(tajweedStr) {
+  if (!tajweedStr) return tajweedStr;
+  // quran.com retourne du texte avec des tags <tajweed class="...">
+  // On les convertit en spans avec data-tajweed pour le CSS
+  return tajweedStr
+    .replace(/<tajweed class="([^"]+)">([^<]*)<\/tajweed>/g,
+      (_, cls, text) => `<span data-t="${cls}">${text}</span>`)
+    .replace(/<[^>]+>/g, ''); // retirer tous autres tags
+}
+
+// ── Source principale : Quran.com API v4 (Mushaf Madinah, tajweed, translittération) ──
+async function fetchFromQuranCom(surahNumber) {
+  const pages = surahNumber <= 9 ? 1 : 2; // grandes sourates = 2 pages
+  let allVerses = [];
+  for (let page = 1; page <= pages; page++) {
+    const url = `https://api.quran.com/api/v4/verses/by_chapter/${surahNumber}` +
+      `?words=true&word_fields=text_uthmani,transliteration,text_uthmani_tajweed` +
+      `&translations=136&per_page=300&page=${page}`;
+    const r = await _fetchWithTimeout(url, 12000);
+    if (!r.ok) throw new Error("quran.com indisponible");
+    const d = await r.json();
+    if (!d.verses?.length) break;
+    allVerses = [...allVerses, ...d.verses];
+    if (!d.pagination?.next_page) break;
+  }
+  if (!allVerses.length) throw new Error("Aucun verset");
+  return allVerses.map(v => {
+    const words = v.words?.filter(w => w.char_type_name !== "end") || [];
+    const arabic = words.map(w => w.text_uthmani || "").join(" ");
+    const tajweed = words.map(w => parseTajweedHtml(w.text_uthmani_tajweed || w.text_uthmani || "")).join(" ");
+    const translit = words.map(w => w.transliteration?.text || "").join(" ");
+    return {
+      number: v.verse_number,
+      arabic,
+      tajweed,
+      transliteration: translit,
+      french: v.translations?.[0]?.text?.replace(/<sup[^>]*>.*?<\/sup>/g, "") || ""
+    };
+  });
+}
+
 async function fetchSurahFromAPI(surahNumber) {
-  // Source A : alquran.cloud direct
+  // Source A : Quran.com v4 (Mushaf Madinah + tajweed + translittération)
+  try {
+    const verses = await fetchFromQuranCom(surahNumber);
+    if (verses.length > 0) return verses;
+  } catch {}
+
+  // Source B : alquran.cloud + tajweed edition
   try {
     const [a, f] = await Promise.all([
       _fetchWithTimeout(`https://api.alquran.cloud/v1/surah/${surahNumber}/quran-uthmani`),
@@ -2308,14 +2364,14 @@ async function fetchSurahFromAPI(surahNumber) {
       const [ad, fd] = await Promise.all([a.json(), f.json()]);
       if (ad.code === 200 && fd.code === 200) {
         return ad.data.ayahs.map((v, i) => ({
-          number: v.numberInSurah, arabic: v.text,
+          number: v.numberInSurah, arabic: v.text, tajweed: null,
           transliteration: "", french: fd.data.ayahs[i]?.text || ""
         }));
       }
     }
   } catch {}
 
-  // Source B : via corsproxy
+  // Source C : corsproxy fallback
   try {
     const base = `https://corsproxy.io/?https://api.alquran.cloud/v1/surah/${surahNumber}`;
     const [a, f] = await Promise.all([
@@ -2326,27 +2382,8 @@ async function fetchSurahFromAPI(surahNumber) {
       const [ad, fd] = await Promise.all([a.json(), f.json()]);
       if (ad.code === 200 && fd.code === 200) {
         return ad.data.ayahs.map((v, i) => ({
-          number: v.numberInSurah, arabic: v.text,
+          number: v.numberInSurah, arabic: v.text, tajweed: null,
           transliteration: "", french: fd.data.ayahs[i]?.text || ""
-        }));
-      }
-    }
-  } catch {}
-
-  // Source C : CDN jsdelivr (JSON statique)
-  try {
-    const r = await _fetchWithTimeout(
-      `https://cdn.jsdelivr.net/npm/quran-json@3.1.2/data/surah/surah_${surahNumber}.json`
-    );
-    if (r.ok) {
-      const d = await r.json();
-      const verses = Array.isArray(d) ? d : (d.verses || d.ayahs || []);
-      if (verses.length > 0) {
-        return verses.map((v, i) => ({
-          number: v.id || v.numberInSurah || (i + 1),
-          arabic: v.text || v.arabic || "",
-          transliteration: v.transliteration || "",
-          french: v.translation || v.french || ""
         }));
       }
     }
@@ -2355,20 +2392,40 @@ async function fetchSurahFromAPI(surahNumber) {
   throw new Error("Toutes les sources ont échoué");
 }
 
+// ── Nettoyer la Basmala mal positionnée ──
+// Règle coranique : Basmala = verset 1 UNIQUEMENT pour Al-Fatiha (1)
+// Sourate 9 (At-Tawbah) = pas de Basmala du tout
+// Toutes les autres : Basmala est un en-tête décoratif, pas un verset numéroté
+function cleanBasmala(verses, surahNumber) {
+  if (!verses || verses.length === 0) return verses;
+  if (surahNumber === 1) return verses; // Al-Fatiha : Basmala = verset 1, OK
+  // Détecter si le verset 1 est la Basmala
+  const first = verses[0];
+  const isBasmala = first && (
+    first.arabic?.includes('بِسْمِ اللَّهِ') ||
+    first.arabic?.includes('بِسْمِ ٱللَّهِ') ||
+    first.arabic?.includes('بسم الله') ||
+    (first.number === 1 && first.arabic?.startsWith('بِسْمِ'))
+  );
+  if (!isBasmala) return verses;
+  // Supprimer la Basmala et renuméroter à partir de 1
+  return verses.slice(1).map((v, i) => ({ ...v, number: i + 1 }));
+}
+
 function useVerses(surahNumber) {
   const embedded = surahNumber ? EMBEDDED_VERSES[surahNumber] : null;
 
   const [state, setState] = useState(() => {
     if (!surahNumber) return { verses: [], loading: false, error: null };
-    if (embedded) return { verses: embedded, loading: false, error: null };
-    if (_versesMemCache.has(surahNumber)) return { verses: _versesMemCache.get(surahNumber), loading: false, error: null };
+    if (embedded) return { verses: cleanBasmala(embedded, surahNumber), loading: false, error: null };
+    if (_versesMemCache.has(surahNumber)) return { verses: cleanBasmala(_versesMemCache.get(surahNumber), surahNumber), loading: false, error: null };
     return { verses: [], loading: true, error: null };
   });
 
   useEffect(() => {
     if (!surahNumber) return;
-    if (embedded) { setState({ verses: embedded, loading: false, error: null }); return; }
-    if (_versesMemCache.has(surahNumber)) { setState({ verses: _versesMemCache.get(surahNumber), loading: false, error: null }); return; }
+    if (embedded) { setState({ verses: cleanBasmala(embedded, surahNumber), loading: false, error: null }); return; }
+    if (_versesMemCache.has(surahNumber)) { setState({ verses: cleanBasmala(_versesMemCache.get(surahNumber), surahNumber), loading: false, error: null }); return; }
 
     const surahInfo = QURAN_SURAHS[surahNumber - 1];
     if (!surahInfo) return;
@@ -2377,7 +2434,8 @@ function useVerses(surahNumber) {
 
     const tryLoad = async (attempts = 0) => {
       try {
-        const verses = await fetchSurahFromAPI(surahNumber);
+        const raw = await fetchSurahFromAPI(surahNumber);
+        const verses = cleanBasmala(raw, surahNumber);
         _versesMemCache.set(surahNumber, verses);
         setState({ verses, loading: false, error: null });
       } catch {
