@@ -565,8 +565,7 @@ function EncouragementModal({ juz, onClose }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Programme Juz (dates libres + objectif dynamique + notifs)
 // ════════════════════════════════════════════════════════════════════
-function JuzProgram({ onNavigateToJuz }) {
-  const juz = useJuzProgram();
+function JuzProgram({ onNavigateToJuz, juzProgram: juz }) {
   const {
     program, start, reset, manualComplete,
     completedCount, remaining, daysPassed, daysTotal, daysLeft,
@@ -1349,14 +1348,14 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
   );
 }
 
-function AdhkarPage() {
+function AdhkarPage({ fridayKahf: fridayKahfProp }) {
   const [favorites, setFavorites] = useState(() => storage("adhkar_favs", {}));
   const [copied,    setCopied]    = useState({});
   const [recited,   setRecited]   = useState(() => storage("adhkar_recited", {}));
   const [activeTab, setActiveTab] = useState("matin");
   const [confirmReset, setConfirmReset] = useState(false);
   const { speaking, speak, voicesLoaded } = useArabicSpeech();
-  const { isReadThisWeek, markRead, totalFridays } = useFridayKahf();
+  const { isReadThisWeek, markRead, totalFridays } = fridayKahfProp || useFridayKahf();
   const today = new Date();
   const isFriday = today.getDay() === 5;
 
@@ -2335,10 +2334,12 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts, juzProgram }) {
+function StatsDrawer({ isOpen, onClose, counts, juzProgram = {program:{active:false},completedCount:0,daysPassed:0,onTrack:false,behindBy:0}, fridayKahf }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
-  const recited = storage("adhkar_recited", {});
-  const { totalFridays, isReadThisWeek } = useFridayKahf();
+  const [recited] = useState(() => storage("adhkar_recited", {}) || {});
+  const { totalFridays, isReadThisWeek } = fridayKahf || useFridayKahf();
+  // Lire directement depuis le hook pour avoir les données fraîches
+  const juzProgram = useJuzProgram();
 
   // Compter les adhkar complétés (toutes catégories)
   const adhkarDone = ADHKAR_MALIKITES.filter(d => (recited[d.id] || 0) >= d.repetition).length;
@@ -2461,6 +2462,7 @@ export default function App() {
   const [pendingNav, setPendingNav] = useState(null); // { surahNum, verseNum }
   const { checked, toggle, counts } = useSurahProgress();
   const juzProgram = useJuzProgram();
+  const fridayKahf = useFridayKahf();
   const khatmBM = useBookmarks("khatm");
 
   // Navigation depuis le programme Juz → Coran
@@ -2551,7 +2553,7 @@ export default function App() {
             <motion.div key="program" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
               className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}
             >
-              <JuzProgram onNavigateToJuz={handleNavigateToJuz} />
+              <JuzProgram onNavigateToJuz={handleNavigateToJuz} juzProgram={juzProgram} />
             </motion.div>
           )}
           {page === "bookmarks" && (
@@ -2565,7 +2567,7 @@ export default function App() {
             <motion.div key="adhkar" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
               className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}
             >
-              <AdhkarPage />
+              <AdhkarPage fridayKahf={fridayKahf} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -2599,7 +2601,7 @@ export default function App() {
         </div>
       </nav>
 
-      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} juzProgram={juzProgram} />
+      <StatsDrawer isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} counts={counts} juzProgram={juzProgram} fridayKahf={fridayKahf} />
     </div>
   );
 }
