@@ -1541,6 +1541,11 @@ const EMBEDDED_VERSES = {
 // API & HOOKS VERSETS
 // ════════════════════════════════════════════════════════════════════
 const _versesMemCache = new Map();
+// Vide le cache local si le format tajweed est l'ancien (sans balises)
+try {
+  const testKey = Object.keys(localStorage).find(k => k.startsWith("verses_"));
+  if (testKey) { const v = localStorage.getItem(testKey); if (v && !v.includes("<tajweed")) { Object.keys(localStorage).filter(k => k.startsWith("verses_")).forEach(k => localStorage.removeItem(k)); } }
+} catch {}
 const _fetchWithTimeout = (url, ms = 10000) => {
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), ms);
@@ -1549,9 +1554,9 @@ const _fetchWithTimeout = (url, ms = 10000) => {
 
 function parseTajweedHtml(tajweedStr) {
   if (!tajweedStr) return tajweedStr;
-  return tajweedStr
-    .replace(/<tajweed class="([^"]+)">([^<]*)<\/tajweed>/g, (_, cls, text) => `<span data-t="${cls}">${text}</span>`)
-    .replace(/<[^>]+>/g, '');
+  // Keep <tajweed class="..."> tags intact — CSS targets them directly
+  // Only strip non-tajweed HTML tags (like <sup>, <foot_note>, etc.)
+  return tajweedStr.replace(/<(?!\/?tajweed)[^>]+>/g, '');
 }
 
 async function fetchFromQuranCom(surahNumber) {
@@ -1794,6 +1799,30 @@ export default function App() {
   const juzProgram = useJuzProgram();
   const fridayKahf = useFridayKahf();
   const { checked, toggle, counts } = useSurahProgress();
+
+  // Inject tajweed CSS globally once
+  useEffect(() => {
+    if (!document.getElementById("tajweed-css")) {
+      const s = document.createElement("style");
+      s.id = "tajweed-css";
+      s.textContent = `
+        tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#AAAAAA}
+        tajweed[class*="madda_normal"]{color:#537FFF}
+        tajweed[class*="madda_permissible"]{color:#4BC8F0}
+        tajweed[class*="madda_necessary"]{color:#2B4FBB}
+        tajweed[class*="madda_obligatory"]{color:#3B6FDD}
+        tajweed[class*="qalaqah"]{color:#DD8000}
+        tajweed[class*="ikhafa"]{color:#D070A0}
+        tajweed[class*="idgham_ghunnah"]{color:#169200}
+        tajweed[class*="idgham_wo_ghunnah"]{color:#2E8B57}
+        tajweed[class*="idgham_mutajanisayn"]{color:#33AA55}
+        tajweed[class*="idgham_mutaqaribayn"]{color:#44BB66}
+        tajweed[class*="iqlab"]{color:#E05000}
+        tajweed[class*="ghunnah"]{color:#22AA22}
+      `;
+      document.head.appendChild(s);
+    }
+  }, []);
 
   const handleNavigateToJuz = useCallback((juzNum) => {
     const juzInfo = getJuzStart(juzNum);
