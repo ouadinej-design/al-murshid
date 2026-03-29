@@ -499,6 +499,13 @@ function JuzProgram({ onNavigateToJuz, onNavigateToRange, juzProgram: juz }) {
   const timerRef = useRef(null);
   const todayISO = new Date().toISOString().slice(0, 10);
 
+  // Si l'ancien programme n'a pas de endDate, on le remet à zéro
+  useEffect(() => {
+    if (program.active && (!program.endDate || !program.startDate)) {
+      reset();
+    }
+  }, [program.active, program.endDate, program.startDate]);
+
   const dailyPlan = useMemo(() =>
     program.active && program.startDate && program.endDate
       ? generateDailyPlan(program.startDate, program.endDate)
