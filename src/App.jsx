@@ -699,8 +699,8 @@ function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvan
               {/* Verse text */}
               <div className="flex-1">
                 {v.tajweed ? (
-                  <p className="text-right leading-[2.6]" dir="rtl" lang="ar"
-                    style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)" }}
+                  <p className="text-right text-white leading-[2.6]" dir="rtl" lang="ar"
+                    style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)", color: "white" }}
                     dangerouslySetInnerHTML={{ __html: v.tajweed }}/>
                 ) : (
                   <p className="text-right text-white leading-[2.6]" dir="rtl" lang="ar"
@@ -1386,8 +1386,8 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
                   <div className="flex items-start gap-3 mb-2">
                     <span className="w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0 mt-1 select-none">{v.number}</span>
                     {v.tajweed ? (
-                      <p className="text-right leading-[2.5] flex-1 select-text" dir="rtl" lang="ar"
-                        style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.7rem)", fontFamily: "'Amiri Quran','Scheherazade New',serif" }}
+                      <p className="text-right text-white leading-[2.5] flex-1 select-text" dir="rtl" lang="ar"
+                        style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.7rem)", fontFamily: "'Amiri Quran','Scheherazade New',serif", color: "white" }}
                         dangerouslySetInnerHTML={{ __html: v.tajweed }}/>
                     ) : (
                       <p className="text-right font-serif text-white leading-[2.4] flex-1 select-text" dir="rtl" lang="ar" style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.6rem)" }}>{v.arabic}</p>
