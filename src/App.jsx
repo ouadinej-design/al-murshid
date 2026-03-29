@@ -653,10 +653,10 @@ function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvan
               className={`flex gap-3 p-3 rounded-2xl border transition-all ${checked ? "bg-emerald-900/15 border-emerald-500/20 opacity-60" : "bg-white/3 border-white/8"}`}>
               {/* Check button */}
               <button onClick={() => checked ? toggleVerse(key) : markAndAdvance(key)}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm transition-all mt-1 ${
-                  checked ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white/8 text-slate-500 hover:bg-emerald-500/20 hover:text-emerald-400 active:scale-90"
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-xl transition-all mt-1 active:scale-90 ${
+                  checked ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : "bg-blue-600 text-white shadow-md shadow-blue-600/40 hover:bg-blue-500"
                 }`}>
-                {checked ? <CheckCircle className="w-4 h-4"/> : v.number}
+                {checked ? <CheckCircle className="w-5 h-5"/> : "+"}
               </button>
               {/* Verse text */}
               <div className="flex-1">
