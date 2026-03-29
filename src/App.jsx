@@ -1046,9 +1046,9 @@ function BookmarksPage() {
         <span className="text-lg shrink-0">💡</span>
         <div>
           {activeTab === "quran" ? (
-            <><p className="text-amber-300 font-semibold text-xs">Marque-pages Coran</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📖 Coran</strong>, appuie sur n'importe quel verset pour l'enregistrer ici instantanément.</p></>
+            <div style={{display:"contents"}}><p className="text-amber-300 font-semibold text-xs">Marque-pages Coran</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📖 Coran</strong>, appuie sur n'importe quel verset pour l'enregistrer ici instantanément.</p></div>
           ) : (
-            <><p className="text-amber-300 font-semibold text-xs">Marque-pages Khatm</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📅 Programme</strong>, utilise le bouton "Sauvegarder ma position" pour marquer où tu en es dans ton Khatm.</p></>
+            <div style={{display:"contents"}}><p className="text-amber-300 font-semibold text-xs">Marque-pages Khatm</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📅 Programme</strong>, utilise le bouton "Sauvegarder ma position" pour marquer où tu en es dans ton Khatm.</p></div>
           )}
         </div>
       </div>
@@ -1064,7 +1064,7 @@ function BookmarksPage() {
                   <motion.div key={bm.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
                     className="flex items-center gap-3 p-4 bg-white/5 border border-amber-500/15 rounded-2xl group hover:border-amber-500/30 transition-all">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/12 border border-amber-500/20 flex flex-col items-center justify-center shrink-0">
-                      {activeTab === "quran" ? (<><span className="text-amber-400 font-black text-base leading-none">{bm.surah}</span><span className="text-amber-600/80 text-[10px] font-semibold">v.{bm.verse}</span></>) : (<span className="text-amber-400 text-xl">📅</span>)}
+                      {activeTab === "quran" ? (<div style={{display:"contents"}}><span className="text-amber-400 font-black text-base leading-none">{bm.surah}</span><span className="text-amber-600/80 text-[10px] font-semibold">v.{bm.verse}</span></div>) : (<span className="text-amber-400 text-xl">📅</span>)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white text-sm">{bm.surahName}</p>
@@ -1772,7 +1772,7 @@ function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzP
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <div style={{display:"contents"}}>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm" onClick={onClose}/>
           <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
@@ -1844,7 +1844,7 @@ function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzP
               <p className="text-center text-slate-700 text-xs italic">« وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا » — Muzzammil 4</p>
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
