@@ -244,6 +244,43 @@ function storageSet(key, val) {
 }
 
 // ════════════════════════════════════════════════════════════════════
+// HELPERS — Planning quotidien
+// ════════════════════════════════════════════════════════════════════
+const SURAH_STARTS = (() => {
+  let c = 0, a = [];
+  for (const s of QURAN_SURAHS) { a.push(c); c += s.verses; }
+  return a;
+})();
+const TOTAL_VERSES = 6236;
+
+function verseFromGlobal(n) {
+  let lo = 0, hi = 113;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (SURAH_STARTS[mid] + QURAN_SURAHS[mid].verses < n) lo = mid + 1;
+    else hi = mid;
+  }
+  return { surah: lo + 1, verse: n - SURAH_STARTS[lo] };
+}
+
+function generateDailyPlan(startISO, endISO) {
+  const totalDays = Math.max(1, Math.ceil((new Date(endISO) - new Date(startISO)) / 86400000));
+  return Array.from({ length: totalDays }, (_, d) => {
+    const sPos = Math.floor((d / totalDays) * TOTAL_VERSES) + 1;
+    const ePos = d === totalDays - 1 ? TOTAL_VERSES : Math.floor(((d + 1) / totalDays) * TOTAL_VERSES);
+    const date = new Date(startISO); date.setDate(date.getDate() + d);
+    const sv = verseFromGlobal(sPos), ev = verseFromGlobal(ePos);
+    return {
+      day: d + 1,
+      date: date.toISOString().slice(0, 10),
+      startSurah: sv.surah, startVerse: sv.verse,
+      endSurah: ev.surah, endVerse: ev.verse,
+      verseCount: ePos - sPos + 1,
+    };
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
 // HOOKS
 // ════════════════════════════════════════════════════════════════════
 function useBookmarks(type) {
@@ -289,11 +326,21 @@ function useJuzProgram() {
   const [program, setProgram] = useState(() => storage("juz_program_v3", {
     active: false, startDate: null, endDate: null, completed: {},
   }));
+  const [dailyCompleted, setDailyCompleted] = useState(() => storage("daily_plan_v1", {}));
+  const markDayDone = useCallback((dateStr) => {
+    setDailyCompleted(prev => {
+      const next = { ...prev, [dateStr]: !prev[dateStr] };
+      storageSet("daily_plan_v1", next);
+      return next;
+    });
+  }, []);
   const start = useCallback(({ startDateISO, endDateISO }) => {
+    storageSet("daily_plan_v1", {}); setDailyCompleted({});
     const p = { active: true, startDate: startDateISO, endDate: endDateISO, completed: {} };
     setProgram(p); storageSet("juz_program_v3", p);
   }, []);
   const reset = useCallback(() => {
+    storageSet("daily_plan_v1", {}); setDailyCompleted({});
     const p = { active: false, startDate: null, endDate: null, completed: {} };
     setProgram(p); storageSet("juz_program_v3", p);
   }, []);
@@ -324,6 +371,7 @@ function useJuzProgram() {
     program, start, reset, manualComplete,
     completedCount, remaining, daysPassed, daysTotal, daysLeft,
     dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
+    dailyCompleted, markDayDone,
   };
 }
 
@@ -435,246 +483,251 @@ function EncouragementModal({ juz, onClose }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Programme Juz
 // ════════════════════════════════════════════════════════════════════
-function JuzProgram({ onNavigateToJuz, juzProgram: juz }) {
+function JuzProgram({ onNavigateToJuz, onNavigateToRange, juzProgram: juz }) {
   const {
     program, start, reset, manualComplete,
     completedCount, remaining, daysPassed, daysTotal, daysLeft,
     dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
+    dailyCompleted, markDayDone,
   } = juz;
   const khatmBM = useBookmarks("khatm");
   const [encourageJuz, setEncourageJuz] = useState(null);
   const [confirmReset, setConfirmReset]  = useState(false);
   const [readingJuz,   setReadingJuz]    = useState(null);
   const [elapsed,      setElapsed]       = useState(0);
+  const [planView, setPlanView] = useState("planning");
   const timerRef = useRef(null);
   const todayISO = new Date().toISOString().slice(0, 10);
-  const in30ISO  = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-  const [startDate, setStartDate] = useState(todayISO);
-  const [endDate,   setEndDate]   = useState(in30ISO);
-  const previewDays = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
-  const previewJuzPerDayRaw = 30 / previewDays;
-  const previewJuzPerDay = Math.ceil(previewJuzPerDayRaw);
-  const previewDaysPerJuz = previewJuzPerDayRaw < 1 ? Math.round(previewDays / 30) : null;
-  const previewMinPerDay = Math.max(1, Math.round(previewJuzPerDayRaw)) * 47;
+
+  const dailyPlan = useMemo(() =>
+    program.active && program.startDate && program.endDate
+      ? generateDailyPlan(program.startDate, program.endDate)
+      : [],
+    [program.startDate, program.endDate, program.active]
+  );
+  const todayPlan = dailyPlan.find(d => d.date === todayISO);
+  const doneDaysCount = dailyPlan.filter(d => dailyCompleted[d.date]).length;
+
+  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  const fmtMin  = m => m >= 60 ? `${Math.floor(m/60)}h${m%60||''}` : `${m} min`;
+  const handleManual = (j) => { if (!program.completed[j.number]) setEncourageJuz(j); manualComplete(j.number); };
+
   useEffect(() => {
     if (readingJuz) { setElapsed(0); timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000); }
     else { clearInterval(timerRef.current); }
     return () => clearInterval(timerRef.current);
   }, [readingJuz]);
-  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  const fmtMin  = m => m >= 60 ? `${Math.floor(m/60)}h${m%60||''}` : `${m} min`;
-  const handleManual = (j) => { if (!program.completed[j.number]) setEncourageJuz(j); manualComplete(j.number); };
+
   const handleFinishReading = () => {
     if (!readingJuz) return;
     if (!program.completed[readingJuz.number]) setEncourageJuz(readingJuz);
     manualComplete(readingJuz.number); setReadingJuz(null);
   };
 
-  if (!program.active) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
-          <div className="text-5xl">📅</div>
-          <h2 className="text-2xl font-black text-white">Programme de Khatm</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">Choisis ta date de départ et ta date de fin — l'objectif quotidien s'ajuste automatiquement à ton rythme.</p>
-        </motion.div>
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-5">
-          <div className="grid grid-cols-3 gap-2">
-            {[{ label: "30 jours", icon: "⚡", days: 30 },{ label: "60 jours", icon: "🌿", days: 60 },{ label: "3 mois", icon: "🌊", days: 90 }].map(opt => {
-              const ed = new Date(new Date(startDate).getTime() + opt.days * 86400000).toISOString().slice(0, 10);
-              const active = endDate === ed;
-              return (
-                <button key={opt.days} onClick={() => setEndDate(ed)}
-                  className={`p-3 rounded-2xl border text-center text-sm transition-all ${active ? "bg-emerald-500/20 border-emerald-500 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:border-white/25"}`}>
-                  <div className="text-xl mb-0.5">{opt.icon}</div>
-                  <div className="font-bold text-xs">{opt.label}</div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs text-slate-500 font-semibold uppercase tracking-wide">📅 Date de départ</label>
-              <input type="date" value={startDate}
-                onChange={e => { setStartDate(e.target.value); if (e.target.value >= endDate) { const nd = new Date(e.target.value); nd.setDate(nd.getDate() + 30); setEndDate(nd.toISOString().slice(0, 10)); } }}
-                className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/60 transition-all [color-scheme:dark]"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs text-slate-500 font-semibold uppercase tracking-wide">🏁 Date de fin</label>
-              <input type="date" value={endDate} min={startDate} onChange={e => setEndDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/60 transition-all [color-scheme:dark]"
-              />
-            </div>
-          </div>
-          <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 space-y-1.5 text-sm">
-            <p className="text-emerald-300 font-bold mb-2">📊 Ton plan :</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-white/5 rounded-xl p-2.5 text-center"><p className="text-slate-500">Durée totale</p><p className="text-white font-black text-lg">{previewDays}j</p></div>
-              <div className="bg-white/5 rounded-xl p-2.5 text-center"><p className="text-slate-500">Rythme</p><p className="text-emerald-400 font-black text-base">{previewDaysPerJuz ? `1 juz / ${previewDaysPerJuz}j` : `${previewJuzPerDay} juz/j`}</p></div>
-              <div className="bg-white/5 rounded-xl p-2.5 text-center"><p className="text-slate-500">Lecture/jour</p><p className="text-white font-bold">~{fmtMin(previewMinPerDay)}</p></div>
-              <div className="bg-white/5 rounded-xl p-2.5 text-center"><p className="text-slate-500">Fin prévue</p><p className="text-white font-bold text-xs">{new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "2-digit" })}</p></div>
-            </div>
-            <p className="text-xs text-slate-500 italic mt-1 text-center">⚡ L'objectif quotidien s'adapte automatiquement si tu prends du retard</p>
-          </div>
-          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-            onClick={() => start({ startDateISO: new Date(startDate).toISOString(), endDateISO: new Date(endDate).toISOString() })}
-            disabled={startDate >= endDate}
-            className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >🚀 Commencer mon Programme</motion.button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
       <AnimatePresence>{encourageJuz && <EncouragementModal juz={encourageJuz} onClose={() => setEncourageJuz(null)} />}</AnimatePresence>
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-        className={`rounded-3xl p-5 border ${onTrack ? "bg-emerald-900/30 border-emerald-500/30" : "bg-orange-900/30 border-orange-500/30"}`}>
-        <div className="flex items-start justify-between mb-4">
+
+      {/* Toggle planning / juz */}
+      <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10 gap-1">
+        {[{key:"planning",label:"📅 Planning quotidien"},{key:"juz",label:"📊 Vue Juz"}].map(v => (
+          <button key={v.key} onClick={() => setPlanView(v.key)}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${planView === v.key ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── PLANNING VIEW ── */}
+      {planView === "planning" && (
+        <div className="space-y-4">
+          {/* Today's reading */}
+          {todayPlan ? (
+            <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}
+              className={`rounded-3xl p-5 border ${dailyCompleted[todayPlan.date] ? "bg-emerald-900/20 border-emerald-500/30" : "bg-blue-900/20 border-blue-500/30"}`}>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3">📖 Lecture d'aujourd'hui — Jour {todayPlan.day}</p>
+              <p className="text-white font-black text-lg leading-tight">
+                {QURAN_SURAHS[todayPlan.startSurah-1].name} v.{todayPlan.startVerse}
+                <span className="text-slate-500 font-normal"> → </span>
+                {QURAN_SURAHS[todayPlan.endSurah-1].name} v.{todayPlan.endVerse}
+              </p>
+              <p className="text-slate-500 text-xs mt-1 mb-4">
+                {todayPlan.verseCount} versets · ~{Math.round(todayPlan.verseCount / 10.3)} pages
+                {todayPlan.startSurah !== todayPlan.endSurah && ` · ${todayPlan.endSurah - todayPlan.startSurah + 1} sourates`}
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => onNavigateToRange(todayPlan.startSurah, todayPlan.startVerse, todayPlan.endSurah, todayPlan.endVerse)}
+                  className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl text-sm shadow-lg hover:shadow-emerald-500/25 transition-all">
+                  📖 Lire maintenant
+                </button>
+                <button onClick={() => markDayDone(todayPlan.date)}
+                  className={`px-4 py-3 rounded-2xl font-bold text-sm border transition-all ${dailyCompleted[todayPlan.date] ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" : "bg-white/5 border-white/15 text-slate-400 hover:border-white/30"}`}>
+                  {dailyCompleted[todayPlan.date] ? "✓ Lu" : "Marquer lu"}
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 text-center">
+              <p className="text-slate-400 text-sm">Aucune lecture programmée aujourd'hui.</p>
+            </div>
+          )}
+
+          {/* Progress bar */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-slate-400">{doneDaysCount} / {dailyPlan.length} jours complétés</span>
+              <span className="text-emerald-400 font-bold">{dailyPlan.length > 0 ? Math.round(doneDaysCount/dailyPlan.length*100) : 0}%</span>
+            </div>
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                animate={{width: `${dailyPlan.length > 0 ? doneDaysCount/dailyPlan.length*100 : 0}%`}} transition={{duration:0.8}}/>
+            </div>
+            <p className="text-slate-700 text-xs mt-2 text-center">
+              {program.endDate ? `Fin prévue : ${new Date(program.endDate).toLocaleDateString("fr-FR", {day:"numeric",month:"long",year:"numeric"})}` : ""}
+            </p>
+          </div>
+
+          {/* Full plan list */}
           <div>
-            <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>
-              {onTrack ? "✅ Dans l'objectif" : `⚠️ ${behindBy} Juz de retard`}
-            </p>
-            <p className="text-white font-bold text-lg">{completedCount} / 30 Juz</p>
-            <p className="text-slate-500 text-xs">Jour {daysPassed} / {daysTotal} · {daysLeft} jours restants</p>
-          </div>
-          <div className="text-right">
-            <p className="text-slate-500 text-xs mb-0.5">Objectif du jour</p>
-            <p className={`font-black text-3xl ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>{dailyGoalJuz}</p>
-            <p className="text-slate-600 text-xs">Juz</p>
-          </div>
-        </div>
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-          <motion.div className={`h-full rounded-full ${onTrack ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-orange-500 to-yellow-400"}`}
-            initial={{ width: 0 }} animate={{ width: `${progressPct}%` }} transition={{ duration: 1 }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-slate-500 mb-4">
-          <span>{progressPct}% accompli</span><span>{remaining} Juz restants</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: "Lecture/jour", value: `~${fmtMin(dailyGoalJuz * 47)}` },
-            { label: "Fin prévue", value: program.endDate ? new Date(program.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "—" },
-            { label: "Avance/retard", value: onTrack ? `+${completedCount - expectedJuz}` : `-${behindBy}`, color: onTrack ? "text-emerald-400" : "text-orange-400" },
-          ].map(s => (
-            <div key={s.label} className="bg-white/5 rounded-2xl p-2.5 text-center">
-              <p className="text-slate-600 text-[10px]">{s.label}</p>
-              <p className={`font-bold text-sm ${s.color || "text-white"}`}>{s.value}</p>
+            <h3 className="text-sm font-bold text-white mb-2">Planning complet</h3>
+            <div className="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
+              {dailyPlan.map(d => {
+                const isToday = d.date === todayISO;
+                const isPast  = d.date < todayISO;
+                const done    = !!dailyCompleted[d.date];
+                const dateObj = new Date(d.date + 'T00:00:00');
+                const dateStr = dateObj.toLocaleDateString("fr-FR", {weekday:"short", day:"numeric", month:"short"});
+                return (
+                  <div key={d.day} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                    isToday ? "bg-blue-900/20 border-blue-500/30 ring-1 ring-blue-500/20" :
+                    done    ? "bg-emerald-900/10 border-emerald-500/15" :
+                    isPast  ? "bg-orange-900/8 border-orange-500/15" :
+                              "bg-white/3 border-white/8"
+                  }`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                      done ? "bg-emerald-500 text-white" : isToday ? "bg-blue-500 text-white" : isPast && !done ? "bg-orange-900/40 text-orange-400 border border-orange-500/30" : "bg-white/8 text-slate-500"
+                    }`}>
+                      {done ? "✓" : d.day}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-semibold ${isToday ? "text-blue-300" : done ? "text-emerald-400" : isPast && !done ? "text-orange-400/70" : "text-slate-500"}`}>
+                        {isToday ? "Aujourd'hui" : dateStr}
+                      </p>
+                      <p className="text-white text-xs font-medium truncate">
+                        {QURAN_SURAHS[d.startSurah-1].name} <span className="text-slate-600">{d.startVerse}</span>
+                        <span className="text-slate-600"> → </span>
+                        {QURAN_SURAHS[d.endSurah-1].name} <span className="text-slate-600">{d.endVerse}</span>
+                      </p>
+                      <p className="text-slate-700 text-[10px]">{d.verseCount} versets · ~{Math.round(d.verseCount/10.3)} pages</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => onNavigateToRange(d.startSurah, d.startVerse, d.endSurah, d.endVerse)}
+                        className="p-2 bg-emerald-500/12 text-emerald-400 rounded-xl hover:bg-emerald-500/25 transition-all" title="Lire">
+                        <BookOpen className="w-3.5 h-3.5"/>
+                      </button>
+                      <button onClick={() => markDayDone(d.date)}
+                        className={`p-2 rounded-xl transition-all ${done ? "bg-emerald-500/20 text-emerald-300" : "bg-white/5 text-slate-500 hover:bg-white/15"}`}>
+                        <CheckCircle className="w-3.5 h-3.5"/>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-        {!onTrack && (
-          <div className="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-2xl text-xs text-orange-300 text-center">
-            ⏰ Pour rester dans les temps : lis <strong>{dailyGoalJuz} Juz</strong> aujourd'hui (~{fmtMin(dailyGoalJuz * 47)})
           </div>
-        )}
-      </motion.div>
-
-      <AnimatePresence>
-        {readingJuz && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-            className="bg-blue-900/40 border border-blue-500/30 rounded-3xl p-5 text-center">
-            <p className="text-blue-300 text-sm font-semibold mb-1">⏱ Lecture en cours</p>
-            <p className="text-white font-black text-xl mb-1">{readingJuz.name} — {readingJuz.arabicName}</p>
-            <div className="text-4xl font-mono font-black text-blue-300 my-3">{fmtTime(elapsed)}</div>
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-3">
-              <motion.div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
-                animate={{ width: `${Math.min(100, (elapsed / (readingJuz.readingMinutes * 60)) * 100)}%` }}
-              />
-            </div>
-            <p className="text-slate-500 text-xs mb-4">
-              Durée moyenne : ~{fmtMin(readingJuz.readingMinutes)}
-              {elapsed < readingJuz.readingMinutes * 60 ? ` · ${fmtTime(readingJuz.readingMinutes * 60 - elapsed)} restants` : " · ✅ Objectif de temps atteint !"}
-            </p>
-            <button onClick={handleFinishReading} className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-emerald-500/30 transition-all">
-              ✅ J'ai terminé ce Juz
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div>
-        <h3 className="font-bold text-white mb-3 flex items-center gap-2 text-sm"><Target className="w-4 h-4 text-emerald-400"/> Grille des 30 Juz</h3>
-        <div className="grid grid-cols-6 gap-1.5">
-          {JUZ_DATA.map(j => {
-            const done = !!program.completed[j.number];
-            const isReading = readingJuz?.number === j.number;
-            return (
-              <div key={j.number} className="relative">
-                <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
-                  onClick={() => onNavigateToJuz(j.number)}
-                  className={`w-full rounded-xl py-2 text-center transition-all border text-xs font-bold ${
-                    done ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300"
-                    : isReading ? "bg-blue-500/20 border-blue-500/40 text-blue-300 animate-pulse"
-                    : "bg-white/4 border-white/8 text-slate-500 hover:border-white/20 hover:text-white"
-                  }`} title={`Lire ${j.name} · ~${j.readingMinutes} min`}>
-                  <div>{done ? "✓" : j.number}</div>
-                  <div className="text-[9px] opacity-50">{j.readingMinutes}m</div>
-                </motion.button>
-                <button onClick={e => { e.stopPropagation(); handleManual(j); }}
-                  className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center transition-all ${
-                    done ? "bg-emerald-500 text-white" : "bg-white/15 text-slate-500 hover:bg-emerald-500/50 hover:text-white"
-                  }`} title="Valider / dévalider ce Juz">
-                  {done ? "✓" : "M"}
-                </button>
-              </div>
-            );
-          })}
         </div>
-        <p className="text-xs text-slate-700 mt-1.5 text-center">Appuie pour valider · M = validé manuellement</p>
-      </div>
+      )}
 
-      <div>
-        <h3 className="font-bold text-white mb-3 text-sm flex items-center gap-2"><Play className="w-4 h-4 text-blue-400"/> Prochains Juz</h3>
-        <div className="space-y-2">
-          {JUZ_DATA.filter(j => !program.completed[j.number]).slice(0, 5).map(j => (
-            <div key={j.number} className="flex items-center gap-3 p-3 bg-white/4 border border-white/8 rounded-2xl">
-              <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center font-black text-white text-sm shrink-0">{j.number}</div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-white text-sm">{j.name} — <span className="font-serif text-slate-400">{j.arabicName}</span></p>
-                <p className="text-xs text-slate-600">~{fmtMin(j.readingMinutes)} · {j.pages} pages</p>
+      {/* ── JUZ VIEW ── */}
+      {planView === "juz" && (
+        <div className="space-y-5">
+          {/* Stats bar */}
+          <div className={`rounded-3xl p-5 border ${onTrack ? "bg-emerald-900/30 border-emerald-500/30" : "bg-orange-900/30 border-orange-500/30"}`}>
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>
+                  {onTrack ? "✅ Dans l'objectif" : `⚠️ ${behindBy} Juz de retard`}
+                </p>
+                <p className="text-white font-bold text-lg">{completedCount} / 30 Juz</p>
               </div>
-              <div className="flex gap-1.5">
-                <button onClick={() => onNavigateToJuz(j.number)} className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-all" title="Lire ce Juz"><BookOpen className="w-3.5 h-3.5"/></button>
-                <button onClick={() => setReadingJuz(readingJuz?.number === j.number ? null : j)}
-                  className={`p-2 rounded-xl transition-all text-xs font-bold ${readingJuz?.number === j.number ? "bg-blue-500 text-white" : "bg-blue-500/15 text-blue-400 hover:bg-blue-500/30"}`} title="Lancer le chrono">
-                  {readingJuz?.number === j.number ? <Pause className="w-3.5 h-3.5"/> : <Play className="w-3.5 h-3.5"/>}
-                </button>
-                <button onClick={() => handleManual(j)} className="p-2 rounded-xl bg-white/8 text-slate-400 hover:bg-white/15 transition-all" title="Valider manuellement"><CheckCircle className="w-3.5 h-3.5"/></button>
+              <div className="text-right">
+                <p className="text-slate-500 text-xs">Objectif/jour</p>
+                <p className={`font-black text-3xl ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>{dailyGoalJuz}</p>
+                <p className="text-slate-600 text-xs">Juz</p>
               </div>
             </div>
-          ))}
-          {remaining === 0 && <p className="text-center py-6 text-emerald-400 font-black text-lg">🏆 Khatm accompli ! Al-ḥamdu lillāh !</p>}
-        </div>
-      </div>
-
-      <div className="bg-white/4 border border-amber-500/15 rounded-3xl p-4 space-y-3">
-        <p className="font-bold text-white text-sm flex items-center gap-2"><Bookmark className="w-4 h-4 text-amber-400"/> Marque-pages du Programme</p>
-        <p className="text-xs text-slate-600">Enregistre ta position dans le programme pour y revenir facilement.</p>
-        <button onClick={() => {
-          const nextJuz = JUZ_DATA.find(j => !program.completed[j.number]);
-          khatmBM.save({ surah: nextJuz ? nextJuz.number : completedCount, verse: nextJuz ? nextJuz.number : completedCount, surahName: nextJuz ? `Juz ${nextJuz.number} — ${nextJuz.name}` : `Khatm terminé`, surahArabic: nextJuz?.arabicName || "", note: `Position: ${completedCount}/30 Juz complétés`, juzNum: nextJuz?.number || 0 });
-        }} className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border border-amber-500/20 text-amber-300 rounded-xl text-xs font-semibold hover:bg-amber-500/25 transition-all">
-          <Bookmark className="w-3.5 h-3.5"/> Sauvegarder ma position actuelle ({completedCount}/30 Juz)
-        </button>
-        {khatmBM.bookmarks.length > 0 && (
-          <div className="space-y-1.5 max-h-32 overflow-y-auto">
-            {khatmBM.bookmarks.map(bm => (
-              <div key={bm.id} className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-xl group">
-                <button className="flex-1 text-left" onClick={() => bm.juzNum && onNavigateToJuz(bm.juzNum)}>
-                  <p className="text-white text-xs font-semibold">{bm.surahName}</p>
-                  <p className="text-slate-600 text-[10px] flex items-center gap-1"><Clock className="w-2.5 h-2.5"/>{bm.datetime}</p>
-                </button>
-                <button onClick={() => khatmBM.remove(bm.id)} className="text-slate-700 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 ml-2"><Trash2 className="w-3 h-3"/></button>
-              </div>
-            ))}
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+              <motion.div className={`h-full rounded-full ${onTrack ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-orange-500 to-yellow-400"}`}
+                initial={{width:0}} animate={{width:`${progressPct}%`}} transition={{duration:1}}/>
+            </div>
+            <div className="flex justify-between text-xs text-slate-500">{progressPct}% accompli<span>{remaining} Juz restants</span></div>
           </div>
-        )}
-      </div>
 
+          <AnimatePresence>
+            {readingJuz && (
+              <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
+                className="bg-blue-900/40 border border-blue-500/30 rounded-3xl p-5 text-center">
+                <p className="text-blue-300 text-sm font-semibold mb-1">⏱ Lecture en cours</p>
+                <p className="text-white font-black text-xl mb-1">{readingJuz.name} — {readingJuz.arabicName}</p>
+                <div className="text-4xl font-mono font-black text-blue-300 my-3">{fmtTime(elapsed)}</div>
+                <button onClick={handleFinishReading} className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg">
+                  ✅ J'ai terminé ce Juz
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Juz grid */}
+          <div>
+            <h3 className="font-bold text-white mb-3 flex items-center gap-2 text-sm"><Target className="w-4 h-4 text-emerald-400"/> Grille des 30 Juz</h3>
+            <div className="grid grid-cols-6 gap-1.5">
+              {JUZ_DATA.map(j => {
+                const done = !!program.completed[j.number];
+                return (
+                  <div key={j.number} className="relative">
+                    <motion.button whileHover={{scale:1.08}} whileTap={{scale:0.92}}
+                      onClick={() => onNavigateToJuz(j.number)}
+                      className={`w-full rounded-xl py-2 text-center transition-all border text-xs font-bold ${done ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300" : "bg-white/4 border-white/8 text-slate-500 hover:border-white/20 hover:text-white"}`}>
+                      <div>{done ? "✓" : j.number}</div>
+                      <div className="text-[9px] opacity-50">{j.readingMinutes}m</div>
+                    </motion.button>
+                    <button onClick={() => handleManual(j)}
+                      className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center transition-all ${done ? "bg-emerald-500 text-white" : "bg-white/15 text-slate-500 hover:bg-emerald-500/50 hover:text-white"}`}>
+                      {done ? "✓" : "M"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Next juz list */}
+          <div>
+            <h3 className="font-bold text-white mb-3 text-sm flex items-center gap-2"><Play className="w-4 h-4 text-blue-400"/> Prochains Juz</h3>
+            <div className="space-y-2">
+              {JUZ_DATA.filter(j => !program.completed[j.number]).slice(0, 5).map(j => (
+                <div key={j.number} className="flex items-center gap-3 p-3 bg-white/4 border border-white/8 rounded-2xl">
+                  <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center font-black text-white text-sm shrink-0">{j.number}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white text-sm">{j.name} — <span className="font-serif text-slate-400">{j.arabicName}</span></p>
+                    <p className="text-xs text-slate-600">~{fmtMin(j.readingMinutes)}</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button onClick={() => onNavigateToJuz(j.number)} className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-all"><BookOpen className="w-3.5 h-3.5"/></button>
+                    <button onClick={() => setReadingJuz(readingJuz?.number === j.number ? null : j)} className={`p-2 rounded-xl transition-all ${readingJuz?.number === j.number ? "bg-blue-500 text-white" : "bg-blue-500/15 text-blue-400 hover:bg-blue-500/30"}`}>
+                      {readingJuz?.number === j.number ? <Pause className="w-3.5 h-3.5"/> : <Play className="w-3.5 h-3.5"/>}
+                    </button>
+                    <button onClick={() => handleManual(j)} className="p-2 rounded-xl bg-white/8 text-slate-400 hover:bg-white/15 transition-all"><CheckCircle className="w-3.5 h-3.5"/></button>
+                  </div>
+                </div>
+              ))}
+              {remaining === 0 && <p className="text-center py-6 text-emerald-400 font-black text-lg">🏆 Khatm accompli !</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset */}
       <div className="pb-6 text-center">
         {!confirmReset ? (
           <button onClick={() => setConfirmReset(true)} className="flex items-center gap-2 text-slate-700 hover:text-red-400 transition-colors text-xs mx-auto">
@@ -1594,15 +1647,13 @@ export default function App() {
   const handleNavigateToJuz = useCallback((juzNum) => {
     const juzInfo = getJuzStart(juzNum);
     if (!juzInfo) return;
-    const startSurah = juzInfo.startSurah;
-    const startVerse = juzInfo.startVerse;
-    const bounds = {
-      startSurah: juzInfo.startSurah,
-      startVerse: juzInfo.startVerse,
-      endSurah:   juzInfo.endSurah,
-      endVerse:   juzInfo.endVerse,
-    };
-    setNavTarget({ surahNum: startSurah, verseNum: startVerse, bounds });
+    setNavTarget({ surahNum: juzInfo.startSurah, verseNum: juzInfo.startVerse, bounds: { startSurah: juzInfo.startSurah, startVerse: juzInfo.startVerse, endSurah: juzInfo.endSurah, endVerse: juzInfo.endVerse } });
+    setNavConsumed(false);
+    setPage("quran");
+  }, []);
+
+  const handleNavigateToRange = useCallback((startSurah, startVerse, endSurah, endVerse) => {
+    setNavTarget({ surahNum: startSurah, verseNum: startVerse, bounds: { startSurah, startVerse, endSurah, endVerse } });
     setNavConsumed(false);
     setPage("quran");
   }, []);
@@ -1639,7 +1690,7 @@ export default function App() {
           {page === "program" && (
             <motion.div key="program" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
               className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}>
-              <JuzProgram onNavigateToJuz={handleNavigateToJuz} juzProgram={juzProgram}/>
+              <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>
             </motion.div>
           )}
           {page === "bookmarks" && (
