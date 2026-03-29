@@ -1564,10 +1564,89 @@ const TAJWEED_COLOR_MAP = {
   iqlab:"#E05000", ghunnah:"#22AA22", idghaam_shafawi:"#44BB66",
 };
 
+// ── Tajweed offline : détecte les règles directement dans le texte arabe ──
+// Fonctionne sans API pour TOUTES les sourates
+function applyOfflineTajweed(arabic) {
+  if (!arabic) return arabic;
+  const SUKUN  = "\u0652"; // ْ
+  const SHADDA = "\u0651"; // ّ
+  const FATHA  = "\u064E"; // َ
+  const DAMMA  = "\u064F"; // ُ
+  const KASRA  = "\u0650"; // ِ
+  const SUPERALIF = "\u0670"; // ٰ
+  const QALQALA = new Set(["ق","ط","ب","ج","د"]);
+  const SUN_LETTERS = new Set(["ت","ث","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ل","ن"]);
+
+  const chars = [...arabic];
+  let out = "";
+  let i = 0;
+
+  while (i < chars.length) {
+    const ch    = chars[i];
+    const next1 = chars[i+1] || "";
+    const next2 = chars[i+2] || "";
+    const next3 = chars[i+3] || "";
+
+    // 1. Qalqala : lettre ق ط ب ج د + sukun
+    if (QALQALA.has(ch) && next1 === SUKUN) {
+      out += `<span style="color:#DD8000">${ch}${SUKUN}</span>`;
+      i += 2; continue;
+    }
+
+    // 2. Ghunna : ن ou م avec shadda
+    if ((ch === "ن" || ch === "م") && next1 === SHADDA) {
+      out += `<span style="color:#22AA22">${ch}${SHADDA}</span>`;
+      i += 2; continue;
+    }
+
+    // 3. Madd : ا après fatha, و après damma, ي après kasra
+    //    Détecte le triplet voyelle+lettre_madd
+    if (ch === FATHA && next1 === "ا") {
+      out += `${FATHA}<span style="color:#537FFF">ا</span>`;
+      i += 2; continue;
+    }
+    if (ch === DAMMA && next1 === "و") {
+      out += `${DAMMA}<span style="color:#537FFF">و</span>`;
+      i += 2; continue;
+    }
+    if (ch === KASRA && next1 === "ي") {
+      out += `${KASRA}<span style="color:#537FFF">ي</span>`;
+      i += 2; continue;
+    }
+    // Superalif madd (ٰ)
+    if (ch === SUPERALIF) {
+      out += `<span style="color:#4BC8F0">${ch}</span>`;
+      i++; continue;
+    }
+
+    // 4. Laam shamsiyya : ل dans ال suivi d'une lettre solaire
+    if (ch === "ل" && next1 === SUKUN && SUN_LETTERS.has(next2)) {
+      out += `<span style="color:#AAAAAA">ل${SUKUN}</span>`;
+      i += 2; continue;
+    }
+
+    // 5. Hamza wasla ٱ
+    if (ch === "ٱ") {
+      out += `<span style="color:#AAAAAA">ٱ</span>`;
+      i++; continue;
+    }
+
+    // 6. Ikhfa / tanwin + lettre d'ikhfa
+    const IKHFA_LETTERS = new Set(["ت","ث","ج","د","ذ","ز","س","ش","ص","ض","ط","ظ","ف","ق","ك"]);
+    if ((ch === "ن" || (ch === "\u064B" || ch === "\u064C" || ch === "\u064D")) && IKHFA_LETTERS.has(next1)) {
+      out += `<span style="color:#D070A0">${ch}</span>`;
+      i++; continue;
+    }
+
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
 function getColorForClass(cls) {
   if (!cls) return null;
   if (TAJWEED_COLOR_MAP[cls]) return TAJWEED_COLOR_MAP[cls];
-  // Handle multiple classes e.g. "qalaqah ham_wasl"
   for (const part of cls.split(/\s+/)) {
     if (TAJWEED_COLOR_MAP[part]) return TAJWEED_COLOR_MAP[part];
   }
@@ -1576,23 +1655,20 @@ function getColorForClass(cls) {
 
 function parseTajweedHtml(str) {
   if (!str) return str;
-  // Replace <tajweed class="...">...</tajweed> with inline color spans
-  // Use [\s\S]*? to handle any content including nested chars
-  let result = str.replace(
-    /<tajweed class="([^"]+)">([\s\S]*?)<\/tajweed>/g,
-    (_, cls, text) => {
-      const color = getColorForClass(cls);
-      // Also process any nested tajweed inside
-      const inner = text.replace(
-        /<tajweed class="([^"]+)">([\s\S]*?)<\/tajweed>/g,
-        (__, c2, t2) => { const col2 = getColorForClass(c2); return col2 ? `<span style="color:${col2}">${t2}</span>` : t2; }
-      );
-      return color ? `<span style="color:${color}">${inner}</span>` : inner;
-    }
-  );
-  // Strip any remaining HTML tags (not span)
-  result = result.replace(/<(?!\/?span[^>]*>)[^>]+>/g, '');
-  return result;
+  // If the string contains actual tajweed markup from the API — parse it
+  if (str.includes("<tajweed")) {
+    let result = str.replace(
+      /<tajweed class="([^"]+)">([\s\S]*?)<\/tajweed>/g,
+      (_, cls, text) => {
+        const color = getColorForClass(cls);
+        return color ? `<span style="color:${color}">${text}</span>` : text;
+      }
+    );
+    result = result.replace(/<(?!\/?span[^>]*>)[^>]+>/g, "");
+    return result;
+  }
+  // No API markup — apply offline tajweed detection
+  return applyOfflineTajweed(str);
 }
 
 async function fetchFromQuranCom(surahNumber) {
@@ -1669,21 +1745,34 @@ function cleanBasmala(verses, surahNumber) {
 
 function useVerses(surahNumber) {
   const embedded = surahNumber ? EMBEDDED_VERSES[surahNumber] : null;
+  // Enrich embedded verses with offline tajweed if no tajweed field yet
+  const enriched = useMemo(() => {
+    if (!embedded) return null;
+    return embedded.map(v => ({
+      ...v,
+      tajweed: v.tajweed || applyOfflineTajweed(v.arabic),
+    }));
+  }, [embedded]);
   const [state, setState] = useState(() => {
     if (!surahNumber) return { verses: [], loading: false, error: null };
-    if (embedded) return { verses: cleanBasmala(embedded, surahNumber), loading: false, error: null };
+    if (enriched) return { verses: cleanBasmala(enriched, surahNumber), loading: false, error: null };
     if (_versesMemCache.has(surahNumber)) return { verses: cleanBasmala(_versesMemCache.get(surahNumber), surahNumber), loading: false, error: null };
     return { verses: [], loading: true, error: null };
   });
   useEffect(() => {
     if (!surahNumber) return;
-    if (embedded) { setState({ verses: cleanBasmala(embedded, surahNumber), loading: false, error: null }); return; }
+    if (enriched) { setState({ verses: cleanBasmala(enriched, surahNumber), loading: false, error: null }); return; }
     if (_versesMemCache.has(surahNumber)) { setState({ verses: cleanBasmala(_versesMemCache.get(surahNumber), surahNumber), loading: false, error: null }); return; }
     setState({ verses: [], loading: true, error: null });
     const tryLoad = async (attempts = 0) => {
       try {
         const raw = await fetchSurahFromAPI(surahNumber);
-        const verses = cleanBasmala(raw, surahNumber);
+        // Apply offline tajweed to any verse that didn't get API tajweed
+        const enrichedRaw = raw.map(v => ({
+          ...v,
+          tajweed: v.tajweed || applyOfflineTajweed(v.arabic),
+        }));
+        const verses = cleanBasmala(enrichedRaw, surahNumber);
         _versesMemCache.set(surahNumber, verses);
         setState({ verses, loading: false, error: null });
       } catch {
