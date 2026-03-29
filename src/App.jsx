@@ -483,17 +483,219 @@ function EncouragementModal({ juz, onClose }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Programme Juz
 // ════════════════════════════════════════════════════════════════════
+function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
+  const SAVE_KEY = `day_progress_${day.date}`;
+  const [checkedVerses, setCheckedVerses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "[]"); } catch { return []; }
+  });
+  const [elapsed, setElapsed] = useState(0);
+  const [currentSurahIdx, setCurrentSurahIdx] = useState(0);
+  const timerRef = useRef(null);
+  const verseRefs = useRef({});
+  const scrollRef = useRef(null);
+
+  // Build list of surahs to show with verse ranges
+  const surahsToRead = useMemo(() => {
+    const result = [];
+    for (let s = day.startSurah; s <= day.endSurah; s++) {
+      const surah = QURAN_SURAHS[s - 1];
+      const startV = s === day.startSurah ? day.startVerse : 1;
+      const endV   = s === day.endSurah   ? day.endVerse   : surah.verses;
+      result.push({ surahNum: s, surah, startV, endV });
+    }
+    return result;
+  }, [day]);
+
+  const allVerseKeys = useMemo(() => {
+    const keys = [];
+    for (const { surahNum, startV, endV } of surahsToRead) {
+      for (let v = startV; v <= endV; v++) keys.push(`${surahNum}:${v}`);
+    }
+    return keys;
+  }, [surahsToRead]);
+
+  const total = allVerseKeys.length;
+  const readCount = checkedVerses.length;
+  const pct = total > 0 ? Math.min(100, Math.round((readCount / total) * 100)) : 0;
+  const done = readCount >= total;
+
+  // Save progress
+  const saveProgress = useCallback((newChecked) => {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(newChecked)); } catch {}
+  }, [SAVE_KEY]);
+
+  // Timer
+  useEffect(() => {
+    timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  const fmtTime = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  const toggleVerse = useCallback((key) => {
+    setCheckedVerses(prev => {
+      const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
+      saveProgress(next);
+      return next;
+    });
+  }, [saveProgress]);
+
+  // Auto-scroll to next unchecked verse
+  const markAndAdvance = useCallback((key) => {
+    setCheckedVerses(prev => {
+      if (prev.includes(key)) return prev;
+      const next = [...prev, key];
+      saveProgress(next);
+      // Scroll to next unchecked
+      const idx = allVerseKeys.indexOf(key);
+      if (idx < allVerseKeys.length - 1) {
+        const nextKey = allVerseKeys[idx + 1];
+        setTimeout(() => {
+          const el = verseRefs.current[nextKey];
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+      }
+      return next;
+    });
+  }, [allVerseKeys, saveProgress]);
+
+  return (
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 60px)" }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-slate-950/95 border-b border-white/8 shrink-0">
+        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white">
+          <ChevronLeft className="w-5 h-5"/>
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-bold text-sm truncate">Jour {day.day} — {new Date(day.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
+          <p className="text-slate-500 text-xs">{total} versets · ~{Math.round(total / 10.3)} pages</p>
+        </div>
+        <span className="text-emerald-400 font-mono font-black text-lg shrink-0">{fmtTime(elapsed)}</span>
+      </div>
+
+      {/* Progress bar sticky */}
+      <div className="px-4 py-2.5 bg-slate-900/80 border-b border-white/5 shrink-0">
+        <div className="flex justify-between text-xs mb-1">
+          <span className="text-slate-500">{readCount} / {total} versets</span>
+          <span className={`font-bold ${done ? "text-emerald-400" : "text-blue-400"}`}>{pct}%</span>
+          <span className="text-slate-500">{total - readCount} restants</span>
+        </div>
+        <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+          <motion.div
+            className={`h-full rounded-full ${done ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-blue-500 to-cyan-400"}`}
+            animate={{ width: `${pct}%` }} transition={{ duration: 0.3 }}
+          />
+        </div>
+        {done && (
+          <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            onClick={() => { onMarkDone(day.date); try { localStorage.removeItem(SAVE_KEY); } catch {} onClose(); }}
+            className="w-full mt-2 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl text-xs shadow-lg">
+            ✅ Terminer — Jour {day.day} accompli
+          </motion.button>
+        )}
+      </div>
+
+      {/* Verse list */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        {surahsToRead.map(({ surahNum, surah, startV, endV }) => (
+          <SurahBlock key={surahNum} surahNum={surahNum} surah={surah} startV={startV} endV={endV}
+            checkedVerses={checkedVerses} markAndAdvance={markAndAdvance} toggleVerse={toggleVerse} verseRefs={verseRefs}/>
+        ))}
+        {/* Bottom action */}
+        <div className="px-4 py-6 space-y-3">
+          <button onClick={() => onNavigateToRange(day.startSurah, day.startVerse, day.endSurah, day.endVerse)}
+            className="w-full py-3 bg-white/5 border border-white/10 text-slate-300 font-semibold rounded-2xl text-sm hover:bg-white/10 transition-all">
+            📖 Ouvrir dans le lecteur Coran
+          </button>
+          {!done && (
+            <button onClick={() => { onMarkDone(day.date); try { localStorage.removeItem(SAVE_KEY); } catch {} onClose(); }}
+              className="w-full py-2.5 bg-white/3 border border-white/8 text-slate-600 rounded-2xl text-xs hover:bg-white/8 transition-all">
+              Marquer comme lu quand même
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvance, toggleVerse, verseRefs }) {
+  const { verses, loading } = useVerses(surahNum);
+  const rangeVerses = useMemo(() => {
+    if (verses.length === 0) return [];
+    return verses.filter(v => v.number >= startV && v.number <= endV);
+  }, [verses, startV, endV]);
+
+  return (
+    <div className="px-4 py-4">
+      {/* Surah header */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-white font-bold text-sm">{surah.name}</p>
+        <p className="font-serif text-slate-500 text-lg" dir="rtl">{surah.arabic}</p>
+      </div>
+      {surahNum !== 9 && startV === 1 && (
+        <p className="text-center text-lg font-serif text-emerald-400/70 mb-4" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-2 p-3 text-slate-600 text-xs">
+          <motion.div className="w-3 h-3 border-2 border-slate-600 border-t-slate-400 rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}/>
+          Chargement des versets…
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {rangeVerses.map(v => {
+          const key = `${surahNum}:${v.number}`;
+          const checked = checkedVerses.includes(key);
+          return (
+            <div key={v.number} ref={el => { verseRefs.current[key] = el; }}
+              className={`flex gap-3 p-3 rounded-2xl border transition-all ${checked ? "bg-emerald-900/15 border-emerald-500/20 opacity-60" : "bg-white/3 border-white/8"}`}>
+              {/* Check button */}
+              <button onClick={() => checked ? toggleVerse(key) : markAndAdvance(key)}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm transition-all mt-1 ${
+                  checked ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white/8 text-slate-500 hover:bg-emerald-500/20 hover:text-emerald-400 active:scale-90"
+                }`}>
+                {checked ? <CheckCircle className="w-4 h-4"/> : v.number}
+              </button>
+              {/* Verse text */}
+              <div className="flex-1">
+                {v.tajweed ? (
+                  <p className="text-right leading-[2.6]" dir="rtl" lang="ar"
+                    style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)" }}
+                    dangerouslySetInnerHTML={{ __html: v.tajweed }}/>
+                ) : (
+                  <p className="text-right text-white leading-[2.6]" dir="rtl" lang="ar"
+                    style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)" }}>
+                    {v.arabic}
+                  </p>
+                )}
+                {v.french && (
+                  <p className="text-slate-500 text-xs italic leading-relaxed mt-1">{v.french}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
   const { program, start, reset, dailyCompleted, markDayDone } = juz;
 
-  // ── garde : programme invalide → réinitialiser
   const isValid = program.active && program.startDate && program.endDate
     && new Date(program.endDate) > new Date(program.startDate);
 
-  const [readingDay, setReadingDay] = useState(null); // day object en cours de lecture
-  const [versesRead, setVersesRead] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const timerRef = useRef(null);
+  const [readingDay, setReadingDay] = useState(() => {
+    // Restore in-progress reading session
+    try {
+      const saved = localStorage.getItem("current_reading_day");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
   const todayISO = new Date().toISOString().slice(0, 10);
 
   const dailyPlan = useMemo(() =>
@@ -504,140 +706,157 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
   const todayPlan = dailyPlan.find(d => d.date === todayISO) || null;
   const doneDaysCount = dailyPlan.filter(d => dailyCompleted[d.date]).length;
 
-  // timer
-  useEffect(() => {
-    if (readingDay) {
-      setElapsed(0);
-      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
-    } else {
-      clearInterval(timerRef.current);
-    }
-    return () => clearInterval(timerRef.current);
-  }, [readingDay]);
+  const openDay = useCallback((d) => {
+    try { localStorage.setItem("current_reading_day", JSON.stringify(d)); } catch {}
+    setReadingDay(d);
+  }, []);
 
-  const fmtTime = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const closeDay = useCallback(() => {
+    try { localStorage.removeItem("current_reading_day"); } catch {}
+    setReadingDay(null);
+  }, []);
 
-  // ── ÉCRAN LECTURE ──────────────────────────────────────────────────
+  // ── ÉCRAN DE LECTURE ───────────────────────────────────────────────
   if (readingDay) {
-    const total = readingDay.verseCount;
-    const pct = Math.min(100, Math.round((versesRead / total) * 100));
-    const s1 = QURAN_SURAHS[readingDay.startSurah - 1];
-    const s2 = QURAN_SURAHS[readingDay.endSurah - 1];
-    const sameS = readingDay.startSurah === readingDay.endSurah;
     return (
-      <div className="flex flex-col" style={{ height: "calc(100dvh - 120px)" }}>
-        {/* Header lecture */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-slate-950/90 border-b border-white/8 shrink-0">
-          <button onClick={() => setReadingDay(null)}
-            className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white">
-            <ChevronLeft className="w-5 h-5"/>
-          </button>
-          <div className="flex-1">
-            <p className="text-white font-bold text-sm">Jour {readingDay.day} — {new Date(readingDay.date + "T00:00:00").toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"})}</p>
-            <p className="text-slate-500 text-xs">{total} versets · ~{Math.round(total / 10.3)} pages</p>
-          </div>
-          <span className="text-2xl font-mono font-black text-emerald-400">{fmtTime(elapsed)}</span>
+      <DayReader
+        day={readingDay}
+        onClose={closeDay}
+        onMarkDone={(dateStr) => { markDayDone(dateStr); closeDay(); }}
+        onNavigateToRange={onNavigateToRange}
+      />
+    );
+  }
+
+  // ── SETUP ──────────────────────────────────────────────────────────
+  if (!isValid) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
+        <div className="text-center space-y-2">
+          <div className="text-5xl">📅</div>
+          <h2 className="text-2xl font-black text-white">Programme de lecture</h2>
+          <p className="text-slate-400 text-sm leading-relaxed">Choisis ta durée — le planning se génère automatiquement avec les versets exacts à lire chaque jour.</p>
         </div>
-
-        {/* Barre de progression */}
-        <div className="px-4 py-3 bg-slate-900/60 border-b border-white/5 shrink-0">
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-slate-500">{versesRead} verset{versesRead > 1 ? "s" : ""} lu{versesRead > 1 ? "s" : ""}</span>
-            <span className={`font-bold ${pct === 100 ? "text-emerald-400" : "text-blue-400"}`}>{pct}%</span>
-            <span className="text-slate-500">{total - versesRead} restant{total - versesRead > 1 ? "s" : ""}</span>
-          </div>
-          <div className="h-2 bg-white/8 rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full ${pct === 100 ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-blue-500 to-cyan-400"}`}
-              animate={{ width: `${pct}%` }} transition={{ duration: 0.4 }}
-            />
-          </div>
-          {/* Compteur rapide */}
-          <div className="flex items-center gap-2 mt-2">
-            <p className="text-xs text-slate-600 flex-1">Appuie sur + après chaque verset lu</p>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setVersesRead(v => Math.max(0, v - 1))}
-                className="w-8 h-8 rounded-xl bg-white/8 text-slate-400 hover:bg-white/15 font-bold transition-all">−</button>
-              <span className="text-white font-black w-8 text-center">{versesRead}</span>
-              <button onClick={() => setVersesRead(v => Math.min(total, v + 1))}
-                className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-300 hover:bg-blue-500/35 font-bold transition-all">+</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Contenu — info versets + navigation */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
-          {/* Bloc lecture */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-4">
-            <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">📖 À lire aujourd'hui</p>
-            {sameS ? (
-              <div className="text-center">
-                <p className="text-white font-black text-lg">{s1.name}</p>
-                <p className="text-2xl font-serif text-slate-400 mt-1" dir="rtl">{s1.arabic}</p>
-                <p className="text-slate-400 text-sm mt-2">Versets <span className="text-white font-bold">{readingDay.startVerse}</span> à <span className="text-white font-bold">{readingDay.endVerse}</span></p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 p-3 bg-emerald-500/8 border border-emerald-500/15 rounded-2xl">
-                  <span className="text-emerald-400 text-xs font-bold shrink-0">Début</span>
-                  <div className="flex-1">
-                    <p className="text-white font-bold text-sm">{s1.name} <span className="text-slate-500 font-normal">v.{readingDay.startVerse}</span></p>
+        <div className="space-y-3">
+          {[
+            { days: 30, label: "30 jours", icon: "⚡", desc: "~207 versets/jour · ~20 pages/jour", color: "from-orange-600 to-red-600" },
+            { days: 60, label: "60 jours", icon: "🌿", desc: "~104 versets/jour · ~10 pages/jour", color: "from-emerald-600 to-teal-600" },
+            { days: 90, label: "90 jours", icon: "🌊", desc: "~70 versets/jour · ~7 pages/jour",   color: "from-blue-600 to-indigo-600" },
+          ].map(opt => {
+            const endDate = new Date(); endDate.setDate(endDate.getDate() + opt.days);
+            return (
+              <motion.button key={opt.days} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                onClick={() => start({ startDateISO: new Date().toISOString(), endDateISO: endDate.toISOString() })}
+                className={`w-full p-5 rounded-3xl bg-gradient-to-r ${opt.color} text-white text-left shadow-lg`}>
+                <div className="flex items-center gap-4">
+                  <span className="text-4xl">{opt.icon}</span>
+                  <div>
+                    <p className="font-black text-xl">{opt.label}</p>
+                    <p className="text-white/75 text-sm mt-0.5">{opt.desc}</p>
+                    <p className="text-white/50 text-xs mt-1">Fin : {endDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>
                   </div>
-                  <p className="font-serif text-slate-500 text-base" dir="rtl">{s1.arabic}</p>
                 </div>
-                {readingDay.endSurah - readingDay.startSurah > 1 && (
-                  <p className="text-xs text-slate-600 text-center italic">+ {readingDay.endSurah - readingDay.startSurah - 1} sourate{readingDay.endSurah - readingDay.startSurah > 2 ? "s" : ""} complète{readingDay.endSurah - readingDay.startSurah > 2 ? "s" : ""} entre les deux</p>
-                )}
-                <div className="flex items-center gap-3 p-3 bg-blue-500/8 border border-blue-500/15 rounded-2xl">
-                  <span className="text-blue-400 text-xs font-bold shrink-0">Fin</span>
-                  <div className="flex-1">
-                    <p className="text-white font-bold text-sm">{s2.name} <span className="text-slate-500 font-normal">v.{readingDay.endVerse}</span></p>
-                  </div>
-                  <p className="font-serif text-slate-500 text-base" dir="rtl">{s2.arabic}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Stats session */}
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: "Versets/min", value: elapsed > 30 ? (versesRead / (elapsed / 60)).toFixed(1) : "—" },
-              { label: "Temps estimé", value: `~${Math.round(total / 10.3 * 2)} min` },
-              { label: "Pages", value: `~${Math.round(total / 10.3)}` },
-            ].map(s => (
-              <div key={s.label} className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
-                <p className="text-slate-600 text-[10px]">{s.label}</p>
-                <p className="text-white font-bold text-sm">{s.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Bouton ouvrir dans Coran */}
-          <button onClick={() => { onNavigateToRange(readingDay.startSurah, readingDay.startVerse, readingDay.endSurah, readingDay.endVerse); }}
-            className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm hover:shadow-emerald-500/25 transition-all">
-            📖 Ouvrir dans le lecteur Coran
-          </button>
-
-          {/* Terminer */}
-          {pct === 100 && (
-            <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              onClick={() => { markDayDone(readingDay.date); setReadingDay(null); setVersesRead(0); }}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold rounded-2xl shadow-lg text-sm">
-              ✅ Terminer et enregistrer — Jour {readingDay.day} accompli
-            </motion.button>
-          )}
-          {pct < 100 && (
-            <button onClick={() => { markDayDone(readingDay.date); setReadingDay(null); setVersesRead(0); }}
-              className="w-full py-2.5 bg-white/5 border border-white/10 text-slate-400 rounded-2xl text-xs hover:bg-white/10 transition-all">
-              Marquer comme lu quand même
-            </button>
-          )}
+              </motion.button>
+            );
+          })}
         </div>
       </div>
     );
   }
 
+  // ── PLANNING ACTIF ─────────────────────────────────────────────────
+  const totalDays = dailyPlan.length;
+  const progressPct = totalDays > 0 ? Math.round((doneDaysCount / totalDays) * 100) : 0;
+  const daysLeft = Math.max(0, Math.ceil((new Date(program.endDate) - new Date()) / 86400000));
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+      {/* Stats */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-white font-bold">{doneDaysCount} / {totalDays} jours</p>
+            <p className="text-slate-500 text-xs">{daysLeft} jours restants · Fin le {new Date(program.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</p>
+          </div>
+          <span className="text-emerald-400 font-black text-2xl">{progressPct}%</span>
+        </div>
+        <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+          <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+            animate={{ width: `${progressPct}%` }} transition={{ duration: 0.8 }}/>
+        </div>
+      </div>
+
+      {/* Aujourd'hui */}
+      {todayPlan && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className={`rounded-3xl p-5 border ${dailyCompleted[todayPlan.date] ? "bg-emerald-900/20 border-emerald-500/30" : "bg-blue-900/20 border-blue-500/30"}`}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-2">📖 Aujourd'hui — Jour {todayPlan.day}</p>
+          <p className="text-white font-black text-sm leading-snug mb-1">
+            {QURAN_SURAHS[todayPlan.startSurah - 1].name} v.{todayPlan.startVerse}
+            <span className="text-slate-500 font-normal"> → </span>
+            {QURAN_SURAHS[todayPlan.endSurah - 1].name} v.{todayPlan.endVerse}
+          </p>
+          <p className="text-slate-500 text-xs mb-4">{todayPlan.verseCount} versets · ~{Math.round(todayPlan.verseCount / 10.3)} pages</p>
+          {!dailyCompleted[todayPlan.date] ? (
+            <button onClick={() => openDay(todayPlan)}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg text-sm">
+              ▶ Lire et cocher verset par verset
+            </button>
+          ) : (
+            <p className="text-center text-emerald-400 font-bold text-sm py-2">✅ Jour {todayPlan.day} accompli — Al-ḥamdu lillāh</p>
+          )}
+        </motion.div>
+      )}
+
+      {/* Liste planning */}
+      <div>
+        <p className="text-sm font-bold text-white mb-2">Planning complet</p>
+        <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
+          {dailyPlan.map(d => {
+            const isToday = d.date === todayISO;
+            const isPast  = d.date < todayISO;
+            const done    = !!dailyCompleted[d.date];
+            const hasSaved = (() => { try { return !!localStorage.getItem(`day_progress_${d.date}`); } catch { return false; } })();
+            const dateStr = new Date(d.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+            return (
+              <div key={d.day} className={`flex items-center gap-3 p-3 rounded-2xl border ${
+                isToday ? "bg-blue-900/20 border-blue-500/30" : done ? "bg-emerald-900/10 border-emerald-500/15" : isPast ? "bg-orange-900/8 border-orange-500/12" : "bg-white/3 border-white/8"
+              }`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                  done ? "bg-emerald-500 text-white" : isToday ? "bg-blue-500 text-white" : isPast ? "bg-orange-900/40 text-orange-400" : "bg-white/8 text-slate-500"
+                }`}>
+                  {done ? "✓" : d.day}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-semibold ${isToday ? "text-blue-300" : done ? "text-emerald-400" : isPast ? "text-orange-400/70" : "text-slate-500"}`}>
+                    {isToday ? "Aujourd'hui" : dateStr}
+                    {hasSaved && !done && <span className="ml-1.5 text-amber-400">● en cours</span>}
+                  </p>
+                  <p className="text-white text-xs font-medium truncate">
+                    {QURAN_SURAHS[d.startSurah - 1].name} <span className="text-slate-600">{d.startVerse}</span>
+                    <span className="text-slate-600"> → </span>
+                    {QURAN_SURAHS[d.endSurah - 1].name} <span className="text-slate-600">{d.endVerse}</span>
+                  </p>
+                </div>
+                {!done && (
+                  <button onClick={() => openDay(d)} className="p-2 bg-blue-500/12 text-blue-400 rounded-xl hover:bg-blue-500/25 transition-all shrink-0">
+                    <Play className="w-3.5 h-3.5"/>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="pb-6 text-center">
+        <button onClick={reset} className="flex items-center gap-2 text-slate-700 hover:text-red-400 transition-colors text-xs mx-auto">
+          <RotateCcw className="w-3.5 h-3.5"/> Changer de programme
+        </button>
+      </div>
+    </div>
+  );
+}
   // ── SETUP ──────────────────────────────────────────────────────────
   if (!isValid) {
     return (
