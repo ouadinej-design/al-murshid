@@ -1541,22 +1541,37 @@ const EMBEDDED_VERSES = {
 // API & HOOKS VERSETS
 // ════════════════════════════════════════════════════════════════════
 const _versesMemCache = new Map();
-// Vide le cache local si le format tajweed est l'ancien (sans balises)
-try {
-  const testKey = Object.keys(localStorage).find(k => k.startsWith("verses_"));
-  if (testKey) { const v = localStorage.getItem(testKey); if (v && !v.includes("<tajweed")) { Object.keys(localStorage).filter(k => k.startsWith("verses_")).forEach(k => localStorage.removeItem(k)); } }
-} catch {}
 const _fetchWithTimeout = (url, ms = 10000) => {
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(tid));
 };
 
+const TAJWEED_COLOR_MAP = {
+  ham_wasl:"#AAAAAA", slnt:"#AAAAAA", laam_shamsiyya:"#AAAAAA",
+  madda_normal:"#537FFF", madda_permissible:"#4BC8F0",
+  madda_necessary:"#2B4FBB", madda_obligatory:"#3B6FDD",
+  qalaqah:"#DD8000", ikhafa_shafawi:"#D070A0", ikhafa:"#D070A0",
+  idgham_ghunnah:"#22AA22", idgham_wo_ghunnah:"#2E8B57",
+  idgham_mutajanisayn:"#33AA55", idgham_mutaqaribayn:"#44BB66",
+  iqlab:"#E05000", ghunnah:"#22AA22", idghaam_shafawi:"#44BB66",
+};
+
 function parseTajweedHtml(tajweedStr) {
   if (!tajweedStr) return tajweedStr;
-  // Keep <tajweed class="..."> tags intact — CSS targets them directly
-  // Only strip non-tajweed HTML tags (like <sup>, <foot_note>, etc.)
-  return tajweedStr.replace(/<(?!\/?tajweed)[^>]+>/g, '');
+  // Convert <tajweed class="X">text</tajweed> → <span style="color:#XXXXX">text</span>
+  let result = tajweedStr.replace(
+    /<tajweed class="([^"]+)">([^<]*)<\/tajweed>/g,
+    (_, cls, text) => {
+      const color = TAJWEED_COLOR_MAP[cls];
+      return color
+        ? `<span style="color:${color}">${text}</span>`
+        : text;
+    }
+  );
+  // Remove any remaining non-span HTML tags
+  result = result.replace(/<(?!\/?(span)[^>]*>)[^>]+>/g, '');
+  return result;
 }
 
 async function fetchFromQuranCom(surahNumber) {
