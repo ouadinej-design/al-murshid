@@ -483,277 +483,312 @@ function EncouragementModal({ juz, onClose }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Programme Juz
 // ════════════════════════════════════════════════════════════════════
-function JuzProgram({ onNavigateToJuz, onNavigateToRange, juzProgram: juz }) {
-  const {
-    program, start, reset, manualComplete,
-    completedCount, remaining, daysPassed, daysTotal, daysLeft,
-    dailyGoalJuz, expectedJuz, onTrack, progressPct, behindBy,
-    dailyCompleted, markDayDone,
-  } = juz;
-  const khatmBM = useBookmarks("khatm");
-  const [encourageJuz, setEncourageJuz] = useState(null);
-  const [confirmReset, setConfirmReset]  = useState(false);
-  const [readingJuz,   setReadingJuz]    = useState(null);
-  const [elapsed,      setElapsed]       = useState(0);
-  const [planView, setPlanView] = useState("planning");
+function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
+  const { program, start, reset, dailyCompleted, markDayDone } = juz;
+
+  // ── garde : programme invalide → réinitialiser
+  const isValid = program.active && program.startDate && program.endDate
+    && new Date(program.endDate) > new Date(program.startDate);
+
+  const [readingDay, setReadingDay] = useState(null); // day object en cours de lecture
+  const [versesRead, setVersesRead] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef(null);
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // Si l'ancien programme n'a pas de endDate, on le remet à zéro
-  useEffect(() => {
-    if (program.active && (!program.endDate || !program.startDate)) {
-      reset();
-    }
-  }, [program.active, program.endDate, program.startDate]);
-
   const dailyPlan = useMemo(() =>
-    program.active && program.startDate && program.endDate
-      ? generateDailyPlan(program.startDate, program.endDate)
-      : [],
-    [program.startDate, program.endDate, program.active]
+    isValid ? generateDailyPlan(program.startDate, program.endDate) : [],
+    [isValid, program.startDate, program.endDate]
   );
-  const todayPlan = dailyPlan.find(d => d.date === todayISO);
+
+  const todayPlan = dailyPlan.find(d => d.date === todayISO) || null;
   const doneDaysCount = dailyPlan.filter(d => dailyCompleted[d.date]).length;
 
-  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  const fmtMin  = m => m >= 60 ? `${Math.floor(m/60)}h${m%60||''}` : `${m} min`;
-  const handleManual = (j) => { if (!program.completed[j.number]) setEncourageJuz(j); manualComplete(j.number); };
-
+  // timer
   useEffect(() => {
-    if (readingJuz) { setElapsed(0); timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000); }
-    else { clearInterval(timerRef.current); }
+    if (readingDay) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
     return () => clearInterval(timerRef.current);
-  }, [readingJuz]);
+  }, [readingDay]);
 
-  const handleFinishReading = () => {
-    if (!readingJuz) return;
-    if (!program.completed[readingJuz.number]) setEncourageJuz(readingJuz);
-    manualComplete(readingJuz.number); setReadingJuz(null);
-  };
+  const fmtTime = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+  // ── ÉCRAN LECTURE ──────────────────────────────────────────────────
+  if (readingDay) {
+    const total = readingDay.verseCount;
+    const pct = Math.min(100, Math.round((versesRead / total) * 100));
+    const s1 = QURAN_SURAHS[readingDay.startSurah - 1];
+    const s2 = QURAN_SURAHS[readingDay.endSurah - 1];
+    const sameS = readingDay.startSurah === readingDay.endSurah;
+    return (
+      <div className="flex flex-col" style={{ height: "calc(100dvh - 120px)" }}>
+        {/* Header lecture */}
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-950/90 border-b border-white/8 shrink-0">
+          <button onClick={() => setReadingDay(null)}
+            className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white">
+            <ChevronLeft className="w-5 h-5"/>
+          </button>
+          <div className="flex-1">
+            <p className="text-white font-bold text-sm">Jour {readingDay.day} — {new Date(readingDay.date + "T00:00:00").toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"})}</p>
+            <p className="text-slate-500 text-xs">{total} versets · ~{Math.round(total / 10.3)} pages</p>
+          </div>
+          <span className="text-2xl font-mono font-black text-emerald-400">{fmtTime(elapsed)}</span>
+        </div>
+
+        {/* Barre de progression */}
+        <div className="px-4 py-3 bg-slate-900/60 border-b border-white/5 shrink-0">
+          <div className="flex justify-between text-xs mb-1.5">
+            <span className="text-slate-500">{versesRead} verset{versesRead > 1 ? "s" : ""} lu{versesRead > 1 ? "s" : ""}</span>
+            <span className={`font-bold ${pct === 100 ? "text-emerald-400" : "text-blue-400"}`}>{pct}%</span>
+            <span className="text-slate-500">{total - versesRead} restant{total - versesRead > 1 ? "s" : ""}</span>
+          </div>
+          <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full ${pct === 100 ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-blue-500 to-cyan-400"}`}
+              animate={{ width: `${pct}%` }} transition={{ duration: 0.4 }}
+            />
+          </div>
+          {/* Compteur rapide */}
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-xs text-slate-600 flex-1">Appuie sur + après chaque verset lu</p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setVersesRead(v => Math.max(0, v - 1))}
+                className="w-8 h-8 rounded-xl bg-white/8 text-slate-400 hover:bg-white/15 font-bold transition-all">−</button>
+              <span className="text-white font-black w-8 text-center">{versesRead}</span>
+              <button onClick={() => setVersesRead(v => Math.min(total, v + 1))}
+                className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-300 hover:bg-blue-500/35 font-bold transition-all">+</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenu — info versets + navigation */}
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
+          {/* Bloc lecture */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-4">
+            <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">📖 À lire aujourd'hui</p>
+            {sameS ? (
+              <div className="text-center">
+                <p className="text-white font-black text-lg">{s1.name}</p>
+                <p className="text-2xl font-serif text-slate-400 mt-1" dir="rtl">{s1.arabic}</p>
+                <p className="text-slate-400 text-sm mt-2">Versets <span className="text-white font-bold">{readingDay.startVerse}</span> à <span className="text-white font-bold">{readingDay.endVerse}</span></p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 bg-emerald-500/8 border border-emerald-500/15 rounded-2xl">
+                  <span className="text-emerald-400 text-xs font-bold shrink-0">Début</span>
+                  <div className="flex-1">
+                    <p className="text-white font-bold text-sm">{s1.name} <span className="text-slate-500 font-normal">v.{readingDay.startVerse}</span></p>
+                  </div>
+                  <p className="font-serif text-slate-500 text-base" dir="rtl">{s1.arabic}</p>
+                </div>
+                {readingDay.endSurah - readingDay.startSurah > 1 && (
+                  <p className="text-xs text-slate-600 text-center italic">+ {readingDay.endSurah - readingDay.startSurah - 1} sourate{readingDay.endSurah - readingDay.startSurah > 2 ? "s" : ""} complète{readingDay.endSurah - readingDay.startSurah > 2 ? "s" : ""} entre les deux</p>
+                )}
+                <div className="flex items-center gap-3 p-3 bg-blue-500/8 border border-blue-500/15 rounded-2xl">
+                  <span className="text-blue-400 text-xs font-bold shrink-0">Fin</span>
+                  <div className="flex-1">
+                    <p className="text-white font-bold text-sm">{s2.name} <span className="text-slate-500 font-normal">v.{readingDay.endVerse}</span></p>
+                  </div>
+                  <p className="font-serif text-slate-500 text-base" dir="rtl">{s2.arabic}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Stats session */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Versets/min", value: elapsed > 30 ? (versesRead / (elapsed / 60)).toFixed(1) : "—" },
+              { label: "Temps estimé", value: `~${Math.round(total / 10.3 * 2)} min` },
+              { label: "Pages", value: `~${Math.round(total / 10.3)}` },
+            ].map(s => (
+              <div key={s.label} className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
+                <p className="text-slate-600 text-[10px]">{s.label}</p>
+                <p className="text-white font-bold text-sm">{s.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Bouton ouvrir dans Coran */}
+          <button onClick={() => { onNavigateToRange(readingDay.startSurah, readingDay.startVerse, readingDay.endSurah, readingDay.endVerse); }}
+            className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm hover:shadow-emerald-500/25 transition-all">
+            📖 Ouvrir dans le lecteur Coran
+          </button>
+
+          {/* Terminer */}
+          {pct === 100 && (
+            <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              onClick={() => { markDayDone(readingDay.date); setReadingDay(null); setVersesRead(0); }}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold rounded-2xl shadow-lg text-sm">
+              ✅ Terminer et enregistrer — Jour {readingDay.day} accompli
+            </motion.button>
+          )}
+          {pct < 100 && (
+            <button onClick={() => { markDayDone(readingDay.date); setReadingDay(null); setVersesRead(0); }}
+              className="w-full py-2.5 bg-white/5 border border-white/10 text-slate-400 rounded-2xl text-xs hover:bg-white/10 transition-all">
+              Marquer comme lu quand même
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── SETUP ──────────────────────────────────────────────────────────
+  if (!isValid) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
+        <div className="text-center space-y-2">
+          <div className="text-5xl">📅</div>
+          <h2 className="text-2xl font-black text-white">Programme de lecture</h2>
+          <p className="text-slate-400 text-sm">Choisis ta durée — le planning se génère automatiquement avec le nombre exact de versets par jour.</p>
+        </div>
+        <div className="space-y-3">
+          {[
+            { days: 30, label: "30 jours", icon: "⚡", desc: "~207 versets/jour · ~20 pages/jour", color: "from-orange-600 to-red-600" },
+            { days: 60, label: "60 jours", icon: "🌿", desc: "~104 versets/jour · ~10 pages/jour", color: "from-emerald-600 to-teal-600" },
+            { days: 90, label: "90 jours", icon: "🌊", desc: "~70 versets/jour · ~7 pages/jour",  color: "from-blue-600 to-indigo-600" },
+          ].map(opt => {
+            const startISO = new Date().toISOString();
+            const endDate = new Date(); endDate.setDate(endDate.getDate() + opt.days);
+            const endISO = endDate.toISOString();
+            return (
+              <motion.button key={opt.days} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                onClick={() => start({ startDateISO: startISO, endDateISO: endISO })}
+                className={`w-full p-5 rounded-3xl bg-gradient-to-r ${opt.color} text-white text-left shadow-lg`}>
+                <div className="flex items-center gap-4">
+                  <span className="text-4xl">{opt.icon}</span>
+                  <div>
+                    <p className="font-black text-xl">{opt.label}</p>
+                    <p className="text-white/75 text-sm mt-0.5">{opt.desc}</p>
+                    <p className="text-white/50 text-xs mt-1">Début : aujourd'hui · Fin : {endDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+        <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-center">
+          <p className="text-slate-500 text-xs leading-relaxed">Chaque jour, tu verras exactement quels versets lire. Un bouton t'amène directement à la bonne page dans le lecteur Coran.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── PLANNING ACTIF ─────────────────────────────────────────────────
+  const totalDays = dailyPlan.length;
+  const progressPct = totalDays > 0 ? Math.round((doneDaysCount / totalDays) * 100) : 0;
+  const endDateFmt = new Date(program.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const daysLeft = Math.max(0, Math.ceil((new Date(program.endDate) - new Date()) / 86400000));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-      <AnimatePresence>{encourageJuz && <EncouragementModal juz={encourageJuz} onClose={() => setEncourageJuz(null)} />}</AnimatePresence>
-
-      {/* Toggle planning / juz */}
-      <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10 gap-1">
-        {[{key:"planning",label:"📅 Planning quotidien"},{key:"juz",label:"📊 Vue Juz"}].map(v => (
-          <button key={v.key} onClick={() => setPlanView(v.key)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${planView === v.key ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}>
-            {v.label}
-          </button>
-        ))}
+      {/* Stats */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-white font-bold">{doneDaysCount} / {totalDays} jours</p>
+            <p className="text-slate-500 text-xs">{daysLeft} jours restants · Fin le {endDateFmt}</p>
+          </div>
+          <span className="text-emerald-400 font-black text-2xl">{progressPct}%</span>
+        </div>
+        <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+          <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+            animate={{ width: `${progressPct}%` }} transition={{ duration: 0.8 }}/>
+        </div>
       </div>
 
-      {/* ── PLANNING VIEW ── */}
-      {planView === "planning" && (
-        <div className="space-y-4">
-          {/* Today's reading */}
-          {todayPlan ? (
-            <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}
-              className={`rounded-3xl p-5 border ${dailyCompleted[todayPlan.date] ? "bg-emerald-900/20 border-emerald-500/30" : "bg-blue-900/20 border-blue-500/30"}`}>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3">📖 Lecture d'aujourd'hui — Jour {todayPlan.day}</p>
-              <p className="text-white font-black text-lg leading-tight">
-                {QURAN_SURAHS[todayPlan.startSurah-1].name} v.{todayPlan.startVerse}
-                <span className="text-slate-500 font-normal"> → </span>
-                {QURAN_SURAHS[todayPlan.endSurah-1].name} v.{todayPlan.endVerse}
-              </p>
-              <p className="text-slate-500 text-xs mt-1 mb-4">
-                {todayPlan.verseCount} versets · ~{Math.round(todayPlan.verseCount / 10.3)} pages
-                {todayPlan.startSurah !== todayPlan.endSurah && ` · ${todayPlan.endSurah - todayPlan.startSurah + 1} sourates`}
-              </p>
-              <div className="flex gap-2">
-                <button onClick={() => onNavigateToRange(todayPlan.startSurah, todayPlan.startVerse, todayPlan.endSurah, todayPlan.endVerse)}
-                  className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl text-sm shadow-lg hover:shadow-emerald-500/25 transition-all">
-                  📖 Lire maintenant
-                </button>
-                <button onClick={() => markDayDone(todayPlan.date)}
-                  className={`px-4 py-3 rounded-2xl font-bold text-sm border transition-all ${dailyCompleted[todayPlan.date] ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" : "bg-white/5 border-white/15 text-slate-400 hover:border-white/30"}`}>
-                  {dailyCompleted[todayPlan.date] ? "✓ Lu" : "Marquer lu"}
-                </button>
-              </div>
-            </motion.div>
+      {/* Aujourd'hui */}
+      {todayPlan ? (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className={`rounded-3xl p-5 border ${dailyCompleted[todayPlan.date] ? "bg-emerald-900/20 border-emerald-500/30" : "bg-blue-900/20 border-blue-500/30"}`}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3">📖 Lecture d'aujourd'hui — Jour {todayPlan.day}</p>
+          <p className="text-white font-black text-base leading-snug mb-1">
+            {QURAN_SURAHS[todayPlan.startSurah - 1].name} v.{todayPlan.startVerse}
+            <span className="text-slate-500 font-normal"> → </span>
+            {QURAN_SURAHS[todayPlan.endSurah - 1].name} v.{todayPlan.endVerse}
+          </p>
+          <p className="text-slate-500 text-xs mb-4">{todayPlan.verseCount} versets · ~{Math.round(todayPlan.verseCount / 10.3)} pages</p>
+          {!dailyCompleted[todayPlan.date] ? (
+            <button onClick={() => { setVersesRead(0); setReadingDay(todayPlan); }}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl shadow-lg text-sm">
+              ▶ Commencer la lecture du jour
+            </button>
           ) : (
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 text-center">
-              <p className="text-slate-400 text-sm">Aucune lecture programmée aujourd'hui.</p>
+            <div className="flex items-center justify-center gap-2 py-3 text-emerald-400 font-bold text-sm">
+              ✅ Jour {todayPlan.day} accompli — Al-ḥamdu lillāh
             </div>
           )}
-
-          {/* Progress bar */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-slate-400">{doneDaysCount} / {dailyPlan.length} jours complétés</span>
-              <span className="text-emerald-400 font-bold">{dailyPlan.length > 0 ? Math.round(doneDaysCount/dailyPlan.length*100) : 0}%</span>
-            </div>
-            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
-                animate={{width: `${dailyPlan.length > 0 ? doneDaysCount/dailyPlan.length*100 : 0}%`}} transition={{duration:0.8}}/>
-            </div>
-            <p className="text-slate-700 text-xs mt-2 text-center">
-              {program.endDate ? `Fin prévue : ${new Date(program.endDate).toLocaleDateString("fr-FR", {day:"numeric",month:"long",year:"numeric"})}` : ""}
-            </p>
-          </div>
-
-          {/* Full plan list */}
-          <div>
-            <h3 className="text-sm font-bold text-white mb-2">Planning complet</h3>
-            <div className="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
-              {dailyPlan.map(d => {
-                const isToday = d.date === todayISO;
-                const isPast  = d.date < todayISO;
-                const done    = !!dailyCompleted[d.date];
-                const dateObj = new Date(d.date + 'T00:00:00');
-                const dateStr = dateObj.toLocaleDateString("fr-FR", {weekday:"short", day:"numeric", month:"short"});
-                return (
-                  <div key={d.day} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
-                    isToday ? "bg-blue-900/20 border-blue-500/30 ring-1 ring-blue-500/20" :
-                    done    ? "bg-emerald-900/10 border-emerald-500/15" :
-                    isPast  ? "bg-orange-900/8 border-orange-500/15" :
-                              "bg-white/3 border-white/8"
-                  }`}>
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
-                      done ? "bg-emerald-500 text-white" : isToday ? "bg-blue-500 text-white" : isPast && !done ? "bg-orange-900/40 text-orange-400 border border-orange-500/30" : "bg-white/8 text-slate-500"
-                    }`}>
-                      {done ? "✓" : d.day}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-semibold ${isToday ? "text-blue-300" : done ? "text-emerald-400" : isPast && !done ? "text-orange-400/70" : "text-slate-500"}`}>
-                        {isToday ? "Aujourd'hui" : dateStr}
-                      </p>
-                      <p className="text-white text-xs font-medium truncate">
-                        {QURAN_SURAHS[d.startSurah-1].name} <span className="text-slate-600">{d.startVerse}</span>
-                        <span className="text-slate-600"> → </span>
-                        {QURAN_SURAHS[d.endSurah-1].name} <span className="text-slate-600">{d.endVerse}</span>
-                      </p>
-                      <p className="text-slate-700 text-[10px]">{d.verseCount} versets · ~{Math.round(d.verseCount/10.3)} pages</p>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => onNavigateToRange(d.startSurah, d.startVerse, d.endSurah, d.endVerse)}
-                        className="p-2 bg-emerald-500/12 text-emerald-400 rounded-xl hover:bg-emerald-500/25 transition-all" title="Lire">
-                        <BookOpen className="w-3.5 h-3.5"/>
-                      </button>
-                      <button onClick={() => markDayDone(d.date)}
-                        className={`p-2 rounded-xl transition-all ${done ? "bg-emerald-500/20 text-emerald-300" : "bg-white/5 text-slate-500 hover:bg-white/15"}`}>
-                        <CheckCircle className="w-3.5 h-3.5"/>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        </motion.div>
+      ) : (
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center text-slate-500 text-sm">
+          Aucune lecture programmée aujourd'hui.
         </div>
       )}
 
-      {/* ── JUZ VIEW ── */}
-      {planView === "juz" && (
-        <div className="space-y-5">
-          {/* Stats bar */}
-          <div className={`rounded-3xl p-5 border ${onTrack ? "bg-emerald-900/30 border-emerald-500/30" : "bg-orange-900/30 border-orange-500/30"}`}>
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>
-                  {onTrack ? "✅ Dans l'objectif" : `⚠️ ${behindBy} Juz de retard`}
-                </p>
-                <p className="text-white font-bold text-lg">{completedCount} / 30 Juz</p>
-              </div>
-              <div className="text-right">
-                <p className="text-slate-500 text-xs">Objectif/jour</p>
-                <p className={`font-black text-3xl ${onTrack ? "text-emerald-400" : "text-orange-400"}`}>{dailyGoalJuz}</p>
-                <p className="text-slate-600 text-xs">Juz</p>
-              </div>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-              <motion.div className={`h-full rounded-full ${onTrack ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-orange-500 to-yellow-400"}`}
-                initial={{width:0}} animate={{width:`${progressPct}%`}} transition={{duration:1}}/>
-            </div>
-            <div className="flex justify-between text-xs text-slate-500">{progressPct}% accompli<span>{remaining} Juz restants</span></div>
-          </div>
-
-          <AnimatePresence>
-            {readingJuz && (
-              <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}} exit={{opacity:0}}
-                className="bg-blue-900/40 border border-blue-500/30 rounded-3xl p-5 text-center">
-                <p className="text-blue-300 text-sm font-semibold mb-1">⏱ Lecture en cours</p>
-                <p className="text-white font-black text-xl mb-1">{readingJuz.name} — {readingJuz.arabicName}</p>
-                <div className="text-4xl font-mono font-black text-blue-300 my-3">{fmtTime(elapsed)}</div>
-                <button onClick={handleFinishReading} className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg">
-                  ✅ J'ai terminé ce Juz
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Juz grid */}
-          <div>
-            <h3 className="font-bold text-white mb-3 flex items-center gap-2 text-sm"><Target className="w-4 h-4 text-emerald-400"/> Grille des 30 Juz</h3>
-            <div className="grid grid-cols-6 gap-1.5">
-              {JUZ_DATA.map(j => {
-                const done = !!program.completed[j.number];
-                return (
-                  <div key={j.number} className="relative">
-                    <motion.button whileHover={{scale:1.08}} whileTap={{scale:0.92}}
-                      onClick={() => onNavigateToJuz(j.number)}
-                      className={`w-full rounded-xl py-2 text-center transition-all border text-xs font-bold ${done ? "bg-emerald-500/25 border-emerald-500/50 text-emerald-300" : "bg-white/4 border-white/8 text-slate-500 hover:border-white/20 hover:text-white"}`}>
-                      <div>{done ? "✓" : j.number}</div>
-                      <div className="text-[9px] opacity-50">{j.readingMinutes}m</div>
-                    </motion.button>
-                    <button onClick={() => handleManual(j)}
-                      className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center transition-all ${done ? "bg-emerald-500 text-white" : "bg-white/15 text-slate-500 hover:bg-emerald-500/50 hover:text-white"}`}>
-                      {done ? "✓" : "M"}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Next juz list */}
-          <div>
-            <h3 className="font-bold text-white mb-3 text-sm flex items-center gap-2"><Play className="w-4 h-4 text-blue-400"/> Prochains Juz</h3>
-            <div className="space-y-2">
-              {JUZ_DATA.filter(j => !program.completed[j.number]).slice(0, 5).map(j => (
-                <div key={j.number} className="flex items-center gap-3 p-3 bg-white/4 border border-white/8 rounded-2xl">
-                  <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center font-black text-white text-sm shrink-0">{j.number}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white text-sm">{j.name} — <span className="font-serif text-slate-400">{j.arabicName}</span></p>
-                    <p className="text-xs text-slate-600">~{fmtMin(j.readingMinutes)}</p>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button onClick={() => onNavigateToJuz(j.number)} className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-all"><BookOpen className="w-3.5 h-3.5"/></button>
-                    <button onClick={() => setReadingJuz(readingJuz?.number === j.number ? null : j)} className={`p-2 rounded-xl transition-all ${readingJuz?.number === j.number ? "bg-blue-500 text-white" : "bg-blue-500/15 text-blue-400 hover:bg-blue-500/30"}`}>
-                      {readingJuz?.number === j.number ? <Pause className="w-3.5 h-3.5"/> : <Play className="w-3.5 h-3.5"/>}
-                    </button>
-                    <button onClick={() => handleManual(j)} className="p-2 rounded-xl bg-white/8 text-slate-400 hover:bg-white/15 transition-all"><CheckCircle className="w-3.5 h-3.5"/></button>
-                  </div>
+      {/* Planning complet */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-bold text-white">Planning complet</h3>
+          <span className="text-xs text-slate-600">{totalDays} jours</span>
+        </div>
+        <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
+          {dailyPlan.map(d => {
+            const isToday = d.date === todayISO;
+            const isPast  = d.date < todayISO;
+            const done    = !!dailyCompleted[d.date];
+            const dateObj = new Date(d.date + "T00:00:00");
+            const dateStr = dateObj.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+            return (
+              <div key={d.day} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${
+                isToday ? "bg-blue-900/20 border-blue-500/30 ring-1 ring-blue-500/20"
+                : done   ? "bg-emerald-900/10 border-emerald-500/15"
+                : isPast ? "bg-orange-900/8 border-orange-500/15"
+                         : "bg-white/3 border-white/8"
+              }`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                  done    ? "bg-emerald-500 text-white"
+                  : isToday ? "bg-blue-500 text-white"
+                  : isPast && !done ? "bg-orange-900/40 text-orange-400 border border-orange-500/25"
+                  : "bg-white/8 text-slate-500"
+                }`}>
+                  {done ? "✓" : d.day}
                 </div>
-              ))}
-              {remaining === 0 && <p className="text-center py-6 text-emerald-400 font-black text-lg">🏆 Khatm accompli !</p>}
-            </div>
-          </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-semibold ${isToday ? "text-blue-300" : done ? "text-emerald-400" : isPast && !done ? "text-orange-400/70" : "text-slate-500"}`}>
+                    {isToday ? "Aujourd'hui" : dateStr}
+                  </p>
+                  <p className="text-white text-xs font-medium truncate">
+                    {QURAN_SURAHS[d.startSurah - 1].name}
+                    <span className="text-slate-600"> {d.startVerse} → </span>
+                    {QURAN_SURAHS[d.endSurah - 1].name}
+                    <span className="text-slate-600"> {d.endVerse}</span>
+                  </p>
+                  <p className="text-slate-700 text-[10px]">{d.verseCount} versets · ~{Math.round(d.verseCount / 10.3)} pages</p>
+                </div>
+                <button onClick={() => { setVersesRead(0); setReadingDay(d); }}
+                  className="p-2 bg-emerald-500/12 text-emerald-400 rounded-xl hover:bg-emerald-500/25 transition-all shrink-0" title="Lire">
+                  <Play className="w-3.5 h-3.5"/>
+                </button>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* Reset */}
       <div className="pb-6 text-center">
-        {!confirmReset ? (
-          <button onClick={() => setConfirmReset(true)} className="flex items-center gap-2 text-slate-700 hover:text-red-400 transition-colors text-xs mx-auto">
-            <RotateCcw className="w-3.5 h-3.5"/> Réinitialiser le programme
-          </button>
-        ) : (
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => { reset(); setConfirmReset(false); }} className="px-4 py-2 bg-red-500/15 text-red-400 border border-red-500/25 rounded-xl text-xs font-bold hover:bg-red-500/25 transition-all">Confirmer</button>
-            <button onClick={() => setConfirmReset(false)} className="px-4 py-2 bg-white/5 text-slate-400 border border-white/10 rounded-xl text-xs hover:bg-white/10 transition-all">Annuler</button>
-          </div>
-        )}
+        <button onClick={reset} className="flex items-center gap-2 text-slate-700 hover:text-red-400 transition-colors text-xs mx-auto">
+          <RotateCcw className="w-3.5 h-3.5"/> Changer de programme
+        </button>
       </div>
     </div>
   );
 }
-
-// ════════════════════════════════════════════════════════════════════
-// COMPOSANT — Marque-pages
-// ════════════════════════════════════════════════════════════════════
 function BookmarksPage() {
   const quranBM = useBookmarks("quran");
   const khatmBM = useBookmarks("khatm");
