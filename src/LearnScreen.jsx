@@ -124,28 +124,31 @@ async function fetchTajweedSurah(surahNumber) {
   const d = await r.json();
   const result = d.verses.map(v => ({
     number: v.verse_number,
-    words: (v.words||[]).filter(w => w.char_type_name !== "end").map(w => ({ text: w.text_uthmani_tajweed || w.text_uthmani || "" })),
+    html: (v.words||[])
+      .filter(w => w.char_type_name !== "end")
+      .map(w => w.text_uthmani_tajweed || w.text_uthmani || "")
+      .join(" "),
   }));
   _tajweedCache.set(surahNumber, result);
   return result;
 }
 
-function renderTajweedWord(text) {
-  const regex = /<tajweed class="([^"]+)">([^<]*)<\/tajweed>/g;
-  const parts = [];
-  let lastIdx = 0, match;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIdx) parts.push({ text: text.slice(lastIdx, match.index), cls: null });
-    parts.push({ text: match[2], cls: match[1] });
-    lastIdx = match.index + match[0].length;
-  }
-  if (lastIdx < text.length) parts.push({ text: text.slice(lastIdx), cls: null });
-  if (!parts.length) return <span>{text}</span>;
-  return parts.map((p, i) => {
-    const color = p.cls ? (TAJWEED_COLORS[p.cls]?.color || null) : null;
-    return <span key={i} style={color ? { color, textShadow: `0 0 6px ${color}50` } : {}}>{p.text}</span>;
-  });
-}
+// CSS tajweed injecté une seule fois
+const TAJWEED_CSS = `
+tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#AAAAAA}
+tajweed[class*="madda_normal"]{color:#537FFF}
+tajweed[class*="madda_permissible"]{color:#4BC8F0}
+tajweed[class*="madda_necessary"]{color:#2B4FBB}
+tajweed[class*="madda_obligatory"]{color:#3B6FDD}
+tajweed[class*="qalaqah"]{color:#DD8000}
+tajweed[class*="ikhafa"]{color:#D070A0}
+tajweed[class*="idgham_ghunnah"]{color:#169200}
+tajweed[class*="idgham_wo_ghunnah"]{color:#2E8B57}
+tajweed[class*="idgham_mutajanisayn"]{color:#33AA55}
+tajweed[class*="idgham_mutaqaribayn"]{color:#44BB66}
+tajweed[class*="iqlab"]{color:#E05000}
+tajweed[class*="ghunnah"]{color:#22AA22}
+`;
 
 function useAudio() {
   const audioRef = useRef(null);
@@ -219,7 +222,6 @@ function SurahCard({ surah, audio }) {
         .catch(() => setLoadingTJ(false));
     }
   }, [open]);
-
   return (
     <div className={`rounded-3xl border overflow-hidden transition-all ${open ? "border-emerald-500/30 bg-emerald-900/8" : "border-white/10 bg-white/4 hover:border-white/20"}`}>
       <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setOpen(o => !o)}>
@@ -287,11 +289,11 @@ function SurahCard({ surah, audio }) {
                           <motion.div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full" animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:"linear"}}/>
                         ) : isPlaying ? <Pause className="w-3 h-3"/> : <span className="text-xs font-bold">{v.n}</span>}
                       </button>
-                      <p className="flex-1 text-right leading-[2.8] select-text" dir="rtl" lang="ar"
+                      <p className="flex-1 text-right leading-[2.8]" dir="rtl" lang="ar"
                         style={{fontFamily:"'Amiri Quran','Scheherazade New',serif", fontSize:"clamp(1.2rem,4vw,1.65rem)"}}>
                         {tjVerse
-                          ? tjVerse.words.map((w,wi) => <span key={wi}>{renderTajweedWord(w.text)} </span>)
-                          : <span className="text-white">{v.ar}</span>
+                          ? <span dangerouslySetInnerHTML={{ __html: tjVerse.html }} className="select-text"/>
+                          : <span className="text-white select-text">{v.ar}</span>
                         }
                       </p>
                     </div>
@@ -444,6 +446,16 @@ const TABS = [
 export default function LearnScreen() {
   const [tab, setTab] = useState("surahs");
   const audio = useAudio();
+
+  // Inject tajweed CSS once
+  useEffect(() => {
+    if (!document.getElementById("tajweed-css")) {
+      const s = document.createElement("style");
+      s.id = "tajweed-css";
+      s.textContent = TAJWEED_CSS;
+      document.head.appendChild(s);
+    }
+  }, []);
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
       <div>
