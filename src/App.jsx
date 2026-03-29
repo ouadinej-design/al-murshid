@@ -1474,13 +1474,20 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
 // ════════════════════════════════════════════════════════════════════
 const EMBEDDED_VERSES = {
   1:[
-    {number:1,arabic:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Bismi llāhi r-raḥmāni r-raḥīm",french:"Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux"},
-    {number:2,arabic:"الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",transliteration:"Al-ḥamdu li-llāhi rabbi l-ʿālamīn",french:"Louange à Allah, Seigneur de l'univers"},
-    {number:3,arabic:"الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Ar-raḥmāni r-raḥīm",french:"Le Tout Miséricordieux, le Très Miséricordieux"},
-    {number:4,arabic:"مَالِكِ يَوْمِ الدِّينِ",transliteration:"Māliki yawmi d-dīn",french:"Maître du Jour de la rétribution"},
-    {number:5,arabic:"إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",transliteration:"Iyyāka naʿbudu wa-iyyāka nastaʿīn",french:"C'est Toi Seul que nous adorons, et c'est Toi Seul dont nous implorons le secours"},
-    {number:6,arabic:"اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",transliteration:"Ihdinā ṣ-ṣirāṭa l-mustaqīm",french:"Guide-nous dans le droit chemin"},
-    {number:7,arabic:"صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",transliteration:"Ṣirāṭa lladhīna anʿamta ʿalayhim ġayri l-maġḍūbi ʿalayhim wa-lā ḍ-ḍāllīn",french:"Le chemin de ceux que Tu as comblés de faveurs, non ceux qui ont encouru Ta colère ni des égarés"},
+    {number:1,arabic:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Bismi llāhi r-raḥmāni r-raḥīm",french:"Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux",
+     tajweed:`بِسْمِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">للَّ</span>هِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حْمَـٰنِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حِيمِ`},
+    {number:2,arabic:"الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",transliteration:"Al-ḥamdu li-llāhi rabbi l-ʿālamīn",french:"Louange à Allah, Seigneur de l'univers",
+     tajweed:`<span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لْ</span>حَمْدُ <span style="color:#AAAAAA">لِ</span>للَّهِ رَبِّ <span style="color:#AAAAAA">ٱ</span><span style="color:#537FFF">لْعَـٰ</span>لَمِينَ`},
+    {number:3,arabic:"الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Ar-raḥmāni r-raḥīm",french:"Le Tout Miséricordieux, le Très Miséricordieux",
+     tajweed:`<span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حْمَـٰنِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حِيمِ`},
+    {number:4,arabic:"مَالِكِ يَوْمِ الدِّينِ",transliteration:"Māliki yawmi d-dīn",french:"Maître du Jour de la rétribution",
+     tajweed:`مَـٰلِكِ يَوْمِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">ل</span>دِّينِ`},
+    {number:5,arabic:"إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",transliteration:"Iyyāka naʿbudu wa-iyyāka nastaʿīn",french:"C'est Toi Seul que nous adorons, et c'est Toi Seul dont nous implorons le secours",
+     tajweed:`إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ`},
+    {number:6,arabic:"اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",transliteration:"Ihdinā ṣ-ṣirāṭa l-mustaqīm",french:"Guide-nous dans le droit chemin",
+     tajweed:`<span style="color:#AAAAAA">ٱ</span>هْدِنَا <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لصِّ</span>رَٰطَ <span style="color:#AAAAAA">ٱ</span><span style="color:#537FFF">لْمُسْتَقِيمَ</span>`},
+    {number:7,arabic:"صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",transliteration:"Ṣirāṭa lladhīna anʿamta ʿalayhim ġayri l-maġḍūbi ʿalayhim wa-lā ḍ-ḍāllīn",french:"Le chemin de ceux que Tu as comblés de faveurs, non ceux qui ont encouru Ta colère ni des égarés",
+     tajweed:`صِرَٰطَ <span style="color:#AAAAAA">ٱ</span>لَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ <span style="color:#AAAAAA">ٱ</span>لْمَغْضُوبِ عَلَيْهِمْ وَلَا <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">ل</span>ضَّ<span style="color:#537FFF">آ</span>لِّينَ`},
   ],
   93:[
     {number:1,arabic:"وَالضُّحَىٰ",transliteration:"Wa-ḍ-ḍuḥā",french:"Par le matin lumineux !"},
@@ -1557,29 +1564,44 @@ const TAJWEED_COLOR_MAP = {
   iqlab:"#E05000", ghunnah:"#22AA22", idghaam_shafawi:"#44BB66",
 };
 
-function parseTajweedHtml(tajweedStr) {
-  if (!tajweedStr) return tajweedStr;
-  // Convert <tajweed class="X">text</tajweed> → <span style="color:#XXXXX">text</span>
-  let result = tajweedStr.replace(
-    /<tajweed class="([^"]+)">([^<]*)<\/tajweed>/g,
+function getColorForClass(cls) {
+  if (!cls) return null;
+  if (TAJWEED_COLOR_MAP[cls]) return TAJWEED_COLOR_MAP[cls];
+  // Handle multiple classes e.g. "qalaqah ham_wasl"
+  for (const part of cls.split(/\s+/)) {
+    if (TAJWEED_COLOR_MAP[part]) return TAJWEED_COLOR_MAP[part];
+  }
+  return null;
+}
+
+function parseTajweedHtml(str) {
+  if (!str) return str;
+  // Replace <tajweed class="...">...</tajweed> with inline color spans
+  // Use [\s\S]*? to handle any content including nested chars
+  let result = str.replace(
+    /<tajweed class="([^"]+)">([\s\S]*?)<\/tajweed>/g,
     (_, cls, text) => {
-      const color = TAJWEED_COLOR_MAP[cls];
-      return color
-        ? `<span style="color:${color}">${text}</span>`
-        : text;
+      const color = getColorForClass(cls);
+      // Also process any nested tajweed inside
+      const inner = text.replace(
+        /<tajweed class="([^"]+)">([\s\S]*?)<\/tajweed>/g,
+        (__, c2, t2) => { const col2 = getColorForClass(c2); return col2 ? `<span style="color:${col2}">${t2}</span>` : t2; }
+      );
+      return color ? `<span style="color:${color}">${inner}</span>` : inner;
     }
   );
-  // Remove any remaining non-span HTML tags
-  result = result.replace(/<(?!\/?(span)[^>]*>)[^>]+>/g, '');
+  // Strip any remaining HTML tags (not span)
+  result = result.replace(/<(?!\/?span[^>]*>)[^>]+>/g, '');
   return result;
 }
 
 async function fetchFromQuranCom(surahNumber) {
-  const pages = surahNumber <= 9 ? 1 : 2;
+  // Use verse-level tajweed field (more reliable than word-level)
+  const pages = surahNumber <= 9 ? 1 : surahNumber <= 50 ? 2 : 3;
   let allVerses = [];
   for (let page = 1; page <= pages; page++) {
     const url = `https://api.quran.com/api/v4/verses/by_chapter/${surahNumber}` +
-      `?words=true&word_fields=text_uthmani,transliteration,text_uthmani_tajweed&translations=136&per_page=300&page=${page}`;
+      `?words=true&word_fields=text_uthmani,text_uthmani_tajweed,transliteration&translations=136&per_page=300&page=${page}`;
     const r = await _fetchWithTimeout(url, 12000);
     if (!r.ok) throw new Error("quran.com indisponible");
     const d = await r.json();
@@ -1589,11 +1611,23 @@ async function fetchFromQuranCom(surahNumber) {
   }
   if (!allVerses.length) throw new Error("Aucun verset");
   return allVerses.map(v => {
-    const words = v.words?.filter(w => w.char_type_name !== "end") || [];
+    const words = (v.words || []).filter(w => w.char_type_name !== "end");
     const arabic = words.map(w => w.text_uthmani || "").join(" ");
-    const tajweed = words.map(w => parseTajweedHtml(w.text_uthmani_tajweed || w.text_uthmani || "")).join(" ");
+    // Build tajweed: use word tajweed if available, fallback to word arabic
+    const tajweedParts = words.map(w => {
+      const raw = w.text_uthmani_tajweed;
+      if (raw && raw.includes("<tajweed")) return parseTajweedHtml(raw);
+      return `<span style="color:white">${w.text_uthmani || ""}</span>`;
+    });
+    const tajweed = tajweedParts.join(" ");
     const translit = words.map(w => w.transliteration?.text || "").join(" ");
-    return { number: v.verse_number, arabic, tajweed, transliteration: translit, french: v.translations?.[0]?.text?.replace(/<sup[^>]*>.*?<\/sup>/g, "") || "" };
+    return {
+      number: v.verse_number,
+      arabic,
+      tajweed,
+      transliteration: translit,
+      french: v.translations?.[0]?.text?.replace(/<sup[^>]*>.*?<\/sup>/g, "") || "",
+    };
   });
 }
 
