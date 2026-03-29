@@ -489,10 +489,34 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
     try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "[]"); } catch { return []; }
   });
   const [elapsed, setElapsed] = useState(0);
-  const [currentSurahIdx, setCurrentSurahIdx] = useState(0);
+  const [showTranslit, setShowTranslit] = useState(false);
   const timerRef = useRef(null);
   const verseRefs = useRef({});
   const scrollRef = useRef(null);
+
+  // Inject tajweed CSS once
+  useEffect(() => {
+    if (!document.getElementById("tajweed-css")) {
+      const s = document.createElement("style");
+      s.id = "tajweed-css";
+      s.textContent = `
+        tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#AAAAAA}
+        tajweed[class*="madda_normal"]{color:#537FFF}
+        tajweed[class*="madda_permissible"]{color:#4BC8F0}
+        tajweed[class*="madda_necessary"]{color:#2B4FBB}
+        tajweed[class*="madda_obligatory"]{color:#3B6FDD}
+        tajweed[class*="qalaqah"]{color:#DD8000}
+        tajweed[class*="ikhafa"]{color:#D070A0}
+        tajweed[class*="idgham_ghunnah"]{color:#169200}
+        tajweed[class*="idgham_wo_ghunnah"]{color:#2E8B57}
+        tajweed[class*="idgham_mutajanisayn"]{color:#33AA55}
+        tajweed[class*="idgham_mutaqaribayn"]{color:#44BB66}
+        tajweed[class*="iqlab"]{color:#E05000}
+        tajweed[class*="ghunnah"]{color:#22AA22}
+      `;
+      document.head.appendChild(s);
+    }
+  }, []);
 
   // Build list of surahs to show with verse ranges
   const surahsToRead = useMemo(() => {
@@ -570,7 +594,21 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
           <p className="text-white font-bold text-sm truncate">Jour {day.day} — {new Date(day.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
           <p className="text-slate-500 text-xs">{total} versets · ~{Math.round(total / 10.3)} pages</p>
         </div>
+        <button onClick={() => setShowTranslit(s => !s)}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 mr-1 ${showTranslit ? "bg-blue-500/25 text-blue-300 border border-blue-500/40" : "bg-white/8 text-slate-500 border border-white/10"}`}>
+          ABC
+        </button>
         <span className="text-emerald-400 font-mono font-black text-lg shrink-0">{fmtTime(elapsed)}</span>
+      </div>
+
+      {/* Tajweed color legend */}
+      <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-900/60 border-b border-white/5 shrink-0 overflow-x-auto">
+        {[["#DD8000","Qalqala"],["#537FFF","Madd"],["#169200","Ghunna"],["#D070A0","Ikhfāʾ"],["#E05000","Iqlāb"],["#AAAAAA","Silence"]].map(([color,label]) => (
+          <span key={label} className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/8 whitespace-nowrap shrink-0">
+            <span className="w-2 h-2 rounded-full" style={{background:color}}/>
+            <span className="text-slate-500">{label}</span>
+          </span>
+        ))}
       </div>
 
       {/* Progress bar sticky */}
@@ -599,7 +637,7 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {surahsToRead.map(({ surahNum, surah, startV, endV }) => (
           <SurahBlock key={surahNum} surahNum={surahNum} surah={surah} startV={startV} endV={endV}
-            checkedVerses={checkedVerses} markAndAdvance={markAndAdvance} toggleVerse={toggleVerse} verseRefs={verseRefs}/>
+            checkedVerses={checkedVerses} markAndAdvance={markAndAdvance} toggleVerse={toggleVerse} verseRefs={verseRefs} showTranslit={showTranslit}/>
         ))}
         {/* Bottom action */}
         <div className="px-4 py-6 space-y-3">
@@ -619,7 +657,7 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
   );
 }
 
-function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvance, toggleVerse, verseRefs }) {
+function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvance, toggleVerse, verseRefs, showTranslit }) {
   const { verses, loading } = useVerses(surahNum);
   const rangeVerses = useMemo(() => {
     if (verses.length === 0) return [];
@@ -669,6 +707,9 @@ function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvan
                     style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)" }}>
                     {v.arabic}
                   </p>
+                )}
+                {showTranslit && v.transliteration && (
+                  <p className="text-blue-300/70 text-xs italic leading-relaxed mt-1 text-right" dir="ltr">{v.transliteration}</p>
                 )}
                 {v.french && (
                   <p className="text-slate-500 text-xs italic leading-relaxed mt-1">{v.french}</p>
