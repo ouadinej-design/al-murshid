@@ -1663,57 +1663,6 @@ function ProfesseurTab() {
     </div>
   );
 }
-      {/* Navigation versets */}
-      <div className="flex gap-1 flex-wrap">
-        {selectedSurah.verses.map((v,i) => (
-          <button key={i} onClick={() => { setVerseIdx(i); setResults(null); setScore(null); setTranscript(""); setFeedback(""); }}
-            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${i === verseIdx ? "bg-purple-600 text-white" : "bg-white/8 text-slate-500 border border-white/10"}`}>
-            {i+1}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Voix synthèse arabe (fonctionne partout sans internet) ──
-let _voicesLoaded = false;
-function ensureVoices() {
-  return new Promise(resolve => {
-    const v = window.speechSynthesis?.getVoices() || [];
-    if (v.length > 0) { resolve(v); return; }
-    if (!window.speechSynthesis) { resolve([]); return; }
-    window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
-    setTimeout(() => resolve(window.speechSynthesis?.getVoices() || []), 1000);
-  });
-}
-
-async function speakArabic(text, rate = 0.6) {
-  if (!window.speechSynthesis) return false;
-  window.speechSynthesis.cancel();
-  const voices = await ensureVoices();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "ar-SA";
-  u.rate = rate;
-  u.pitch = 1.1;
-  const arVoice = voices.find(v => v.lang === "ar-SA")
-    || voices.find(v => v.lang === "ar-EG")
-    || voices.find(v => v.lang.startsWith("ar"));
-  if (arVoice) u.voice = arVoice;
-  window.speechSynthesis.speak(u);
-  return true;
-}
-
-function speakLetter(text) { speakArabic(text, 0.4); }
-function speakFeedback(text, lang = "fr-FR") {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = 0.9;
-  window.speechSynthesis.speak(u);
-}
-
 // ═══════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════
