@@ -88,7 +88,8 @@ function colorizeGroup(grp, groups, idx) {
 
 // ── Audio (fiable sur mobile) ─────────────────────────────────────────
 function getVerseAudioUrl(surah, verse) {
-  return `https://verses.quran.com/Alafasy/mp3/${String(surah).padStart(3,"0")}${String(verse).padStart(3,"0")}.mp3`;
+  // everyayah.com works on iOS Safari (no CORS issues)
+  return `https://everyayah.com/data/Alafasy_128kbps/${String(surah).padStart(3,"0")}${String(verse).padStart(3,"0")}.mp3`;
 }
 
 function useAudio() {
@@ -427,48 +428,73 @@ function TajweedTab() {
 // ── AlphabetTab ────────────────────────────────────────────────────────
 function AlphabetTab() {
   const [sel, setSel] = useState(null);
+
+  // Group alphabet into rows of 4 for inline panel insertion
+  const rows = [];
+  for (let i = 0; i < ALPHABET.length; i += 4) {
+    rows.push(ALPHABET.slice(i, i + 4));
+  }
+
   return (
     <div className="space-y-4">
       <div className="p-4 bg-blue-900/14 border border-blue-500/18 rounded-2xl">
         <p className="text-blue-300 font-bold text-sm mb-1">الحروف الهجائية — 28 lettres</p>
         <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes et entendre sa prononciation.</p>
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        {ALPHABET.map((l,i) => (
-          <motion.button key={l.name} initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} transition={{delay:i*0.015}}
-            onClick={() => { setSel(sel?.name===l.name ? null : l); speakArabic(l.ar); }}
-            className={`p-3 rounded-2xl border text-center transition-all ${sel?.name===l.name ? "bg-blue-500/25 border-blue-500/50" : "bg-slate-800 border-white/15 hover:border-white/30"}`}>
-            <p className="text-2xl font-serif mb-0.5" style={{color:"white"}} dir="rtl">{l.ar}</p>
-            <p className="text-[10px] text-slate-400">{l.name}</p>
-          </motion.button>
-        ))}
-      </div>
-      <AnimatePresence>
-        {sel && (
-          <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="p-5 bg-blue-900/18 border border-blue-500/22 rounded-3xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center">
-                <span className="text-4xl font-serif" style={{color:"white"}}>{sel.ar}</span>
-              </div>
-              <div>
-                <p className="text-white font-black text-xl">{sel.name}</p>
-                <p className="text-blue-300 text-sm">Son : <span className="font-bold">{sel.sound}</span></p>
-                <button onClick={() => speakArabic(sel.ar)} className="flex items-center gap-1 mt-1 text-xs text-blue-400 hover:text-blue-300">
-                  <Volume2 className="w-3 h-3"/> Écouter
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[{label:"Isolée",text:sel.isolated},{label:"Initiale",text:sel.initial},{label:"Médiane",text:sel.medial},{label:"Finale",text:sel.final}].map(f => (
-                <div key={f.label} className="bg-slate-800 rounded-xl p-2.5 text-center border border-white/15">
-                  <p className="text-[10px] text-slate-500 mb-1">{f.label}</p>
-                  <p className="text-2xl font-serif" style={{color:"white"}} dir="rtl">{f.text}</p>
-                </div>
+
+      {rows.map((row, rowIdx) => {
+        const selInRow = row.find(l => l.name === sel?.name);
+        return (
+          <div key={rowIdx}>
+            {/* Row of 4 letters */}
+            <div className="grid grid-cols-4 gap-2 mb-2">
+              {row.map(l => (
+                <motion.button key={l.name}
+                  onClick={() => { setSel(sel?.name === l.name ? null : l); speakArabic(l.ar); }}
+                  className={`p-3 rounded-2xl border text-center transition-all ${sel?.name === l.name ? "bg-blue-600 border-blue-400" : "bg-slate-800 border-slate-600 hover:border-slate-400"}`}>
+                  <p className="text-2xl font-serif mb-0.5" style={{color:"white"}} dir="rtl">{l.ar}</p>
+                  <p className="text-[10px] text-slate-300">{l.name}</p>
+                </motion.button>
               ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {/* Detail panel — appears inline under the row containing selected letter */}
+            <AnimatePresence>
+              {selInRow && (
+                <motion.div
+                  initial={{opacity:0, height:0}} animate={{opacity:1, height:"auto"}} exit={{opacity:0, height:0}}
+                  className="overflow-hidden mb-2">
+                  <div className="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl">
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-16 h-16 rounded-2xl bg-blue-600/40 border border-blue-400/50 flex items-center justify-center shrink-0">
+                        <span className="text-4xl font-serif" style={{color:"white"}}>{sel.ar}</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-black text-xl" style={{color:"white"}}>{sel.name}</p>
+                        <p className="text-blue-300 text-sm">Son : <span className="font-bold">{sel.sound}</span></p>
+                        <button onClick={() => speakArabic(sel.ar)}
+                          className="flex items-center gap-1 mt-1.5 px-3 py-1 bg-blue-500/30 border border-blue-400/40 rounded-lg text-xs text-blue-300 hover:bg-blue-500/50 active:scale-95 transition-all">
+                          <Volume2 className="w-3 h-3"/> Écouter
+                        </button>
+                      </div>
+                    </div>
+                    {/* 4 forms */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {[{label:"Isolée",text:sel.isolated},{label:"Initiale",text:sel.initial},{label:"Médiane",text:sel.medial},{label:"Finale",text:sel.final}].map(f => (
+                        <div key={f.label} className="bg-slate-800 rounded-xl p-2.5 text-center border border-slate-600">
+                          <p className="text-[10px] text-slate-400 mb-1">{f.label}</p>
+                          <p className="text-2xl font-serif" style={{color:"white"}} dir="rtl">{f.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
     </div>
   );
 }
