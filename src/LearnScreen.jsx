@@ -324,7 +324,7 @@ function updateCard(card, quality) {
   let { interval, ease, reps } = card;
   if (quality === 0) { interval = 0; reps = 0; }
   else {
-    ease = Math.max(1.3, ease + [−0.8, -0.15, 0, 0.1][quality]);
+    ease = Math.max(1.3, ease + [-0.8, -0.15, 0, 0.1][quality]);
     if (reps === 0) interval = 1;
     else if (reps === 1) interval = 3;
     else interval = Math.round(interval * ease);
