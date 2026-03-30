@@ -597,8 +597,19 @@ function SuratesTab() {
             {open === surah.number && (
               <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
                 <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
-                  <button onClick={() => setShowTr(s => !s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "bg-white/5 text-slate-600"}`}>ABC Translit.</button>
-                  <button onClick={() => setShowFr(s => !s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : "bg-white/5 text-slate-600"}`}>FR Traduction</button>
+                  {/* Bouton principal lecture TTS — fonctionne sans Chrome */}
+                  <button
+                    onClick={() => {
+                      if (audio.playing?.startsWith(surah.number+":")) { audio.stop(); return; }
+                      // Lecture via synthèse vocale (fonctionne partout)
+                      const allText = surah.verses.map(v => v.ar).join(" . ");
+                      speakArabicTTS(allText, 0.6);
+                    }}
+                    style={{background: audio.playing?.startsWith(surah.number+":") ? "#ef4444" : "linear-gradient(135deg,#059669,#0d9488)", color:"white", border:"none", borderRadius:"12px", padding:"10px 16px", fontWeight:"bold", fontSize:"0.85rem", display:"flex", alignItems:"center", gap:"6px", cursor:"pointer"}}>
+                    {audio.playing?.startsWith(surah.number+":") ? "⏹ Stop" : "▶ Lire (voix)"}
+                  </button>
+                  <button onClick={() => setShowTr(s => !s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "bg-white/5 text-slate-600"}`}>ABC</button>
+                  <button onClick={() => setShowFr(s => !s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : "bg-white/5 text-slate-600"}`}>FR</button>
                 </div>
                 <div className="px-4 pb-3 flex flex-wrap gap-1">
                   {[["#DD8000","Qalqala"],["#537FFF","Madd"],["#22AA22","Ghunna"],["#D070A0","Ikhfāʾ"],["#AAAAAA","Silence"]].map(([color,label]) => (
@@ -612,15 +623,27 @@ function SuratesTab() {
                     <motion.div key={v.n} initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}
                       className={`p-4 rounded-2xl border transition-all ${audio.playing === `${surah.number}:${v.n}` ? "bg-emerald-900/20 border-emerald-500/25" : "bg-white/3 border-white/8"}`}>
                       <div className="flex items-start gap-3 mb-1">
-                        <button onClick={() => audio.playVerse(surah.number, v.n)}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 font-bold text-xs transition-all ${
-                            audio.loading === `${surah.number}:${v.n}` ? "bg-blue-500/20 text-blue-300" :
-                            audio.playing === `${surah.number}:${v.n}` ? "bg-emerald-500 text-white" :
-                            "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30"
-                          }`}>
-                          {audio.loading === `${surah.number}:${v.n}` ? (
-                            <motion.div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full" animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:"linear"}}/>
-                          ) : audio.playing === `${surah.number}:${v.n}` ? <Pause className="w-3 h-3"/> : v.n}
+                        <button onClick={() => {
+                          if (audio.playing === `${surah.number}:${v.n}`) { audio.stop(); return; }
+                          // Essaie MP3, bascule sur TTS si ça échoue
+                          audio.playVerse(surah.number, v.n);
+                          // Fallback TTS après 1.5s si toujours loading
+                          setTimeout(() => {
+                            if (audio.loading === `${surah.number}:${v.n}`) speakArabicTTS(v.ar, 0.6);
+                          }, 1500);
+                        }}
+                          style={{
+                            width:"36px", height:"36px", borderRadius:"50%",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            flexShrink:0, marginTop:"4px", fontWeight:"bold", fontSize:"0.75rem",
+                            cursor:"pointer", border:"none", transition:"all 0.2s",
+                            background: audio.playing === `${surah.number}:${v.n}` ? "#10b981" :
+                                        audio.loading === `${surah.number}:${v.n}` ? "rgba(59,130,246,0.2)" :
+                                        "rgba(16,185,129,0.15)",
+                            color: audio.playing === `${surah.number}:${v.n}` ? "white" : "#6ee7b7",
+                          }}>
+                          {audio.loading === `${surah.number}:${v.n}` ? "⏳" :
+                           audio.playing === `${surah.number}:${v.n}` ? "⏸" : v.n}
                         </button>
                         <div className="flex-1 text-right" style={{lineHeight:"3"}}>
                           <LetterByLetter text={v.ar} size="clamp(1.2rem,4vw,1.6rem)"/>
@@ -1520,17 +1543,33 @@ function ProfesseurTab() {
         "bg-orange-900/20 border-orange-500/25"}`}>
 
         {results && isWordMode ? (
-          <div className="flex flex-wrap justify-center gap-2 py-3" dir="rtl">
-            {results.map((r,i) => (
-              <span key={i} style={{fontFamily:"'Amiri Quran','Scheherazade New',serif", fontSize:"1.7rem"}}
-                className={`px-2 py-1 rounded-xl transition-all ${
-                  r.status==="correct" ? "text-emerald-400" :
-                  r.status==="close"   ? "text-amber-400" :
-                  r.status==="missing" ? "text-slate-600 line-through" :
-                  "text-red-400 bg-red-900/20"}`}>
-                {r.word}
-              </span>
-            ))}
+          <div className="flex flex-wrap justify-center gap-3 py-3" dir="rtl">
+            {results.map((r,i) => {
+              const color = r.status==="correct" ? "#34d399"
+                : r.status==="close"   ? "#fbbf24"
+                : r.status==="missing" ? "#475569"
+                : "#f87171";
+              const bg = r.status==="wrong" ? "rgba(239,68,68,0.12)" : r.status==="missing" ? "rgba(71,85,105,0.15)" : "transparent";
+              return (
+                <div key={i} style={{display:"inline-flex", flexDirection:"column", alignItems:"center", gap:"4px"}}>
+                  <span style={{
+                    fontFamily:"'Amiri Quran','Scheherazade New',serif",
+                    fontSize:"1.8rem",
+                    color,
+                    background: bg,
+                    padding: "4px 8px",
+                    borderRadius:"10px",
+                    lineHeight:"2.2",
+                    textDecoration: r.status==="missing" ? "line-through" : "none",
+                  }}>
+                    {r.word}
+                  </span>
+                  <span style={{fontSize:"0.6rem", color, opacity:0.8}}>
+                    {r.status==="correct" ? "✓" : r.status==="close" ? "≈" : r.status==="missing" ? "—" : "✗"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="py-3" style={{lineHeight:"3"}}>
