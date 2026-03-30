@@ -1257,6 +1257,32 @@ function QuizTab() {
         <p className="font-serif text-white" style={{fontSize:"3.5rem"}} dir="rtl">{q.ar}</p>
         {q.tr && <p className="text-blue-300/60 text-sm italic mt-2">{q.tr}</p>}
       </div>
+      <div className="grid grid-cols-2 gap-2">
+        {q.options.map(opt => {
+          const isCorrect = opt === q.correct;
+          const isSelected = opt === selected;
+          let bg = "rgba(255,255,255,0.05)"; let border = "rgba(255,255,255,0.15)"; let color = "white";
+          if (answered && isCorrect)  { bg="rgba(16,185,129,0.25)"; border="#10b981"; color="#6ee7b7"; }
+          else if (answered && isSelected && !isCorrect) { bg="rgba(239,68,68,0.25)"; border="#ef4444"; color="#fca5a5"; }
+          return (
+            <button key={opt} onClick={() => { if(answered) return; setSelected(opt); setAnswered(true); if(opt===q.correct) setScore(s=>s+1); if(streak>=2&&opt!==q.correct) setStreak(0); if(opt===q.correct) setStreak(s=>s+1); }}
+              style={{padding:"14px 10px",borderRadius:"16px",border:`1px solid ${border}`,background:bg,color,fontWeight:"bold",fontSize:"0.875rem",cursor:"pointer",transition:"all 0.2s",textAlign:"center"}}>
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+      {answered && (
+        <motion.button initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
+          onClick={() => { if(qIdx<questions.length-1){setQIdx(i=>i+1);setSelected(null);setAnswered(false);}else setMode("done"); }}
+          className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl">
+          {qIdx < questions.length-1 ? "Suivant →" : "Voir le résultat →"}
+        </motion.button>
+      )}
+    </div>
+  );
+}
+
 function ProfesseurTab() {
   const [mode, setMode] = useState(null);
   const [selectedSurah, setSelectedSurah] = useState(PROF_SURAHS[0]);
