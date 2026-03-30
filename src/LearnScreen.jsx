@@ -99,6 +99,63 @@ const LEARN_SURAHS = [
     {n:2, ar:"إِنَّ الْإِنسَانَ لَفِي خُسْرٍ", tr:"Inna l-insāna la-fī khusr", fr:"L'être humain est certes en perdition"},
     {n:3, ar:"إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ", tr:"Illā lladhīna āmanū wa-ʿamilū ṣ-ṣāliḥāti", fr:"sauf ceux qui croient et font de bonnes oeuvres"},
   ]},
+  { number:93, name:"Aḍ-Ḍuḥā", arabic:"الضحى", juz:30, verses:[
+    {n:1, ar:"وَالضُّحَىٰ", tr:"Wa-ḍ-ḍuḥā", fr:"Par le matin lumineux !"},
+    {n:2, ar:"وَاللَّيْلِ إِذَا سَجَىٰ", tr:"Wa-l-layli idhā sajā", fr:"Par la nuit quand elle est tranquille !"},
+    {n:3, ar:"مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ", tr:"Mā waddaʿaka rabbuka wa-mā qalā", fr:"Ton Seigneur ne t'a pas abandonné"},
+    {n:4, ar:"وَلَلْآخِرَةُ خَيْرٌ لَّكَ مِنَ الْأُولَىٰ", tr:"Wa-la-l-ākhiratu khayrun laka mina l-ūlā", fr:"L'au-delà est meilleur pour toi que la vie ici-bas"},
+    {n:5, ar:"وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ", tr:"Wa-la-sawfa yuʿṭīka rabbuka fa-tarḍā", fr:"Ton Seigneur te donnera et tu seras satisfait"},
+    {n:6, ar:"أَلَمْ يَجِدْكَ يَتِيمًا فَآوَىٰ", tr:"Alam yajidka yatīman fa-āwā", fr:"Ne t'a-t-Il pas trouvé orphelin et recueilli ?"},
+    {n:7, ar:"وَوَجَدَكَ ضَالًّا فَهَدَىٰ", tr:"Wa-wajadaka ḍāllan fa-hadā", fr:"Ne t'a-t-Il pas trouvé égaré et guidé ?"},
+    {n:8, ar:"وَوَجَدَكَ عَائِلًا فَأَغْنَىٰ", tr:"Wa-wajadaka ʿāʾilan fa-aġnā", fr:"Ne t'a-t-Il pas trouvé pauvre et enrichi ?"},
+    {n:9, ar:"فَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ", tr:"Fa-ammā l-yatīma fa-lā taqhar", fr:"Quant à l'orphelin, ne le brime pas"},
+    {n:10, ar:"وَأَمَّا السَّائِلَ فَلَا تَنْهَرْ", tr:"Wa-ammā s-sāʾila fa-lā tanhar", fr:"Quant au mendiant, ne le rabroue pas"},
+    {n:11, ar:"وَأَمَّا بِنِعْمَةِ رَبِّكَ فَحَدِّثْ", tr:"Wa-ammā bi-niʿmati rabbika fa-ḥaddith", fr:"Et quant aux bienfaits de ton Seigneur, proclame-les"},
+  ]},
+  { number:94, name:"Ash-Sharḥ", arabic:"الشرح", juz:30, verses:[
+    {n:1, ar:"أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ", tr:"Alam nashraḥ laka ṣadrak", fr:"N'avons-Nous pas déployé ta poitrine ?"},
+    {n:2, ar:"وَوَضَعْنَا عَنكَ وِزْرَكَ", tr:"Wa-waḍaʿnā ʿanka wizrak", fr:"Et déposé ton fardeau"},
+    {n:3, ar:"الَّذِي أَنقَضَ ظَهْرَكَ", tr:"Alladhī anqaḍa ẓahrak", fr:"qui alourdissait ton dos ?"},
+    {n:4, ar:"وَرَفَعْنَا لَكَ ذِكْرَكَ", tr:"Wa-rafaʿnā laka dhikrak", fr:"N'avons-Nous pas élevé ta renommée ?"},
+    {n:5, ar:"فَإِنَّ مَعَ الْعُسْرِ يُسْرًا", tr:"Fa-inna maʿa l-ʿusri yusrā", fr:"Avec la difficulté vient la facilité"},
+    {n:6, ar:"إِنَّ مَعَ الْعُسْرِ يُسْرًا", tr:"Inna maʿa l-ʿusri yusrā", fr:"Oui, avec la difficulté vient la facilité"},
+    {n:7, ar:"فَإِذَا فَرَغْتَ فَانصَبْ", tr:"Fa-idhā faraġta fa-nṣab", fr:"Quand tu te libères, travaille ardemment"},
+    {n:8, ar:"وَإِلَىٰ رَبِّكَ فَارْغَب", tr:"Wa-ilā rabbika fa-rġab", fr:"et vers ton Seigneur aspire"},
+  ]},
+  { number:107, name:"Al-Māʿūn", arabic:"الماعون", juz:30, verses:[
+    {n:1, ar:"أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ", tr:"Araʾayta lladhī yukadhdhibu bi-d-dīn", fr:"As-tu vu celui qui traite de mensonge la Rétribution ?"},
+    {n:2, ar:"فَذَٰلِكَ الَّذِي يَدُعُّ الْيَتِيمَ", tr:"Fadhālika lladhī yadhuʿʿu l-yatīm", fr:"C'est lui qui repousse brutalement l'orphelin"},
+    {n:3, ar:"وَلَا يَحُضُّ عَلَىٰ طَعَامِ الْمِسْكِينِ", tr:"Wa-lā yaḥuḍḍu ʿalā ṭaʿāmi l-miskīn", fr:"et n'encourage pas à nourrir le pauvre"},
+    {n:4, ar:"فَوَيْلٌ لِّلْمُصَلِّينَ", tr:"Fa-waylun li-l-muṣallīn", fr:"Malheur à ceux qui font la Salāt"},
+    {n:5, ar:"الَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ", tr:"Alladhīna hum ʿan ṣalātihim sāhūn", fr:"qui sont distraits dans leur Salāt"},
+    {n:6, ar:"الَّذِينَ هُمْ يُرَاءُونَ", tr:"Alladhīna hum yurāʾūn", fr:"qui font de l'ostentation"},
+    {n:7, ar:"وَيَمْنَعُونَ الْمَاعُونَ", tr:"Wa-yamnaʿūna l-māʿūn", fr:"et refusent l'entraide courante"},
+  ]},
+  { number:108, name:"Al-Kawthar", arabic:"الكوثر", juz:30, verses:[
+    {n:1, ar:"إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ", tr:"Innā aʿṭaynāka l-kawthar", fr:"Nous t'avons accordé l'Abondance"},
+    {n:2, ar:"فَصَلِّ لِرَبِّكَ وَانْحَرْ", tr:"Fa-ṣalli li-rabbika wa-nḥar", fr:"Accomplis donc la Salāt et sacrifie"},
+    {n:3, ar:"إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ", tr:"Inna shāniʾaka huwa l-abtar", fr:"C'est ton ennemi qui est sans postérité"},
+  ]},
+  { number:109, name:"Al-Kāfirūn", arabic:"الكافرون", juz:30, verses:[
+    {n:1, ar:"قُلْ يَا أَيُّهَا الْكَافِرُونَ", tr:"Qul yā ayyuhā l-kāfirūn", fr:"Dis : Ô vous les mécréants"},
+    {n:2, ar:"لَا أَعْبُدُ مَا تَعْبُدُونَ", tr:"Lā aʿbudu mā taʿbudūn", fr:"Je n'adore pas ce que vous adorez"},
+    {n:3, ar:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ", tr:"Wa-lā antum ʿābidūna mā aʿbud", fr:"Et vous n'adorez pas ce que j'adore"},
+    {n:4, ar:"وَلَا أَنَا عَابِدٌ مَّا عَبَدتُّمْ", tr:"Wa-lā anā ʿābidun mā ʿabadtum", fr:"Je ne suis pas adorateur de ce que vous avez adoré"},
+    {n:5, ar:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ", tr:"Wa-lā antum ʿābidūna mā aʿbud", fr:"Et vous n'êtes pas adorateurs de ce que j'adore"},
+    {n:6, ar:"لَكُمْ دِينُكُمْ وَلِيَ دِينِ", tr:"Lakum dīnukum wa-liya dīn", fr:"À vous votre religion, à moi la mienne"},
+  ]},
+  { number:110, name:"An-Naṣr", arabic:"النصر", juz:30, verses:[
+    {n:1, ar:"إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ", tr:"Idhā jāʾa naṣru llāhi wa-l-fatḥ", fr:"Quand vient le secours d'Allah et la victoire"},
+    {n:2, ar:"وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا", tr:"Wa-raʾayta n-nāsa yadkhulūna fī dīni llāhi afwājā", fr:"et que tu vois les gens entrer en foule dans la religion d'Allah"},
+    {n:3, ar:"فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا", tr:"Fasabbiḥ bi-ḥamdi rabbika wa-staġfirhu innahū kāna tawwābā", fr:"célèbre la gloire de ton Seigneur et implore Son pardon"},
+  ]},
+  { number:111, name:"Al-Masad", arabic:"المسد", juz:30, verses:[
+    {n:1, ar:"تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ", tr:"Tabbat yadā abī lahabin wa-tabb", fr:"Que périssent les deux mains d'Abī Lahab !"},
+    {n:2, ar:"مَا أَغْنَىٰ عَنْهُ مَالُهُ وَمَا كَسَبَ", tr:"Mā aġnā ʿanhu māluhu wa-mā kasab", fr:"Sa richesse ne lui a servi à rien"},
+    {n:3, ar:"سَيَصْلَىٰ نَارًا ذَاتَ لَهَبٍ", tr:"Sa-yaṣlā nāran dhāta lahab", fr:"Il sera brûlé dans un feu plein de flammes"},
+    {n:4, ar:"وَامْرَأَتُهُ حَمَّالَةَ الْحَطَبِ", tr:"Wa-mraʾatuhū ḥammālata l-ḥaṭab", fr:"Et sa femme, la porteuse de bois"},
+    {n:5, ar:"فِي جِيدِهَا حَبْلٌ مِّن مَّسَدٍ", tr:"Fī jīdihā ḥablun min masad", fr:"avec une corde de fibres autour du cou"},
+  ]},
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -253,7 +310,7 @@ const LESSONS = [
 ];
 
 // ═══════════════════════════════════════════════════════
-// DONNÉES — Vocabulaire coranique (50 mots les plus fréquents)
+// DONNÉES — Vocabulaire coranique (100 mots les plus fréquents)
 // ═══════════════════════════════════════════════════════
 const VOCAB = [
   {id:1, ar:"اللَّهُ", tr:"Allāhu", fr:"Allah", freq:2699, cat:"essentiel"},
@@ -306,6 +363,56 @@ const VOCAB = [
   {id:48, ar:"صَغِيرٌ", tr:"ṣaghīrun", fr:"petit / jeune", freq:14, cat:"adjectif"},
   {id:49, ar:"حَمْدُ", tr:"ḥamdu", fr:"louange", freq:42, cat:"nom"},
   {id:50, ar:"صِرَاطَ", tr:"ṣirāṭa", fr:"chemin / voie droite", freq:45, cat:"nom"},
+  {id:51, ar:"تَوْبَةَ", tr:"tawbata", fr:"repentir", freq:88, cat:"nom"},
+  {id:52, ar:"رَحْمَةَ", tr:"raḥmata", fr:"miséricorde", freq:114, cat:"nom"},
+  {id:53, ar:"نِعْمَةَ", tr:"niʿmata", fr:"bienfait / grâce", freq:66, cat:"nom"},
+  {id:54, ar:"أَمْرَ", tr:"amra", fr:"ordre / affaire", freq:264, cat:"nom"},
+  {id:55, ar:"قَوْمَ", tr:"qawma", fr:"peuple / nation", freq:383, cat:"nom"},
+  {id:56, ar:"مُوسَى", tr:"mūsā", fr:"Moïse", freq:136, cat:"nom propre"},
+  {id:57, ar:"إِبْرَاهِيمَ", tr:"ibrāhīm", fr:"Abraham", freq:69, cat:"nom propre"},
+  {id:58, ar:"عِيسَى", tr:"ʿīsā", fr:"Jésus", freq:25, cat:"nom propre"},
+  {id:59, ar:"مُحَمَّدٌ", tr:"muḥammadun", fr:"Muhammad", freq:4, cat:"nom propre"},
+  {id:60, ar:"مَلَائِكَةِ", tr:"malāʾikati", fr:"anges", freq:68, cat:"nom"},
+  {id:61, ar:"شَيْطَانِ", tr:"shayṭāni", fr:"Satan / diable", freq:88, cat:"nom"},
+  {id:62, ar:"آخِرَةِ", tr:"ākhirati", fr:"au-delà / vie future", freq:115, cat:"nom"},
+  {id:63, ar:"دُنْيَا", tr:"dunyā", fr:"monde ici-bas", freq:115, cat:"nom"},
+  {id:64, ar:"مَوْتِ", tr:"mawti", fr:"mort", freq:56, cat:"nom"},
+  {id:65, ar:"حَيَاةِ", tr:"ḥayāti", fr:"vie", freq:71, cat:"nom"},
+  {id:66, ar:"عَذَابِ", tr:"ʿadhābi", fr:"châtiment / tourment", freq:322, cat:"nom"},
+  {id:67, ar:"ثَوَابِ", tr:"thawābi", fr:"récompense", freq:7, cat:"nom"},
+  {id:68, ar:"أَجْرَ", tr:"ajra", fr:"salaire / rétribution", freq:107, cat:"nom"},
+  {id:69, ar:"فَضْلِ", tr:"faḍli", fr:"faveur / grâce", freq:87, cat:"nom"},
+  {id:70, ar:"حُكْمَ", tr:"ḥukma", fr:"jugement / autorité", freq:76, cat:"nom"},
+  {id:71, ar:"أَمَانَةَ", tr:"amānata", fr:"confiance / dépôt", freq:6, cat:"nom"},
+  {id:72, ar:"صَبْرِ", tr:"ṣabri", fr:"patience / persévérance", freq:90, cat:"nom"},
+  {id:73, ar:"شُكْرِ", tr:"shukri", fr:"gratitude / remerciement", freq:17, cat:"nom"},
+  {id:74, ar:"إِيمَانِ", tr:"īmāni", fr:"foi / croyance", freq:45, cat:"nom"},
+  {id:75, ar:"إِسْلَامِ", tr:"islāmi", fr:"Islam / soumission", freq:8, cat:"nom"},
+  {id:76, ar:"تَقْوَى", tr:"taqwā", fr:"piété / crainte d'Allah", freq:41, cat:"nom"},
+  {id:77, ar:"هُدًى", tr:"hudan", fr:"guidance / chemin droit", freq:95, cat:"nom"},
+  {id:78, ar:"ضَلَالَ", tr:"ḍalāla", fr:"égarement", freq:34, cat:"nom"},
+  {id:79, ar:"حَقٌّ", tr:"ḥaqqun", fr:"vérité / droit", freq:287, cat:"nom"},
+  {id:80, ar:"بَاطِلَ", tr:"bāṭila", fr:"fausseté / vanité", freq:36, cat:"nom"},
+  {id:81, ar:"رَزَقَ", tr:"razaqa", fr:"Il a pourvu / accordé", freq:123, cat:"verbe"},
+  {id:82, ar:"خَلَقَ", tr:"khalaqa", fr:"Il a créé", freq:85, cat:"verbe"},
+  {id:83, ar:"أَرْسَلَ", tr:"arsala", fr:"Il a envoyé", freq:77, cat:"verbe"},
+  {id:84, ar:"أَنزَلَ", tr:"anzala", fr:"Il a fait descendre", freq:97, cat:"verbe"},
+  {id:85, ar:"جَعَلَ", tr:"jaʿala", fr:"Il a fait / établi", freq:345, cat:"verbe"},
+  {id:86, ar:"أَخَذَ", tr:"akhadha", fr:"Il a pris / saisi", freq:90, cat:"verbe"},
+  {id:87, ar:"دَعَا", tr:"daʿā", fr:"Il a appelé / invoqué", freq:111, cat:"verbe"},
+  {id:88, ar:"نَصَرَ", tr:"naṣara", fr:"Il a secouru / aidé", freq:27, cat:"verbe"},
+  {id:89, ar:"كَفَرَ", tr:"kafara", fr:"Il a mécru / ingrat", freq:138, cat:"verbe"},
+  {id:90, ar:"ظَلَمَ", tr:"ẓalama", fr:"Il a opprimé / lésé", freq:96, cat:"verbe"},
+  {id:91, ar:"أَحَبَّ", tr:"aḥabba", fr:"Il a aimé", freq:40, cat:"verbe"},
+  {id:92, ar:"خَافَ", tr:"khāfa", fr:"Il a craint", freq:44, cat:"verbe"},
+  {id:93, ar:"عَلِمَ", tr:"ʿalima", fr:"Il a su / connu", freq:382, cat:"verbe"},
+  {id:94, ar:"سَمِعَ", tr:"samiʿa", fr:"Il a entendu", freq:185, cat:"verbe"},
+  {id:95, ar:"بَصَرَ", tr:"baṣara", fr:"vision / vue", freq:38, cat:"nom"},
+  {id:96, ar:"يَدَ", tr:"yada", fr:"main", freq:120, cat:"nom"},
+  {id:97, ar:"وَجْهَ", tr:"wajha", fr:"visage / face", freq:72, cat:"nom"},
+  {id:98, ar:"قَلْبِ", tr:"qalbi", fr:"cœur", freq:132, cat:"nom"},
+  {id:99, ar:"عَقْلَ", tr:"ʿaqla", fr:"raison / intelligence", freq:49, cat:"nom"},
+  {id:100, ar:"نَفْسُ", tr:"nafsu", fr:"âme / soi", freq:295, cat:"nom"},
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -337,7 +444,57 @@ function getDueCards(cards) {
   const now = Date.now();
   return VOCAB.filter(w => !cards[w.id] || cards[w.id].nextReview <= now)
     .sort(() => Math.random() - 0.5)
-    .slice(0, 10);
+    .slice(0, 15);
+}
+
+// ═══════════════════════════════════════════════════════
+// AUDIO — everyayah CDN (fonctionne dans Chrome)
+// ═══════════════════════════════════════════════════════
+function getAudioUrl(surah, verse) {
+  return `https://everyayah.com/data/Alafasy_128kbps/${String(surah).padStart(3,"0")}${String(verse).padStart(3,"0")}.mp3`;
+}
+
+function useAudio() {
+  const ref = useRef(null);
+  const [playing, setPlaying] = useState(null);
+  const [loading, setLoading] = useState(null);
+
+  const stop = useCallback(() => {
+    if (ref.current) { ref.current.onended = null; ref.current.onerror = null; ref.current.pause(); ref.current = null; }
+    setPlaying(null); setLoading(null);
+  }, []);
+
+  const play = useCallback((url, key, onDone) => {
+    if (ref.current) { ref.current.onended = null; ref.current.onerror = null; ref.current.pause(); }
+    const a = new Audio(url);
+    ref.current = a;
+    setLoading(key);
+    a.onended = () => { setPlaying(null); setLoading(null); onDone && onDone(); };
+    a.onerror = () => { setLoading(null); setPlaying(null); onDone && onDone(); };
+    const p = a.play();
+    if (p) p.then(() => { setLoading(null); setPlaying(key); }).catch(() => { setLoading(null); setPlaying(null); });
+    else { setLoading(null); setPlaying(key); }
+  }, []);
+
+  const playVerse = useCallback((surah, verse) => {
+    const key = `${surah}:${verse}`;
+    if (playing === key) { stop(); return; }
+    play(getAudioUrl(surah, verse), key, null);
+  }, [playing, stop, play]);
+
+  const playSurah = useCallback((surah, verses) => {
+    stop();
+    let i = 0;
+    const next = () => {
+      if (i >= verses.length) { setPlaying(null); return; }
+      const v = verses[i++];
+      play(getAudioUrl(surah, v.n), `${surah}:${v.n}`, next);
+    };
+    next();
+  }, [stop, play]);
+
+  useEffect(() => () => stop(), []);
+  return { playing, loading, playVerse, playSurah, stop };
 }
 
 // ═══════════════════════════════════════════════════════
@@ -347,6 +504,7 @@ function SuratesTab() {
   const [open, setOpen] = useState(null);
   const [showTr, setShowTr] = useState(true);
   const [showFr, setShowFr] = useState(false);
+  const audio = useAudio();
 
   return (
     <div className="space-y-3">
@@ -362,6 +520,10 @@ function SuratesTab() {
               <p className="font-bold text-white text-sm">{surah.name}</p>
               <p className="text-slate-500 text-xs">{surah.verses.length} versets</p>
             </div>
+            <button onClick={e => { e.stopPropagation(); audio.playSurah(surah.number, surah.verses); }}
+              className={`p-2 rounded-xl mr-1 transition-all ${audio.playing?.startsWith(surah.number+":") ? "bg-emerald-500/30 text-emerald-300" : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"}`}>
+              {audio.playing?.startsWith(surah.number+":") ? <Pause className="w-4 h-4"/> : <Volume2 className="w-4 h-4"/>}
+            </button>
             <p className="text-xl font-serif text-slate-500 mr-2" dir="rtl">{surah.arabic}</p>
             <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${open === surah.number ? "rotate-90" : ""}`}/>
           </button>
@@ -382,9 +544,18 @@ function SuratesTab() {
                 <div className="space-y-2 px-4 pb-5">
                   {surah.verses.map((v,i) => (
                     <motion.div key={v.n} initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}
-                      className="p-4 rounded-2xl bg-white/3 border border-white/8">
+                      className={`p-4 rounded-2xl border transition-all ${audio.playing === `${surah.number}:${v.n}` ? "bg-emerald-900/20 border-emerald-500/25" : "bg-white/3 border-white/8"}`}>
                       <div className="flex items-start gap-3 mb-1">
-                        <span className="w-7 h-7 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0 mt-1">{v.n}</span>
+                        <button onClick={() => audio.playVerse(surah.number, v.n)}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 font-bold text-xs transition-all ${
+                            audio.loading === `${surah.number}:${v.n}` ? "bg-blue-500/20 text-blue-300" :
+                            audio.playing === `${surah.number}:${v.n}` ? "bg-emerald-500 text-white" :
+                            "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30"
+                          }`}>
+                          {audio.loading === `${surah.number}:${v.n}` ? (
+                            <motion.div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full" animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:"linear"}}/>
+                          ) : audio.playing === `${surah.number}:${v.n}` ? <Pause className="w-3 h-3"/> : v.n}
+                        </button>
                         <div className="flex-1 text-right" style={{lineHeight:"3"}}>
                           <LetterByLetter text={v.ar} size="clamp(1.2rem,4vw,1.6rem)"/>
                         </div>
@@ -769,7 +940,7 @@ function RevisionTab() {
           <p className="text-4xl mb-3">🎓</p>
           <p className="text-white font-black text-xl mb-1">{sessionDone > 0 ? `Session terminée !` : "À jour !"}</p>
           {sessionDone > 0 && <p className="text-emerald-400 text-sm">{sessionDone} cartes révisées</p>}
-          <p className="text-slate-500 text-sm mt-2">{learned}/50 mots appris</p>
+          <p className="text-slate-500 text-sm mt-2">{learned}/100 mots appris</p>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
@@ -871,7 +1042,7 @@ function QuizTab() {
   const [streak, setStreak] = useState(0);
 
   const generateLetterQuiz = () => {
-    const qs = [...ALPHABET].sort(() => Math.random()-0.5).slice(0, 8).map(letter => {
+    const qs = [...ALPHABET].sort(() => Math.random()-0.5).slice(0, 12).map(letter => {
       const wrong = ALPHABET.filter(l => l.name !== letter.name).sort(() => Math.random()-0.5).slice(0,3).map(l => l.name);
       const options = [...wrong, letter.name].sort(() => Math.random()-0.5);
       return { ar: letter.ar, correct: letter.name, options, type:"letter" };
@@ -880,7 +1051,7 @@ function QuizTab() {
   };
 
   const generateVocabQuiz = () => {
-    const qs = [...VOCAB].sort(() => Math.random()-0.5).slice(0, 8).map(w => {
+    const qs = [...VOCAB].sort(() => Math.random()-0.5).slice(0, 12).map(w => {
       const wrong = VOCAB.filter(v => v.id !== w.id).sort(() => Math.random()-0.5).slice(0,3).map(v => v.fr);
       const options = [...wrong, w.fr].sort(() => Math.random()-0.5);
       return { ar: w.ar, tr: w.tr, correct: w.fr, options, type:"vocab" };
@@ -894,6 +1065,13 @@ function QuizTab() {
     { ar:"الرَّحِيمِ", question:"Le ل de ال est ici...", correct:"Laam solaire", options:["Laam solaire","Laam lunaire","Madd","Sukūn"], type:"tajweed" },
     { ar:"الْكِتَابُ", question:"Le ل de ال est ici...", correct:"Laam lunaire", options:["Laam lunaire","Laam solaire","Ghunna","Qalqala"], type:"tajweed" },
     { ar:"بِسْمِ", question:"Le س porte...", correct:"Sukūn", options:["Sukūn","Fatha","Ghunna","Qalqala"], type:"tajweed" },
+    { ar:"أَحَدٌ", question:"Quelle règle sur le د final ?", correct:"Qalqala", options:["Qalqala","Ghunna","Madd","Iqlab"], type:"tajweed" },
+    { ar:"الرَّحْمَٰنِ", question:"Le ٰ au-dessus indique...", correct:"Madd long", options:["Madd long","Ghunna","Qalqala","Sukūn"], type:"tajweed" },
+    { ar:"مِن نَّفْسٍ", question:"Le ن suivi de نّ → règle ?", correct:"Idghām + Ghunna", options:["Idghām + Ghunna","Ikhfāʾ","Iqlāb","Qalqala"], type:"tajweed" },
+    { ar:"مِن بَعْدِ", question:"Le ن suivi de ب → règle ?", correct:"Iqlāb", options:["Iqlāb","Ikhfāʾ","Idghām","Ghunna"], type:"tajweed" },
+    { ar:"مِن قَبْلِ", question:"Le ن suivi de ق → règle ?", correct:"Ikhfāʾ", options:["Ikhfāʾ","Iqlāb","Idghām","Qalqala"], type:"tajweed" },
+    { ar:"ثُمَّ", question:"Quelle règle sur le مّ ?", correct:"Ghunna", options:["Ghunna","Qalqala","Madd","Ikhfāʾ"], type:"tajweed" },
+    { ar:"الشَّمْسُ", question:"Le ل de ال est ici...", correct:"Laam solaire", options:["Laam solaire","Laam lunaire","Ghunna","Madd"], type:"tajweed" },
   ];
 
   const start = (type) => {
@@ -1040,7 +1218,7 @@ export default function LearnScreen() {
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
       <div>
         <h2 className="text-xl font-black text-white">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
-        <p className="text-slate-600 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed lettre par lettre</p>
+        <p className="text-slate-600 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed lettre par lettre · 🔊 <span className="text-amber-500">Son : ouvrir dans Chrome</span></p>
       </div>
       {/* Stats rapides */}
       <div className="grid grid-cols-3 gap-2">
@@ -1049,7 +1227,7 @@ export default function LearnScreen() {
           <p className="text-slate-600 text-[10px]">Leçons</p>
         </div>
         <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
-          <p className="text-blue-400 font-black text-lg">{VOCAB.filter(w => anki[w.id]?.reps > 0).length}/50</p>
+          <p className="text-blue-400 font-black text-lg">{VOCAB.filter(w => anki[w.id]?.reps > 0).length}/100</p>
           <p className="text-slate-600 text-[10px]">Mots appris</p>
         </div>
         <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
