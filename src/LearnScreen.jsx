@@ -95,10 +95,18 @@ function useAudio() {
   const audioRef = useRef(null);
   const [playing, setPlaying] = useState(null);
   const [loading, setLoading] = useState(null);
-  const nextRef = useRef(null);
+  const unlockedRef = useRef(false);
+
+  // iOS requires a silent play() on first user gesture to unlock audio
+  const unlockAudio = useCallback(() => {
+    if (unlockedRef.current) return;
+    unlockedRef.current = true;
+    const a = new Audio();
+    a.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+    a.play().catch(() => {});
+  }, []);
 
   const stop = useCallback(() => {
-    nextRef.current = null;
     if (audioRef.current) {
       audioRef.current.onended = null;
       audioRef.current.onerror = null;
@@ -114,29 +122,41 @@ function useAudio() {
       audioRef.current.onended = null;
       audioRef.current.onerror = null;
       audioRef.current.pause();
+      audioRef.current = null;
     }
-    const a = new Audio();
+    const a = new Audio(url);
     audioRef.current = a;
-    setLoading(key);
-    a.oncanplaythrough = () => {
-      setLoading(null);
-      setPlaying(key);
-      a.play().catch(() => { setPlaying(null); onDone && onDone(); });
-    };
-    a.onended = () => { setPlaying(null); onDone && onDone(); };
+    a.onended = () => { setPlaying(null); setLoading(null); onDone && onDone(); };
     a.onerror = () => { setLoading(null); setPlaying(null); onDone && onDone(); };
-    a.src = url;
-    a.load();
+    // iOS Safari + Android Chrome : play() MUST be called synchronously
+    // within the user gesture call stack — no await, no setTimeout
+    const promise = a.play();
+    if (promise !== undefined) {
+      setLoading(key);
+      promise
+        .then(() => { setLoading(null); setPlaying(key); })
+        .catch(err => {
+          // iOS may block autoplay — try unlocking audio context first
+          setLoading(null);
+          setPlaying(null);
+          console.warn("Audio blocked:", err);
+        });
+    } else {
+      // Older iOS — no promise returned
+      setPlaying(key);
+    }
   }, []);
 
   const playVerse = useCallback((surah, verse) => {
+    unlockAudio();
     const key = `${surah}:${verse}`;
     if (playing === key) { stop(); return; }
     stop();
     playAudio(getVerseAudioUrl(surah, verse), key, null);
-  }, [playing, stop, playAudio]);
+  }, [playing, stop, playAudio, unlockAudio]);
 
   const playSurah = useCallback((surah, verses) => {
+    unlockAudio();
     stop();
     let idx = 0;
     const playNext = () => {
@@ -145,10 +165,10 @@ function useAudio() {
       playAudio(getVerseAudioUrl(surah, v.n), `${surah}:${v.n}`, playNext);
     };
     playNext();
-  }, [stop, playAudio]);
+  }, [stop, playAudio, unlockAudio]);
 
   useEffect(() => () => stop(), []);
-  return { playing, loading, playVerse, playSurah, stop };
+  return { playing, loading, playVerse, playSurah, stop, unlockAudio };
 }
 
 function speakArabic(text) {
@@ -417,9 +437,9 @@ function AlphabetTab() {
         {ALPHABET.map((l,i) => (
           <motion.button key={l.name} initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} transition={{delay:i*0.015}}
             onClick={() => { setSel(sel?.name===l.name ? null : l); speakArabic(l.ar); }}
-            className={`p-3 rounded-2xl border text-center transition-all ${sel?.name===l.name ? "bg-blue-500/18 border-blue-500/40" : "bg-white/4 border-white/10 hover:border-white/22"}`}>
-            <p className="text-2xl font-serif text-white mb-0.5" dir="rtl">{l.ar}</p>
-            <p className="text-[10px] text-slate-500">{l.name}</p>
+            className={`p-3 rounded-2xl border text-center transition-all ${sel?.name===l.name ? "bg-blue-500/25 border-blue-500/50" : "bg-slate-800 border-white/15 hover:border-white/30"}`}>
+            <p className="text-2xl font-serif mb-0.5" style={{color:"white"}} dir="rtl">{l.ar}</p>
+            <p className="text-[10px] text-slate-400">{l.name}</p>
           </motion.button>
         ))}
       </div>
@@ -427,8 +447,8 @@ function AlphabetTab() {
         {sel && (
           <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="p-5 bg-blue-900/18 border border-blue-500/22 rounded-3xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/12 border border-blue-500/28 flex items-center justify-center">
-                <span className="text-4xl font-serif text-white">{sel.ar}</span>
+              <div className="w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center">
+                <span className="text-4xl font-serif" style={{color:"white"}}>{sel.ar}</span>
               </div>
               <div>
                 <p className="text-white font-black text-xl">{sel.name}</p>
@@ -440,9 +460,9 @@ function AlphabetTab() {
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[{label:"Isolée",text:sel.isolated},{label:"Initiale",text:sel.initial},{label:"Médiane",text:sel.medial},{label:"Finale",text:sel.final}].map(f => (
-                <div key={f.label} className="bg-white/5 rounded-xl p-2.5 text-center border border-white/8">
-                  <p className="text-[10px] text-slate-600 mb-1">{f.label}</p>
-                  <p className="text-2xl font-serif text-white" dir="rtl">{f.text}</p>
+                <div key={f.label} className="bg-slate-800 rounded-xl p-2.5 text-center border border-white/15">
+                  <p className="text-[10px] text-slate-500 mb-1">{f.label}</p>
+                  <p className="text-2xl font-serif" style={{color:"white"}} dir="rtl">{f.text}</p>
                 </div>
               ))}
             </div>
