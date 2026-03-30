@@ -999,10 +999,10 @@ function RevisionTab() {
         className="w-full min-h-48 rounded-3xl border border-white/15 bg-white/5 flex flex-col items-center justify-center p-6 gap-3 active:scale-98 transition-all"
         whileTap={{scale:0.98}}>
         {!flipped ? (
-          <>
+          <div style={{display:"contents"}}>
             <p className="font-serif text-white" style={{fontSize:"3.5rem"}} dir="rtl">{card?.ar}</p>
             <p className="text-slate-500 text-sm">Appuie pour voir la réponse</p>
-          </>
+          </div>
         ) : (
           <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} className="text-center space-y-2">
             <p className="font-serif text-white" style={{fontSize:"3rem"}} dir="rtl">{card?.ar}</p>
@@ -1195,10 +1195,364 @@ function QuizTab() {
 }
 
 // ═══════════════════════════════════════════════════════
+// COMPOSANT — Professeur de Tajweed 🎙️
+// ═══════════════════════════════════════════════════════
+const PROF_SURAHS = LEARN_SURAHS.slice(0, 6);
+
+// Normalise le texte arabe pour comparaison
+function normalizeAr(text) {
+  return text
+    .replace(/[\u064B-\u065F\u0670]/g, "") // retire diacritiques
+    .replace(/[أإآا]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Compare deux chaînes mot par mot → retourne tableau de résultats
+function compareWords(expected, spoken) {
+  const expWords = normalizeAr(expected).split(" ");
+  const spkWords = normalizeAr(spoken).split(" ");
+  return expWords.map((w, i) => {
+    const s = spkWords[i] || "";
+    if (!s) return { word: w, status: "missing" };
+    if (s === w) return { word: w, status: "correct" };
+    // Tolérance : 1 lettre de différence
+    let diff = 0;
+    for (let j = 0; j < Math.max(w.length, s.length); j++) {
+      if (w[j] !== s[j]) diff++;
+    }
+    return { word: w, status: diff <= 1 ? "close" : "wrong", spoken: s };
+  });
+}
+
+// Score de précision
+function calcScore(results) {
+  if (!results.length) return 0;
+  const pts = results.reduce((a, r) => a + (r.status === "correct" ? 1 : r.status === "close" ? 0.5 : 0), 0);
+  return Math.round((pts / results.length) * 100);
+}
+
+function ProfesseurTab() {
+  const [mode, setMode] = useState(null); // null | "verse" | "letter" | "word"
+  const [selectedSurah, setSelectedSurah] = useState(PROF_SURAHS[0]);
+  const [verseIdx, setVerseIdx] = useState(0);
+  const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [results, setResults] = useState(null);
+  const [score, setScore] = useState(null);
+  const [letterIdx, setLetterIdx] = useState(0);
+  const [letterResult, setLetterResult] = useState(null);
+  const [sessionScores, setSessionScores] = useState([]);
+  const [feedback, setFeedback] = useState("");
+  const recognitionRef = useRef(null);
+  const audio = useAudio();
+
+  const verse = selectedSurah.verses[verseIdx];
+  const letter = ALPHABET[letterIdx];
+
+  // ── Reconnaissance vocale ──────────────────────────────
+  const startListening = useCallback((expected, onResult) => {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      setFeedback("❌ Reconnaissance vocale non supportée. Utilise Chrome sur Android ou Safari sur iPhone.");
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    recognitionRef.current = rec;
+    rec.lang = "ar-SA";
+    rec.interimResults = false;
+    rec.maxAlternatives = 3;
+    rec.onstart = () => { setListening(true); setTranscript(""); setResults(null); setFeedback(""); };
+    rec.onresult = (e) => {
+      const heard = Array.from(e.results[0]).map(r => r.transcript).join(" ");
+      setTranscript(heard);
+      onResult(heard);
+    };
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error === "not-allowed") setFeedback("❌ Accès au microphone refusé. Autorise le micro dans les paramètres.");
+      else if (e.error === "no-speech") setFeedback("🎙️ Aucun son détecté. Réessaie en parlant plus fort.");
+      else setFeedback("❌ Erreur : " + e.error);
+    };
+    rec.onend = () => setListening(false);
+    rec.start();
+  }, []);
+
+  const stopListening = () => { recognitionRef.current?.stop(); setListening(false); };
+
+  // ── Mode verset ────────────────────────────────────────
+  const handleVerseResult = (heard) => {
+    const res = compareWords(verse.ar, heard);
+    const sc = calcScore(res);
+    setResults(res);
+    setScore(sc);
+    setSessionScores(prev => [...prev, sc]);
+    if (sc >= 90) setFeedback("✅ Excellent ! Mashā Allāh !");
+    else if (sc >= 70) setFeedback("👍 Bien ! Quelques mots à retravailler.");
+    else if (sc >= 50) setFeedback("📚 Continue à t'entraîner, tu progresses !");
+    else setFeedback("🔄 Écoute d'abord le verset, puis répète.");
+  };
+
+  const nextVerse = () => {
+    if (verseIdx < selectedSurah.verses.length - 1) { setVerseIdx(v => v+1); }
+    else { setVerseIdx(0); }
+    setResults(null); setScore(null); setTranscript(""); setFeedback("");
+  };
+
+  // ── Mode lettre ────────────────────────────────────────
+  const handleLetterResult = (heard) => {
+    const norm = normalizeAr(heard.split(" ")[0]);
+    const exp = letter.name.toLowerCase();
+    const heardLower = norm.toLowerCase();
+    const correct = heardLower.includes(letter.ar) || heard.includes(letter.ar);
+    setLetterResult(correct ? "correct" : "wrong");
+    setFeedback(correct ? `✅ Bravo ! Tu as bien prononcé ${letter.name} (${letter.ar})` : `❌ Entendu : "${heard}" — Attendu : ${letter.ar} (${letter.sound})`);
+  };
+
+  // ── Mode mot ────────────────────────────────────────────
+  const handleWordResult = (heard) => {
+    const words = verse.ar.split(" ");
+    const wordResults = words.map((w, i) => {
+      const heardWords = heard.split(" ");
+      const h = normalizeAr(heardWords[i] || "");
+      const e = normalizeAr(w);
+      if (!h) return { word: w, status: "missing" };
+      if (h === e) return { word: w, status: "correct" };
+      let diff = 0;
+      for (let j = 0; j < Math.max(e.length, h.length); j++) { if (e[j] !== h[j]) diff++; }
+      return { word: w, status: diff <= 1 ? "close" : "wrong", heard: heardWords[i] };
+    });
+    setResults(wordResults);
+    const sc = calcScore(wordResults);
+    setScore(sc);
+    if (sc === 100) setFeedback("✅ Parfait ! Tous les mots sont corrects !");
+    else if (sc >= 70) setFeedback("👍 Bien ! Vérifie les mots en rouge.");
+    else setFeedback("📚 Regarde les mots en rouge, ré-écoute et réessaie.");
+  };
+
+  // ── UI ──────────────────────────────────────────────────
+  if (!mode) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-2xl">
+          <p className="text-red-300 font-bold text-sm mb-1">🎙️ Professeur de Tajweed</p>
+          <p className="text-slate-500 text-xs leading-relaxed">Lis à voix haute — l'app compare ta récitation avec le texte correct et te montre les mots à améliorer.</p>
+          <p className="text-amber-400 text-xs mt-2 font-semibold">⚠️ Requiert Chrome (Android) ou Safari (iPhone)</p>
+        </div>
+
+        {/* Choix sourate */}
+        <div className="space-y-1">
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Choisir la sourate</p>
+          <div className="flex flex-wrap gap-2">
+            {PROF_SURAHS.map(s => (
+              <button key={s.number} onClick={() => { setSelectedSurah(s); setVerseIdx(0); }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedSurah.number === s.number ? "bg-emerald-600 text-white" : "bg-white/8 text-slate-400 border border-white/10 hover:border-white/25"}`}>
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3 modes */}
+        <div className="space-y-3">
+          {[
+            { key:"verse",  emoji:"📖", title:"Mode Verset",   color:"from-emerald-700 to-teal-700",   desc:"Lis un verset complet → score global de précision" },
+            { key:"word",   emoji:"🔤", title:"Mode Mot par mot", color:"from-blue-700 to-indigo-700", desc:"Chaque mot analysé séparément → mots à retravailler en rouge" },
+            { key:"letter", emoji:"ح",  title:"Mode Lettre",   color:"from-purple-700 to-violet-700",  desc:"Prononce chaque lettre de l'alphabet → validation sonore" },
+          ].map(m => (
+            <motion.button key={m.key} whileTap={{scale:0.97}}
+              onClick={() => { setMode(m.key); setResults(null); setScore(null); setTranscript(""); setFeedback(""); setLetterResult(null); }}
+              className={`w-full flex items-center gap-4 p-5 rounded-3xl bg-gradient-to-r ${m.color} text-white text-left shadow-lg`}>
+              <span className="text-3xl font-serif">{m.emoji}</span>
+              <div>
+                <p className="font-black text-base">{m.title}</p>
+                <p className="text-white/70 text-sm mt-0.5">{m.desc}</p>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+
+        {sessionScores.length > 0 && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+            <p className="text-white font-bold text-sm mb-2">📊 Session en cours</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {sessionScores.map((s,i) => (
+                <span key={i} className={`text-xs font-bold px-2 py-1 rounded-lg ${s >= 90 ? "bg-emerald-500/25 text-emerald-300" : s >= 70 ? "bg-blue-500/25 text-blue-300" : "bg-orange-500/25 text-orange-300"}`}>{s}%</span>
+              ))}
+            </div>
+            <p className="text-slate-500 text-xs mt-2">Moyenne : <span className="text-white font-bold">{Math.round(sessionScores.reduce((a,b)=>a+b,0)/sessionScores.length)}%</span></p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── MODE LETTRE ─────────────────────────────────────────
+  if (mode === "letter") {
+    const rows = [];
+    for (let i = 0; i < ALPHABET.length; i += 4) rows.push(ALPHABET.slice(i, i+4));
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => { setMode(null); stopListening(); }} className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+          <p className="text-white font-bold">Mode Lettre — {selectedSurah.name}</p>
+        </div>
+
+        {/* Lettre courante grande */}
+        <div className={`rounded-3xl p-6 border text-center transition-all ${letterResult === "correct" ? "bg-emerald-900/30 border-emerald-500/40" : letterResult === "wrong" ? "bg-red-900/30 border-red-500/40" : "bg-white/5 border-white/15"}`}>
+          <p className="font-serif text-white mb-2" style={{fontSize:"5rem"}}>{letter.ar}</p>
+          <p className="text-blue-300 font-bold text-lg">{letter.name}</p>
+          <p className="text-slate-400 text-sm">Son attendu : <span className="text-white font-bold">{letter.sound}</span></p>
+          {letterResult === "correct" && <p className="text-emerald-400 font-black text-xl mt-2">✅ Correct !</p>}
+          {letterResult === "wrong"   && <p className="text-red-400 font-bold text-sm mt-2">{feedback}</p>}
+        </div>
+
+        {/* Boutons action */}
+        <div className="flex gap-2">
+          <button onClick={() => audio.playVerse && speakLetter(letter.ar)}
+            className="flex-1 py-3 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+            <Volume2 className="w-4 h-4"/> Écouter
+          </button>
+          <motion.button whileTap={{scale:0.95}}
+            onClick={() => listening ? stopListening() : startListening(letter.ar, handleLetterResult)}
+            className={`flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 ${listening ? "bg-red-500 text-white animate-pulse" : "bg-purple-600 text-white"}`}>
+            {listening ? <span style={{display:"contents"}}><span className="text-base">⏹</span> Stop</span> : <span style={{display:"contents"}}><span className="text-base">🎙️</span> Prononcer</span>}
+          </motion.button>
+        </div>
+
+        {feedback && !letterResult && <p className="text-center text-sm font-bold text-amber-300 bg-amber-900/20 rounded-2xl p-3">{feedback}</p>}
+
+        {/* Navigation lettres */}
+        <div className="flex items-center justify-between">
+          <button onClick={() => { setLetterIdx(i => Math.max(0, i-1)); setLetterResult(null); setFeedback(""); }} disabled={letterIdx === 0}
+            className="p-3 bg-white/8 rounded-xl text-slate-400 disabled:opacity-30"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+          <p className="text-slate-500 text-sm">{letterIdx+1} / {ALPHABET.length}</p>
+          <button onClick={() => { setLetterIdx(i => Math.min(ALPHABET.length-1, i+1)); setLetterResult(null); setFeedback(""); }} disabled={letterIdx === ALPHABET.length-1}
+            className="p-3 bg-white/8 rounded-xl text-slate-400 disabled:opacity-30"><ChevronRight className="w-5 h-5"/></button>
+        </div>
+
+        {/* Grille des lettres avec statut */}
+        <div className="grid grid-cols-7 gap-1.5">
+          {ALPHABET.map((l, i) => (
+            <button key={i} onClick={() => { setLetterIdx(i); setLetterResult(null); setFeedback(""); }}
+              className={`p-1.5 rounded-xl text-center font-serif text-sm transition-all ${i === letterIdx ? "bg-purple-600 text-white" : "bg-white/8 text-white border border-white/10"}`}
+              style={{color:"white"}} dir="rtl">{l.ar}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── MODE VERSET et MOT PAR MOT ──────────────────────────
+  const isWordMode = mode === "word";
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <button onClick={() => { setMode(null); stopListening(); setResults(null); setScore(null); setFeedback(""); }}
+          className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+        <div className="flex-1">
+          <p className="text-white font-bold text-sm">{isWordMode ? "Mode Mot par mot" : "Mode Verset"} — {selectedSurah.name}</p>
+          <p className="text-slate-500 text-xs">Verset {verseIdx+1}/{selectedSurah.verses.length}</p>
+        </div>
+        <button onClick={() => audio.playVerse(selectedSurah.number, verse.n)}
+          className="p-2 bg-emerald-500/15 text-emerald-400 rounded-xl"><Volume2 className="w-4 h-4"/></button>
+      </div>
+
+      {/* Verset à réciter */}
+      <div className={`p-5 rounded-3xl border text-center transition-all ${score !== null ? score >= 90 ? "bg-emerald-900/25 border-emerald-500/30" : score >= 70 ? "bg-blue-900/25 border-blue-500/30" : "bg-orange-900/20 border-orange-500/25" : "bg-white/5 border-white/12"}`}>
+        {/* Affichage mot par mot avec couleurs de résultat */}
+        {results && isWordMode ? (
+          <div className="flex flex-wrap justify-center gap-2 py-2" dir="rtl">
+            {results.map((r, i) => (
+              <span key={i} className={`text-2xl font-serif px-2 py-1 rounded-xl ${r.status === "correct" ? "text-emerald-400" : r.status === "close" ? "text-amber-400" : r.status === "missing" ? "text-slate-600" : "text-red-400 underline"}`}
+                style={{fontFamily:"'Amiri Quran','Scheherazade New',serif"}}>
+                {r.word}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-3" style={{lineHeight:"3"}}>
+            <LetterByLetter text={verse.ar} size="clamp(1.3rem,4.5vw,1.8rem)"/>
+          </div>
+        )}
+        <p className="text-blue-300/60 text-xs italic mt-2" dir="ltr">{verse.tr}</p>
+
+        {score !== null && (
+          <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} className="mt-3">
+            <p className={`font-black text-3xl ${score >= 90 ? "text-emerald-400" : score >= 70 ? "text-blue-400" : "text-orange-400"}`}>{score}%</p>
+            <p className="text-xs text-slate-400">{score >= 90 ? "Mashā Allāh !" : score >= 70 ? "Très bien !" : "Continue !"}</p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Légende si mode mot */}
+      {isWordMode && results && (
+        <div className="flex gap-3 justify-center text-xs">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"/>Correct</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block"/>Proche</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block"/>À retravailler</span>
+        </div>
+      )}
+
+      {/* Ce que l'app a entendu */}
+      {transcript && (
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-3">
+          <p className="text-slate-600 text-xs mb-1">🎙️ Ce que j'ai entendu :</p>
+          <p className="text-white font-serif text-lg" dir="rtl">{transcript}</p>
+        </div>
+      )}
+
+      {feedback && <p className={`text-center text-sm font-bold py-3 px-4 rounded-2xl ${feedback.startsWith("✅") ? "bg-emerald-900/25 text-emerald-300" : feedback.startsWith("👍") ? "bg-blue-900/25 text-blue-300" : "bg-orange-900/20 text-orange-300"}`}>{feedback}</p>}
+
+      {/* Boutons */}
+      <div className="flex gap-2">
+        <motion.button whileTap={{scale:0.95}}
+          onClick={() => listening ? stopListening() : startListening(verse.ar, isWordMode ? handleWordResult : handleVerseResult)}
+          className={`flex-1 py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 shadow-lg ${listening ? "bg-red-500 text-white animate-pulse shadow-red-500/30" : "bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-purple-500/25"}`}>
+          {listening ? <span style={{display:"contents"}}><span className="text-xl">⏹</span> Stop</span> : <span style={{display:"contents"}}><span className="text-xl">🎙️</span> Réciter</span>}
+        </motion.button>
+        {score !== null && (
+          <motion.button initial={{opacity:0}} animate={{opacity:1}} whileTap={{scale:0.95}}
+            onClick={nextVerse}
+            className="px-5 py-4 bg-white/10 border border-white/20 text-white font-bold rounded-2xl">
+            {verseIdx < selectedSurah.verses.length-1 ? "→" : "↺"}
+          </motion.button>
+        )}
+      </div>
+
+      {/* Navigation versets */}
+      <div className="flex gap-1 flex-wrap">
+        {selectedSurah.verses.map((v,i) => (
+          <button key={i} onClick={() => { setVerseIdx(i); setResults(null); setScore(null); setTranscript(""); setFeedback(""); }}
+            className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${i === verseIdx ? "bg-purple-600 text-white" : "bg-white/8 text-slate-500 border border-white/10"}`}>
+            {i+1}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Synthèse vocale arabe pour lettre
+function speakLetter(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ar-SA"; u.rate = 0.5;
+  const ar = window.speechSynthesis.getVoices().find(v => v.lang.startsWith("ar"));
+  if (ar) u.voice = ar;
+  window.speechSynthesis.speak(u);
+}
+
+// ═══════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════
 const TABS = [
   {key:"surahs",   label:"📖 Sourates"},
+  {key:"prof",     label:"🎙️ Professeur"},
   {key:"lessons",  label:"📚 Leçons"},
   {key:"revision", label:"🃏 Révision"},
   {key:"quiz",     label:"🎯 Quiz"},
@@ -1220,7 +1574,6 @@ export default function LearnScreen() {
         <h2 className="text-xl font-black text-white">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
         <p className="text-slate-600 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed lettre par lettre · 🔊 <span className="text-amber-500">Son : ouvrir dans Chrome</span></p>
       </div>
-      {/* Stats rapides */}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
           <p className="text-emerald-400 font-black text-lg">{lessonsDone}/7</p>
@@ -1235,7 +1588,6 @@ export default function LearnScreen() {
           <p className="text-slate-600 text-[10px]">À réviser</p>
         </div>
       </div>
-      {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
@@ -1248,6 +1600,7 @@ export default function LearnScreen() {
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="pb-8">
           {tab === "surahs"   && <SuratesTab/>}
+          {tab === "prof"     && <ProfesseurTab/>}
           {tab === "lessons"  && <LessonsTab/>}
           {tab === "revision" && <RevisionTab/>}
           {tab === "quiz"     && <QuizTab/>}
