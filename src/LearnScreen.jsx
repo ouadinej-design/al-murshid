@@ -159,8 +159,188 @@ const LEARN_SURAHS = [
 ];
 
 // ═══════════════════════════════════════════════════════
-// DONNÉES — Alphabet
+// SOURATES — organisées par niveau, déverrouillage progressif
 // ═══════════════════════════════════════════════════════
+const ALL_SURAHS = [
+  // ── NIVEAU 1 : Les incontournables ─────────────────
+  { number:1,  name:"Al-Fātiḥa",  arabic:"الفاتحة",  juz:1,  level:1, verses:[
+    {n:1,ar:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",tr:"Bismi llāhi r-raḥmāni r-raḥīm",fr:"Au nom d'Allah, le Tout Miséricordieux"},
+    {n:2,ar:"الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",tr:"Al-ḥamdu li-llāhi rabbi l-ʿālamīn",fr:"Louange à Allah, Seigneur de l'univers"},
+    {n:3,ar:"الرَّحْمَٰنِ الرَّحِيمِ",tr:"Ar-raḥmāni r-raḥīm",fr:"Le Tout Miséricordieux, le Très Miséricordieux"},
+    {n:4,ar:"مَالِكِ يَوْمِ الدِّينِ",tr:"Māliki yawmi d-dīn",fr:"Maître du Jour de la rétribution"},
+    {n:5,ar:"إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",tr:"Iyyāka naʿbudu wa-iyyāka nastaʿīn",fr:"C'est Toi Seul que nous adorons"},
+    {n:6,ar:"اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",tr:"Ihdinā ṣ-ṣirāṭa l-mustaqīm",fr:"Guide-nous dans le droit chemin"},
+    {n:7,ar:"صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",tr:"Ṣirāṭa lladhīna anʿamta ʿalayhim",fr:"Le chemin de ceux que Tu as comblés de faveurs"},
+  ]},
+  { number:112, name:"Al-Ikhlāṣ",  arabic:"الإخلاص",  juz:30, level:1, verses:[
+    {n:1,ar:"قُلْ هُوَ اللَّهُ أَحَدٌ",tr:"Qul huwa llāhu aḥad",fr:"Dis : Il est Allah, Unique"},
+    {n:2,ar:"اللَّهُ الصَّمَدُ",tr:"Allāhu ṣ-ṣamad",fr:"Allah, le Seul à être imploré"},
+    {n:3,ar:"لَمْ يَلِدْ وَلَمْ يُولَدْ",tr:"Lam yalid wa-lam yūlad",fr:"Il n'a pas engendré et n'a pas été engendré"},
+    {n:4,ar:"وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",tr:"Wa-lam yakun lahū kufuwan aḥad",fr:"Et nul n'est égal à Lui"},
+  ]},
+  { number:113, name:"Al-Falaq",   arabic:"الفلق",    juz:30, level:1, verses:[
+    {n:1,ar:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",tr:"Qul aʿūdhu bi-rabbi l-falaq",fr:"Je cherche refuge auprès du Seigneur de l'aurore"},
+    {n:2,ar:"مِن شَرِّ مَا خَلَقَ",tr:"Min sharri mā khalaq",fr:"contre le mal de ce qu'Il a créé"},
+    {n:3,ar:"وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",tr:"Wa-min sharri ghāsiqin idhā waqab",fr:"contre le mal de l'obscurité"},
+    {n:4,ar:"وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",tr:"Wa-min sharri n-naffāthāti fī l-ʿuqad",fr:"contre le mal de celles qui soufflent sur les nœuds"},
+    {n:5,ar:"وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",tr:"Wa-min sharri ḥāsidin idhā ḥasad",fr:"contre le mal de l'envieux"},
+  ]},
+  { number:114, name:"An-Nās",     arabic:"الناس",    juz:30, level:1, verses:[
+    {n:1,ar:"قُلْ أَعُوذُ بِرَبِّ النَّاسِ",tr:"Qul aʿūdhu bi-rabbi n-nās",fr:"Je cherche refuge auprès du Seigneur des hommes"},
+    {n:2,ar:"مَلِكِ النَّاسِ",tr:"Maliki n-nās",fr:"du Roi des hommes"},
+    {n:3,ar:"إِلَٰهِ النَّاسِ",tr:"Ilāhi n-nās",fr:"de la Divinité des hommes"},
+    {n:4,ar:"مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",tr:"Min sharri l-waswāsi l-khannās",fr:"contre le mal du tentateur furtif"},
+    {n:5,ar:"الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",tr:"Alladhī yuwaswisu fī ṣudūri n-nās",fr:"qui souffle le mal dans les poitrines des hommes"},
+    {n:6,ar:"مِنَ الْجِنَّةِ وَالنَّاسِ",tr:"Mina l-jinnati wa-n-nās",fr:"qu'il soit parmi les djinns ou parmi les hommes"},
+  ]},
+  // ── NIVEAU 2 : Sourates courtes ────────────────────
+  { number:103, name:"Al-ʿAṣr",   arabic:"العصر",    juz:30, level:2, verses:[
+    {n:1,ar:"وَالْعَصْرِ",tr:"Wa-l-ʿaṣr",fr:"Par le Temps !"},
+    {n:2,ar:"إِنَّ الْإِنسَانَ لَفِي خُسْرٍ",tr:"Inna l-insāna la-fī khusr",fr:"L'être humain est certes en perdition"},
+    {n:3,ar:"إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",tr:"Illā lladhīna āmanū",fr:"sauf ceux qui croient et font de bonnes oeuvres"},
+  ]},
+  { number:108, name:"Al-Kawthar",arabic:"الكوثر",   juz:30, level:2, verses:[
+    {n:1,ar:"إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ",tr:"Innā aʿṭaynāka l-kawthar",fr:"Nous t'avons accordé l'Abondance"},
+    {n:2,ar:"فَصَلِّ لِرَبِّكَ وَانْحَرْ",tr:"Fa-ṣalli li-rabbika wa-nḥar",fr:"Accomplis donc la Salāt et sacrifie"},
+    {n:3,ar:"إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ",tr:"Inna shāniʾaka huwa l-abtar",fr:"C'est ton ennemi qui est sans postérité"},
+  ]},
+  { number:110, name:"An-Naṣr",   arabic:"النصر",    juz:30, level:2, verses:[
+    {n:1,ar:"إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ",tr:"Idhā jāʾa naṣru llāhi wa-l-fatḥ",fr:"Quand vient le secours d'Allah et la victoire"},
+    {n:2,ar:"وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا",tr:"Wa-raʾayta n-nāsa yadkhulūna fī dīni llāhi afwājā",fr:"et que tu vois les gens entrer en foule dans la religion d'Allah"},
+    {n:3,ar:"فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا",tr:"Fasabbiḥ bi-ḥamdi rabbika",fr:"célèbre la gloire de ton Seigneur et implore Son pardon"},
+  ]},
+  { number:111, name:"Al-Masad",  arabic:"المسد",    juz:30, level:2, verses:[
+    {n:1,ar:"تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ",tr:"Tabbat yadā abī lahabin wa-tabb",fr:"Que périssent les deux mains d'Abī Lahab !"},
+    {n:2,ar:"مَا أَغْنَىٰ عَنْهُ مَالُهُ وَمَا كَسَبَ",tr:"Mā aġnā ʿanhu māluhu wa-mā kasab",fr:"Sa richesse ne lui a servi à rien"},
+    {n:3,ar:"سَيَصْلَىٰ نَارًا ذَاتَ لَهَبٍ",tr:"Sa-yaṣlā nāran dhāta lahab",fr:"Il sera brûlé dans un feu plein de flammes"},
+    {n:4,ar:"وَامْرَأَتُهُ حَمَّالَةَ الْحَطَبِ",tr:"Wa-mraʾatuhū ḥammālata l-ḥaṭab",fr:"Et sa femme, la porteuse de bois"},
+    {n:5,ar:"فِي جِيدِهَا حَبْلٌ مِّن مَّسَدٍ",tr:"Fī jīdihā ḥablun min masad",fr:"avec une corde de fibres autour du cou"},
+  ]},
+  // ── NIVEAU 3 : Juz 30 intermédiaires ───────────────
+  { number:93,  name:"Aḍ-Ḍuḥā",  arabic:"الضحى",   juz:30, level:3, verses:[
+    {n:1,ar:"وَالضُّحَىٰ",tr:"Wa-ḍ-ḍuḥā",fr:"Par le matin lumineux !"},
+    {n:2,ar:"وَاللَّيْلِ إِذَا سَجَىٰ",tr:"Wa-l-layli idhā sajā",fr:"Par la nuit quand elle est tranquille !"},
+    {n:3,ar:"مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ",tr:"Mā waddaʿaka rabbuka wa-mā qalā",fr:"Ton Seigneur ne t'a pas abandonné"},
+    {n:4,ar:"وَلَلْآخِرَةُ خَيْرٌ لَّكَ مِنَ الْأُولَىٰ",tr:"Wa-la-l-ākhiratu khayrun laka",fr:"L'au-delà est meilleur pour toi"},
+    {n:5,ar:"وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",tr:"Wa-la-sawfa yuʿṭīka rabbuka fa-tarḍā",fr:"Ton Seigneur te donnera et tu seras satisfait"},
+    {n:6,ar:"أَلَمْ يَجِدْكَ يَتِيمًا فَآوَىٰ",tr:"Alam yajidka yatīman fa-āwā",fr:"Ne t'a-t-Il pas trouvé orphelin et recueilli ?"},
+    {n:7,ar:"وَوَجَدَكَ ضَالًّا فَهَدَىٰ",tr:"Wa-wajadaka ḍāllan fa-hadā",fr:"Ne t'a-t-Il pas trouvé égaré et guidé ?"},
+    {n:8,ar:"وَوَجَدَكَ عَائِلًا فَأَغْنَىٰ",tr:"Wa-wajadaka ʿāʾilan fa-aġnā",fr:"Ne t'a-t-Il pas trouvé pauvre et enrichi ?"},
+    {n:9,ar:"فَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ",tr:"Fa-ammā l-yatīma fa-lā taqhar",fr:"Quant à l'orphelin, ne le brime pas"},
+    {n:10,ar:"وَأَمَّا السَّائِلَ فَلَا تَنْهَرْ",tr:"Wa-ammā s-sāʾila fa-lā tanhar",fr:"Quant au mendiant, ne le rabroue pas"},
+    {n:11,ar:"وَأَمَّا بِنِعْمَةِ رَبِّكَ فَحَدِّثْ",tr:"Wa-ammā bi-niʿmati rabbika fa-ḥaddith",fr:"Et quant aux bienfaits de ton Seigneur, proclame-les"},
+  ]},
+  { number:94,  name:"Ash-Sharḥ", arabic:"الشرح",   juz:30, level:3, verses:[
+    {n:1,ar:"أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ",tr:"Alam nashraḥ laka ṣadrak",fr:"N'avons-Nous pas déployé ta poitrine ?"},
+    {n:2,ar:"وَوَضَعْنَا عَنكَ وِزْرَكَ",tr:"Wa-waḍaʿnā ʿanka wizrak",fr:"Et déposé ton fardeau"},
+    {n:3,ar:"الَّذِي أَنقَضَ ظَهْرَكَ",tr:"Alladhī anqaḍa ẓahrak",fr:"qui alourdissait ton dos ?"},
+    {n:4,ar:"وَرَفَعْنَا لَكَ ذِكْرَكَ",tr:"Wa-rafaʿnā laka dhikrak",fr:"N'avons-Nous pas élevé ta renommée ?"},
+    {n:5,ar:"فَإِنَّ مَعَ الْعُسْرِ يُسْرًا",tr:"Fa-inna maʿa l-ʿusri yusrā",fr:"Avec la difficulté vient la facilité"},
+    {n:6,ar:"إِنَّ مَعَ الْعُسْرِ يُسْرًا",tr:"Inna maʿa l-ʿusri yusrā",fr:"Oui, avec la difficulté vient la facilité"},
+    {n:7,ar:"فَإِذَا فَرَغْتَ فَانصَبْ",tr:"Fa-idhā faraġta fa-nṣab",fr:"Quand tu te libères, travaille ardemment"},
+    {n:8,ar:"وَإِلَىٰ رَبِّكَ فَارْغَب",tr:"Wa-ilā rabbika fa-rġab",fr:"et vers ton Seigneur aspire"},
+  ]},
+  { number:107, name:"Al-Māʿūn",  arabic:"الماعون", juz:30, level:3, verses:[
+    {n:1,ar:"أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ",tr:"Araʾayta lladhī yukadhdhibu bi-d-dīn",fr:"As-tu vu celui qui traite de mensonge la Rétribution ?"},
+    {n:2,ar:"فَذَٰلِكَ الَّذِي يَدُعُّ الْيَتِيمَ",tr:"Fadhālika lladhī yadhuʿʿu l-yatīm",fr:"C'est lui qui repousse brutalement l'orphelin"},
+    {n:3,ar:"وَلَا يَحُضُّ عَلَىٰ طَعَامِ الْمِسْكِينِ",tr:"Wa-lā yaḥuḍḍu ʿalā ṭaʿāmi l-miskīn",fr:"et n'encourage pas à nourrir le pauvre"},
+    {n:4,ar:"فَوَيْلٌ لِّلْمُصَلِّينَ",tr:"Fa-waylun li-l-muṣallīn",fr:"Malheur à ceux qui font la Salāt"},
+    {n:5,ar:"الَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ",tr:"Alladhīna hum ʿan ṣalātihim sāhūn",fr:"qui sont distraits dans leur Salāt"},
+    {n:6,ar:"الَّذِينَ هُمْ يُرَاءُونَ",tr:"Alladhīna hum yurāʾūn",fr:"qui font de l'ostentation"},
+    {n:7,ar:"وَيَمْنَعُونَ الْمَاعُونَ",tr:"Wa-yamnaʿūna l-māʿūn",fr:"et refusent l'entraide courante"},
+  ]},
+  { number:109, name:"Al-Kāfirūn",arabic:"الكافرون",juz:30, level:3, verses:[
+    {n:1,ar:"قُلْ يَا أَيُّهَا الْكَافِرُونَ",tr:"Qul yā ayyuhā l-kāfirūn",fr:"Dis : Ô vous les mécréants"},
+    {n:2,ar:"لَا أَعْبُدُ مَا تَعْبُدُونَ",tr:"Lā aʿbudu mā taʿbudūn",fr:"Je n'adore pas ce que vous adorez"},
+    {n:3,ar:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ",tr:"Wa-lā antum ʿābidūna mā aʿbud",fr:"Et vous n'adorez pas ce que j'adore"},
+    {n:4,ar:"وَلَا أَنَا عَابِدٌ مَّا عَبَدتُّمْ",tr:"Wa-lā anā ʿābidun mā ʿabadtum",fr:"Je ne suis pas adorateur de ce que vous avez adoré"},
+    {n:5,ar:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ",tr:"Wa-lā antum ʿābidūna mā aʿbud",fr:"Et vous n'êtes pas adorateurs de ce que j'adore"},
+    {n:6,ar:"لَكُمْ دِينُكُمْ وَلِيَ دِينِ",tr:"Lakum dīnukum wa-liya dīn",fr:"À vous votre religion, à moi la mienne"},
+  ]},
+  // ── NIVEAU 4 : Juz 30 avancées ─────────────────────
+  { number:78,  name:"An-Nabaʾ",  arabic:"النبأ",   juz:30, level:4, verses:[
+    {n:1,ar:"عَمَّ يَتَسَاءَلُونَ",tr:"ʿAmma yatasāʾalūn",fr:"De quoi s'interrogent-ils ?"},
+    {n:2,ar:"عَنِ النَّبَإِ الْعَظِيمِ",tr:"ʿAni n-nabaʾi l-ʿaẓīm",fr:"De la grande nouvelle"},
+    {n:3,ar:"الَّذِي هُمْ فِيهِ مُخْتَلِفُونَ",tr:"Alladhī hum fīhi mukhtalifūn",fr:"au sujet de laquelle ils sont en désaccord"},
+    {n:4,ar:"كَلَّا سَيَعْلَمُونَ",tr:"Kallā sayaʿlamūn",fr:"Certes non ! Ils sauront bientôt"},
+    {n:5,ar:"ثُمَّ كَلَّا سَيَعْلَمُونَ",tr:"Thumma kallā sayaʿlamūn",fr:"puis non ! Ils sauront vraiment"},
+  ]},
+  { number:87,  name:"Al-Aʿlā",   arabic:"الأعلى",  juz:30, level:4, verses:[
+    {n:1,ar:"سَبِّحِ اسْمَ رَبِّكَ الْأَعْلَى",tr:"Sabbiḥi sma rabbika l-aʿlā",fr:"Glorifie le nom de ton Seigneur, le Très-Haut"},
+    {n:2,ar:"الَّذِي خَلَقَ فَسَوَّىٰ",tr:"Alladhī khalaqa fa-sawwā",fr:"qui a créé et harmonisé"},
+    {n:3,ar:"وَالَّذِي قَدَّرَ فَهَدَىٰ",tr:"Wa-lladhī qaddara fa-hadā",fr:"et qui a déterminé et guidé"},
+    {n:4,ar:"وَالَّذِي أَخْرَجَ الْمَرْعَىٰ",tr:"Wa-lladhī akhraja l-marʿā",fr:"et qui a fait sortir le pâturage"},
+    {n:5,ar:"فَجَعَلَهُ غُثَاءً أَحْوَىٰ",tr:"Fa-jaʿalahu ghuthāʾan aḥwā",fr:"puis en a fait un débris noirâtre"},
+    {n:6,ar:"سَنُقْرِئُكَ فَلَا تَنسَىٰ",tr:"Sa-nuqriʾuka fa-lā tansā",fr:"Nous te ferons réciter et tu n'oublieras pas"},
+    {n:7,ar:"إِلَّا مَا شَاءَ اللَّهُ",tr:"Illā mā shāʾa llāh",fr:"sauf ce qu'Allah veut"},
+  ]},
+  { number:88,  name:"Al-Ghāshiya",arabic:"الغاشية",juz:30, level:4, verses:[
+    {n:1,ar:"هَلْ أَتَاكَ حَدِيثُ الْغَاشِيَةِ",tr:"Hal atāka ḥadīthu l-ghāshiya",fr:"T'est-il parvenu le récit de l'Enveloppante ?"},
+    {n:2,ar:"وُجُوهٌ يَوْمَئِذٍ خَاشِعَةٌ",tr:"Wujūhun yawmaʾidhin khāshiʿa",fr:"Des visages ce jour-là seront humiliés"},
+    {n:3,ar:"عَامِلَةٌ نَّاصِبَةٌ",tr:"ʿĀmilatun nāṣiba",fr:"ayant peiné et s'étant fatiguées"},
+    {n:4,ar:"تَصْلَىٰ نَارًا حَامِيَةً",tr:"Taṣlā nāran ḥāmiya",fr:"rôtissant dans un feu ardent"},
+    {n:5,ar:"تُسْقَىٰ مِنْ عَيْنٍ آنِيَةٍ",tr:"Tusqā min ʿaynin āniya",fr:"abreuvées d'une source bouillante"},
+  ]},
+  { number:89,  name:"Al-Fajr",   arabic:"الفجر",   juz:30, level:4, verses:[
+    {n:1,ar:"وَالْفَجْرِ",tr:"Wa-l-fajr",fr:"Par l'aurore !"},
+    {n:2,ar:"وَلَيَالٍ عَشْرٍ",tr:"Wa-layālin ʿashr",fr:"Par les dix nuits !"},
+    {n:3,ar:"وَالشَّفْعِ وَالْوَتْرِ",tr:"Wa-sh-shafʿi wa-l-watr",fr:"Par le pair et l'impair !"},
+    {n:4,ar:"وَاللَّيْلِ إِذَا يَسْرِ",tr:"Wa-l-layli idhā yasr",fr:"Par la nuit quand elle s'en va !"},
+    {n:5,ar:"هَلْ فِي ذَٰلِكَ قَسَمٌ لِّذِي حِجْرٍ",tr:"Hal fī dhālika qasamun li-dhī ḥijr",fr:"N'y a-t-il pas là un serment pour un doué de raison ?"},
+  ]},
+  // ── NIVEAU 5 : Juz 29-28 ───────────────────────────
+  { number:67,  name:"Al-Mulk",   arabic:"الملك",   juz:29, level:5, verses:[
+    {n:1,ar:"تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ",tr:"Tabāraka lladhī bi-yadihi l-mulk",fr:"Béni soit Celui en la main de qui est la royauté"},
+    {n:2,ar:"وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",tr:"Wa-huwa ʿalā kulli shayʾin qadīr",fr:"et Il est Omnipotent"},
+    {n:3,ar:"الَّذِي خَلَقَ الْمَوْتَ وَالْحَيَاةَ",tr:"Alladhī khalaqa l-mawta wa-l-ḥayāh",fr:"Celui qui a créé la mort et la vie"},
+    {n:4,ar:"لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا",tr:"Li-yabluwakum ayyukum aḥsanu ʿamalā",fr:"pour vous éprouver : lequel de vous fera le mieux"},
+    {n:5,ar:"وَهُوَ الْعَزِيزُ الْغَفُورُ",tr:"Wa-huwa l-ʿazīzu l-ghafūr",fr:"Il est le Tout-Puissant, le Très Pardonneur"},
+  ]},
+  { number:55,  name:"Ar-Raḥmān", arabic:"الرحمان", juz:27, level:5, verses:[
+    {n:1,ar:"الرَّحْمَانُ",tr:"Ar-raḥmān",fr:"Le Tout Miséricordieux"},
+    {n:2,ar:"عَلَّمَ الْقُرْآنَ",tr:"ʿAllama l-qurʾān",fr:"a enseigné le Coran"},
+    {n:3,ar:"خَلَقَ الْإِنسَانَ",tr:"Khalaqa l-insān",fr:"a créé l'être humain"},
+    {n:4,ar:"عَلَّمَهُ الْبَيَانَ",tr:"ʿAllamahu l-bayān",fr:"lui a enseigné l'expression"},
+    {n:13,ar:"فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ",tr:"Fa-bi-ayyi ālāʾi rabbikumā tukadhdhibān",fr:"Lequel donc des bienfaits de votre Seigneur nierez-vous ?"},
+  ]},
+  { number:36,  name:"Yā-Sīn",    arabic:"يس",      juz:22, level:5, verses:[
+    {n:1,ar:"يس",tr:"Yā-Sīn",fr:"Yā-Sīn"},
+    {n:2,ar:"وَالْقُرْآنِ الْحَكِيمِ",tr:"Wa-l-qurʾāni l-ḥakīm",fr:"Par le Coran plein de sagesse"},
+    {n:3,ar:"إِنَّكَ لَمِنَ الْمُرْسَلِينَ",tr:"Innaka la-mina l-mursalīn",fr:"Tu es vraiment du nombre des envoyés"},
+    {n:4,ar:"عَلَىٰ صِرَاطٍ مُّسْتَقِيمٍ",tr:"ʿAlā ṣirāṭin mustaqīm",fr:"sur un chemin droit"},
+    {n:5,ar:"تَنزِيلَ الْعَزِيزِ الرَّحِيمِ",tr:"Tanzīla l-ʿazīzi r-raḥīm",fr:"révélation du Tout-Puissant, du Très Miséricordieux"},
+  ]},
+  // ── NIVEAU 6 : Grandes sourates ────────────────────
+  { number:2,   name:"Al-Baqara (début)",arabic:"البقرة",juz:1, level:6, verses:[
+    {n:1,ar:"الم",tr:"Alif-Lām-Mīm",fr:"Alif, Lām, Mīm"},
+    {n:2,ar:"ذَٰلِكَ الْكِتَابُ لَا رَيْبَ فِيهِ هُدًى لِّلْمُتَّقِينَ",tr:"Dhālika l-kitābu lā rayba fīhi",fr:"C'est le Livre en lequel il n'y a aucun doute"},
+    {n:3,ar:"الَّذِينَ يُؤْمِنُونَ بِالْغَيْبِ وَيُقِيمُونَ الصَّلَاةَ",tr:"Alladhīna yuʾminūna bi-l-ghayb",fr:"ceux qui croient à l'invisible et accomplissent la Salāt"},
+    {n:255,ar:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",tr:"Allāhu lā ilāha illā huwa l-ḥayyu l-qayyūm",fr:"Allah ! Pas de divinité sinon Lui, le Vivant, le Subsistant"},
+    {n:256,ar:"لَا إِكْرَاهَ فِي الدِّينِ",tr:"Lā ikrāha fī d-dīn",fr:"Point de contrainte en religion"},
+    {n:257,ar:"قَدْ تَبَيَّنَ الرُّشْدُ مِنَ الْغَيِّ",tr:"Qad tabayyana r-rushdun mina l-ghayy",fr:"La bonne voie s'est distinguée de l'égarement"},
+  ]},
+  { number:18,  name:"Al-Kahf (début)",arabic:"الكهف",juz:15, level:6, verses:[
+    {n:1,ar:"الْحَمْدُ لِلَّهِ الَّذِي أَنزَلَ عَلَىٰ عَبْدِهِ الْكِتَابَ",tr:"Al-ḥamdu lillāhi lladhī anzala ʿalā ʿabdihi l-kitāb",fr:"Louange à Allah qui a fait descendre le Livre à Son serviteur"},
+    {n:2,ar:"قَيِّمًا لِّيُنذِرَ بَأْسًا شَدِيدًا مِّن لَّدُنْهُ",tr:"Qayyiman li-yundhira baʾsan shadīdan",fr:"sans déviation, pour mettre en garde contre une sévère punition"},
+    {n:3,ar:"وَيُبَشِّرَ الْمُؤْمِنِينَ الَّذِينَ يَعْمَلُونَ الصَّالِحَاتِ",tr:"Wa-yubashshira l-muʾminīna",fr:"et annoncer la bonne nouvelle aux croyants"},
+    {n:10,ar:"إِذْ أَوَى الْفِتْيَةُ إِلَى الْكَهْفِ فَقَالُوا رَبَّنَا آتِنَا مِن لَّدُنكَ رَحْمَةً",tr:"Idh awaā l-fityatu ilā l-kahf",fr:"Quand les jeunes gens se réfugièrent dans la caverne"},
+  ]},
+];
+
+// Niveaux avec leurs labels
+const LEVELS = [
+  {id:1, label:"Niveau 1 — Incontournables", color:"#10b981", unlockAt:0},
+  {id:2, label:"Niveau 2 — Courtes",         color:"#3b82f6", unlockAt:3},
+  {id:3, label:"Niveau 3 — Juz 30",          color:"#8b5cf6", unlockAt:6},
+  {id:4, label:"Niveau 4 — Juz 30 avancé",   color:"#f59e0b", unlockAt:9},
+  {id:5, label:"Niveau 5 — Juz 27-29",       color:"#ef4444", unlockAt:12},
+  {id:6, label:"Niveau 6 — Grandes sourates",color:"#ec4899", unlockAt:15},
+];
+
+// Pour compatibilité avec les autres tabs
+const LEARN_SURAHS = ALL_SURAHS.filter(s => s.level <= 2);
+
+
 const ALPHABET = [
   {name:"Alif",  ar:"ا",i:"ا",  ini:"ا",   med:"ـا",   fin:"ـا",  sound:"a / ā", group:"lunaire"},
   {name:"Bāʾ",   ar:"ب",i:"ب",  ini:"بـ",  med:"ـبـ",  fin:"ـب",  sound:"b", group:"lunaire"},
@@ -468,102 +648,148 @@ function SuratesTab() {
   const [open, setOpen] = useState(null);
   const [showTr, setShowTr] = useState(true);
   const [showFr, setShowFr] = useState(false);
+  const [mastered, setMastered] = useState(() => ls("mastered_surahs", []));
   const audio = useAudio();
 
+  const masteredCount = mastered.length;
+
+  const markMastered = (surahNumber) => {
+    const next = mastered.includes(surahNumber)
+      ? mastered.filter(n => n !== surahNumber)
+      : [...mastered, surahNumber];
+    setMastered(next);
+    lsSet("mastered_surahs", next);
+  };
+
+  const isUnlocked = (level) => {
+    const lvl = LEVELS.find(l => l.id === level);
+    return masteredCount >= lvl.unlockAt;
+  };
+
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-slate-600 italic text-center">Couleurs tajweed lettre par lettre · Sans internet requis</p>
-      {LEARN_SURAHS.map(surah => (
-        <div key={surah.number} className={`rounded-3xl border overflow-hidden transition-all ${open === surah.number ? "border-emerald-500/30 bg-emerald-900/8" : "border-white/10 bg-white/4"}`}>
-          <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setOpen(open === surah.number ? null : surah.number)}>
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/12 border border-emerald-500/20 flex flex-col items-center justify-center shrink-0">
-              <span className="text-emerald-400 font-black text-sm">{surah.number}</span>
-              <span className="text-emerald-600/60 text-[9px]">J.{surah.juz}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-white text-sm">{surah.name}</p>
-              <p className="text-slate-500 text-xs">{surah.verses.length} versets</p>
-            </div>
-            <button onClick={e => { e.stopPropagation(); audio.playSurah(surah.number, surah.verses); }}
-              className={`p-2 rounded-xl mr-1 transition-all ${audio.playing?.startsWith(surah.number+":") ? "bg-emerald-500/30 text-emerald-300" : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"}`}>
-              {audio.playing?.startsWith(surah.number+":") ? <Pause className="w-4 h-4"/> : <Volume2 className="w-4 h-4"/>}
-            </button>
-            <p className="text-xl font-serif text-slate-500 mr-2" dir="rtl">{surah.arabic}</p>
-            <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${open === surah.number ? "rotate-90" : ""}`}/>
-          </button>
-          <AnimatePresence>
-            {open === surah.number && (
-              <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
-                <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
-                  {/* Bouton principal lecture TTS — fonctionne sans Chrome */}
-                  <button
-                    onClick={() => {
-                      if (audio.playing?.startsWith(surah.number+":")) { audio.stop(); return; }
-                      // Lecture via synthèse vocale (fonctionne partout)
-                      const allText = surah.verses.map(v => v.ar).join(" . ");
-                      speakArabicTTS(allText, 0.6);
-                    }}
-                    style={{background: audio.playing?.startsWith(surah.number+":") ? "#ef4444" : "linear-gradient(135deg,#059669,#0d9488)", color:"white", border:"none", borderRadius:"12px", padding:"10px 16px", fontWeight:"bold", fontSize:"0.85rem", display:"flex", alignItems:"center", gap:"6px", cursor:"pointer"}}>
-                    {audio.playing?.startsWith(surah.number+":") ? "⏹ Stop" : "▶ Lire (voix)"}
-                  </button>
-                  <button onClick={() => setShowTr(s => !s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "bg-white/5 text-slate-600"}`}>ABC</button>
-                  <button onClick={() => setShowFr(s => !s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" : "bg-white/5 text-slate-600"}`}>FR</button>
-                </div>
-                <div className="px-4 pb-3 flex flex-wrap gap-1">
-                  {[["#DD8000","Qalqala"],["#537FFF","Madd"],["#22AA22","Ghunna"],["#D070A0","Ikhfāʾ"],["#AAAAAA","Silence"]].map(([color,label]) => (
-                    <span key={label} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 border border-white/8">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{background:color}}/><span className="text-slate-600">{label}</span>
-                    </span>
-                  ))}
-                </div>
-                <div className="space-y-2 px-4 pb-5">
-                  {surah.verses.map((v,i) => (
-                    <motion.div key={v.n} initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}
-                      className={`p-4 rounded-2xl border transition-all ${audio.playing === `${surah.number}:${v.n}` ? "bg-emerald-900/20 border-emerald-500/25" : "bg-white/3 border-white/8"}`}>
-                      <div className="flex items-start gap-3 mb-1">
-                        <button onClick={() => {
-                          if (audio.playing === `${surah.number}:${v.n}`) { audio.stop(); return; }
-                          // Essaie MP3, bascule sur TTS si ça échoue
-                          audio.playVerse(surah.number, v.n);
-                          // Fallback TTS après 1.5s si toujours loading
-                          setTimeout(() => {
-                            if (audio.loading === `${surah.number}:${v.n}`) speakArabicTTS(v.ar, 0.6);
-                          }, 1500);
-                        }}
-                          style={{
-                            width:"36px", height:"36px", borderRadius:"50%",
-                            display:"flex", alignItems:"center", justifyContent:"center",
-                            flexShrink:0, marginTop:"4px", fontWeight:"bold", fontSize:"0.75rem",
-                            cursor:"pointer", border:"none", transition:"all 0.2s",
-                            background: audio.playing === `${surah.number}:${v.n}` ? "#10b981" :
-                                        audio.loading === `${surah.number}:${v.n}` ? "rgba(59,130,246,0.2)" :
-                                        "rgba(16,185,129,0.15)",
-                            color: audio.playing === `${surah.number}:${v.n}` ? "white" : "#6ee7b7",
-                          }}>
-                          {audio.loading === `${surah.number}:${v.n}` ? "⏳" :
-                           audio.playing === `${surah.number}:${v.n}` ? "⏸" : v.n}
-                        </button>
-                        <div className="flex-1 text-right" style={{lineHeight:"3"}}>
-                          <LetterByLetter text={v.ar} size="clamp(1.2rem,4vw,1.6rem)"/>
-                        </div>
-                      </div>
-                      {showTr && <p className="text-xs text-blue-300/70 italic ml-10" dir="ltr">{v.tr}</p>}
-                      {showFr && <p className="text-sm text-slate-400 leading-relaxed ml-10 mt-1 bg-white/3 rounded-xl px-3 py-2">{v.fr}</p>}
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+    <div className="space-y-4">
+      {/* Progression globale */}
+      <div className="p-4 bg-white/5 border border-white/8 rounded-2xl">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-white font-bold text-sm">Progression sourates</p>
+          <span className="text-emerald-400 font-black">{masteredCount}/{ALL_SURAHS.length}</span>
         </div>
-      ))}
+        <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all" style={{width:`${(masteredCount/ALL_SURAHS.length)*100}%`}}/>
+        </div>
+        <p className="text-slate-600 text-xs mt-1.5">Marque une sourate comme maîtrisée ✅ pour déverrouiller le niveau suivant</p>
+      </div>
+
+      {/* Sourates par niveau */}
+      {LEVELS.map(lvl => {
+        const surahs = ALL_SURAHS.filter(s => s.level === lvl.id);
+        const unlocked = isUnlocked(lvl.id);
+        const levelMastered = surahs.filter(s => mastered.includes(s.number)).length;
+        return (
+          <div key={lvl.id}>
+            {/* Header niveau */}
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm" style={{background:`${lvl.color}25`,border:`1px solid ${lvl.color}40`,color:lvl.color}}>
+                {unlocked ? lvl.id : "🔒"}
+              </div>
+              <div className="flex-1">
+                <p className={`font-bold text-sm ${unlocked ? "text-white" : "text-slate-600"}`}>{lvl.label}</p>
+                {!unlocked && (
+                  <p className="text-slate-600 text-xs">Maîtrise {lvl.unlockAt} sourates pour débloquer</p>
+                )}
+                {unlocked && <p className="text-xs" style={{color:lvl.color}}>{levelMastered}/{surahs.length} maîtrisées</p>}
+              </div>
+            </div>
+
+            {/* Sourates du niveau */}
+            <div className="space-y-2 mb-4">
+              {surahs.map(surah => {
+                const isMastered = mastered.includes(surah.number);
+                const isOpen = open === surah.number;
+                return (
+                  <div key={surah.number} className={`rounded-2xl border overflow-hidden transition-all ${
+                    !unlocked ? "opacity-35 pointer-events-none" :
+                    isMastered ? "border-emerald-500/30 bg-emerald-900/10" :
+                    isOpen ? "border-white/20 bg-white/5" :
+                    "border-white/8 bg-white/3"
+                  }`}>
+                    <button className="w-full flex items-center gap-3 p-3.5 text-left" onClick={() => unlocked && setOpen(isOpen ? null : surah.number)}>
+                      <div className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0" style={{background:`${lvl.color}18`,border:`1px solid ${lvl.color}30`}}>
+                        <span className="font-black text-xs" style={{color:lvl.color}}>{surah.number}</span>
+                        <span className="text-[8px] text-slate-600">J.{surah.juz}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-bold text-sm ${isMastered ? "text-emerald-300" : "text-white"}`}>{surah.name}</p>
+                        <p className="text-slate-600 text-xs">{surah.verses.length} versets</p>
+                      </div>
+                      {isMastered && <span className="text-emerald-400 text-lg mr-1">✅</span>}
+                      <p className="font-serif text-slate-500 text-lg mr-1" dir="rtl">{surah.arabic}</p>
+                      <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${isOpen ? "rotate-90" : ""}`}/>
+                    </button>
+
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
+                          {/* Contrôles */}
+                          <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
+                            <button onClick={() => { const t = surah.verses.map(v=>v.ar).join(" . "); speakArabicTTS(t,0.6); }}
+                              style={{background:"linear-gradient(135deg,#059669,#0d9488)",color:"white",border:"none",borderRadius:"12px",padding:"8px 14px",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"6px"}}>
+                              ▶ Lire (voix)
+                            </button>
+                            <button onClick={() => setShowTr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr?"bg-blue-500/20 text-blue-300 border border-blue-500/30":"bg-white/5 text-slate-600"}`}>ABC</button>
+                            <button onClick={() => setShowFr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr?"bg-purple-500/20 text-purple-300 border border-purple-500/30":"bg-white/5 text-slate-600"}`}>FR</button>
+                            <button onClick={() => markMastered(surah.number)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ml-auto ${isMastered?"bg-emerald-500/20 text-emerald-300 border border-emerald-500/30":"bg-white/5 text-slate-600 border border-white/10"}`}>
+                              {isMastered ? "✅ Maîtrisée" : "Marquer maîtrisée"}
+                            </button>
+                          </div>
+                          {/* Légende tajweed */}
+                          <div className="px-4 pb-3 flex flex-wrap gap-1">
+                            {[["#DD8000","Qalqala"],["#537FFF","Madd"],["#22AA22","Ghunna"],["#D070A0","Ikhfāʾ"],["#AAAAAA","Silence"]].map(([color,label])=>(
+                              <span key={label} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 border border-white/8">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{background:color}}/><span className="text-slate-600">{label}</span>
+                              </span>
+                            ))}
+                          </div>
+                          {/* Versets */}
+                          <div className="space-y-2 px-4 pb-5">
+                            {surah.verses.map((v,i) => (
+                              <motion.div key={v.n} initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}
+                                className={`p-4 rounded-2xl border ${audio.playing===`${surah.number}:${v.n}`?"bg-emerald-900/20 border-emerald-500/25":"bg-white/3 border-white/8"}`}>
+                                <div className="flex items-start gap-3 mb-1">
+                                  <button onClick={()=>{
+                                    if(audio.playing===`${surah.number}:${v.n}`){audio.stop();return;}
+                                    audio.playVerse(surah.number,v.n);
+                                    setTimeout(()=>{if(audio.loading===`${surah.number}:${v.n}`)speakArabicTTS(v.ar,0.6);},1500);
+                                  }}
+                                    style={{width:"32px",height:"32px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"4px",fontWeight:"bold",fontSize:"0.75rem",cursor:"pointer",border:"none",transition:"all 0.2s",
+                                      background:audio.playing===`${surah.number}:${v.n}`?"#10b981":"rgba(16,185,129,0.15)",
+                                      color:audio.playing===`${surah.number}:${v.n}`?"white":"#6ee7b7"}}>
+                                    {audio.playing===`${surah.number}:${v.n}`?"⏸":v.n}
+                                  </button>
+                                  <div className="flex-1 text-right" style={{lineHeight:"3"}}>
+                                    <LetterByLetter text={v.ar} size="clamp(1.2rem,4vw,1.6rem)"/>
+                                  </div>
+                                </div>
+                                {showTr && <p className="text-xs text-blue-300/70 italic ml-10" dir="ltr">{v.tr}</p>}
+                                {showFr && <p className="text-sm text-slate-400 leading-relaxed ml-10 mt-1 bg-white/3 rounded-xl px-3 py-2">{v.fr}</p>}
+                              </motion.div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════
-// COMPOSANT — Tab Alphabet
-// ═══════════════════════════════════════════════════════
 function AlphabetTab() {
   const [sel, setSel] = useState(null);
   const rows = [];
@@ -970,12 +1196,15 @@ function RevisionTab() {
     else setDue([]);
   };
 
+  const [confirmReset, setConfirmReset] = useState(false);
+
   const reset = () => {
     const fresh = getInitialCardState();
     setCards(fresh);
     lsSet("anki_cards", fresh);
     const d = getDueCards(fresh);
     setDue(d); setIdx(0); setFlipped(false); setSessionDone(0);
+    setConfirmReset(false);
   };
 
   if (due.length === 0) {
@@ -987,6 +1216,13 @@ function RevisionTab() {
           {sessionDone > 0 && <p className="text-emerald-400 text-sm">{sessionDone} cartes révisées</p>}
           <p className="text-slate-500 text-sm mt-2">{learned}/500 mots appris</p>
         </div>
+
+        {/* Explication du compteur */}
+        <div className="p-3 bg-blue-900/20 border border-blue-500/20 rounded-2xl">
+          <p className="text-blue-300 font-bold text-xs mb-1">ℹ️ Comment fonctionne le compteur ?</p>
+          <p className="text-slate-500 text-xs leading-relaxed">Retourne une carte → réponds <span className="text-blue-300 font-bold">Bien</span> ou <span className="text-emerald-400 font-bold">Facile</span> → le mot est marqué "appris". Plus tu réponds correctement, plus l'intervalle avant la prochaine révision s'allonge (1j → 3j → 1 sem → …)</p>
+        </div>
+
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
             <p className="text-slate-500 text-xs">Appris</p>
@@ -994,7 +1230,7 @@ function RevisionTab() {
           </div>
           <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
             <p className="text-slate-500 text-xs">Total</p>
-            <p className="text-white font-black text-xl">50</p>
+            <p className="text-white font-black text-xl">500</p>
           </div>
           <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
             <p className="text-slate-500 text-xs">À revoir</p>
@@ -1006,9 +1242,27 @@ function RevisionTab() {
             className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl">
             🔄 Nouvelle session
           </button>
-          <button onClick={reset} className="w-full py-2.5 bg-white/5 text-slate-500 border border-white/10 rounded-2xl text-sm">
-            Réinitialiser tout
-          </button>
+          {!confirmReset ? (
+            <button onClick={() => setConfirmReset(true)}
+              className="w-full py-2.5 bg-red-900/20 text-red-400 border border-red-500/25 rounded-2xl text-sm font-semibold hover:bg-red-900/35 transition-all">
+              🗑️ Réinitialiser la progression
+            </button>
+          ) : (
+            <div className="p-4 bg-red-900/25 border border-red-500/35 rounded-2xl space-y-3">
+              <p className="text-red-300 text-sm font-bold text-center">⚠️ Supprimer toute la progression ?</p>
+              <p className="text-slate-500 text-xs text-center">Les {learned} mots appris seront remis à zéro.</p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmReset(false)}
+                  className="flex-1 py-2.5 bg-white/8 text-slate-400 rounded-xl text-sm font-bold">
+                  Annuler
+                </button>
+                <button onClick={reset}
+                  className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold">
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div>
           <p className="text-sm font-bold text-white mb-2">Tous les mots</p>
