@@ -1154,155 +1154,263 @@ function QuizTab() {
   const [answered, setAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [lastCorrect, setLastCorrect] = useState(false);
 
-  const generateLetterQuiz = () => {
-    const qs = [...ALPHABET].sort(() => Math.random()-0.5).slice(0, 12).map(letter => {
-      const wrong = ALPHABET.filter(l => l.name !== letter.name).sort(() => Math.random()-0.5).slice(0,3).map(l => l.name);
-      const options = [...wrong, letter.name].sort(() => Math.random()-0.5);
-      return { ar: letter.ar, correct: letter.name, options, type:"letter" };
+  const genLetterForms = () =>
+    [...ALPHABET].sort(()=>Math.random()-0.5).slice(0,12).map(l => {
+      const wrong = ALPHABET.filter(x=>x.name!==l.name).sort(()=>Math.random()-0.5).slice(0,3);
+      return {
+        type:"letter_forms", question:"Quelle est cette lettre ?",
+        letter:l, ar:l.ar, correct:l.name, sound:l.sound,
+        options:[...wrong.map(x=>x.name),l.name].sort(()=>Math.random()-0.5),
+        variants:[{label:"Isolée",text:l.i},{label:"Initiale",text:l.ini},{label:"Médiane",text:l.med},{label:"Finale",text:l.fin}],
+      };
     });
-    return qs;
+
+  const genLetterSound = () =>
+    [...ALPHABET].sort(()=>Math.random()-0.5).slice(0,12).map(l => {
+      const wrong = ALPHABET.filter(x=>x.name!==l.name).sort(()=>Math.random()-0.5).slice(0,3);
+      return {
+        type:"letter_sound", question:"Quel son vient d'être prononcé ?",
+        letter:l, ar:l.ar, correct:l.ar, sound:l.sound,
+        options:[...wrong.map(x=>x.ar),l.ar].sort(()=>Math.random()-0.5),
+      };
+    });
+
+  const genWordMeaning = () => {
+    const top30 = [...VOCAB].sort((a,b)=>b.freq-a.freq).slice(0,30);
+    return [...top30].sort(()=>Math.random()-0.5).slice(0,12).map(w => {
+      const wrong = top30.filter(x=>x.id!==w.id).sort(()=>Math.random()-0.5).slice(0,3);
+      return { type:"word_meaning", question:"Que signifie ce mot ?", ar:w.ar, tr:w.tr, correct:w.fr, freq:w.freq, cat:w.cat,
+        options:[...wrong.map(x=>x.fr),w.fr].sort(()=>Math.random()-0.5) };
+    });
   };
 
-  const generateVocabQuiz = () => {
-    const qs = [...VOCAB].sort(() => Math.random()-0.5).slice(0, 12).map(w => {
-      const wrong = VOCAB.filter(v => v.id !== w.id).sort(() => Math.random()-0.5).slice(0,3).map(v => v.fr);
-      const options = [...wrong, w.fr].sort(() => Math.random()-0.5);
-      return { ar: w.ar, tr: w.tr, correct: w.fr, options, type:"vocab" };
+  const genWordArabic = () => {
+    const top30 = [...VOCAB].sort((a,b)=>b.freq-a.freq).slice(0,30);
+    return [...top30].sort(()=>Math.random()-0.5).slice(0,12).map(w => {
+      const wrong = top30.filter(x=>x.id!==w.id).sort(()=>Math.random()-0.5).slice(0,3);
+      return { type:"word_arabic", question:`Mot arabe pour "${w.fr}" ?`, ar:w.ar, tr:w.tr, correct:w.ar, freq:w.freq,
+        options:[...wrong.map(x=>x.ar),w.ar].sort(()=>Math.random()-0.5) };
     });
-    return qs;
   };
 
-  const generateTajweedQuiz = () => [
-    { ar:"قُلْ", question:"Quelle règle s'applique sur le ق ?", correct:"Qalqala", options:["Qalqala","Ghunna","Madd","Ikhfāʾ"], type:"tajweed" },
-    { ar:"إِنَّ", question:"Quelle règle s'applique sur le نّ ?", correct:"Ghunna", options:["Ghunna","Qalqala","Iqlāb","Madd"], type:"tajweed" },
-    { ar:"الرَّحِيمِ", question:"Le ل de ال est ici...", correct:"Laam solaire", options:["Laam solaire","Laam lunaire","Madd","Sukūn"], type:"tajweed" },
-    { ar:"الْكِتَابُ", question:"Le ل de ال est ici...", correct:"Laam lunaire", options:["Laam lunaire","Laam solaire","Ghunna","Qalqala"], type:"tajweed" },
-    { ar:"بِسْمِ", question:"Le س porte...", correct:"Sukūn", options:["Sukūn","Fatha","Ghunna","Qalqala"], type:"tajweed" },
-    { ar:"أَحَدٌ", question:"Quelle règle sur le د final ?", correct:"Qalqala", options:["Qalqala","Ghunna","Madd","Iqlab"], type:"tajweed" },
-    { ar:"الرَّحْمَٰنِ", question:"Le ٰ au-dessus indique...", correct:"Madd long", options:["Madd long","Ghunna","Qalqala","Sukūn"], type:"tajweed" },
-    { ar:"مِن نَّفْسٍ", question:"Le ن suivi de نّ → règle ?", correct:"Idghām + Ghunna", options:["Idghām + Ghunna","Ikhfāʾ","Iqlāb","Qalqala"], type:"tajweed" },
-    { ar:"مِن بَعْدِ", question:"Le ن suivi de ب → règle ?", correct:"Iqlāb", options:["Iqlāb","Ikhfāʾ","Idghām","Ghunna"], type:"tajweed" },
-    { ar:"مِن قَبْلِ", question:"Le ن suivi de ق → règle ?", correct:"Ikhfāʾ", options:["Ikhfāʾ","Iqlāb","Idghām","Qalqala"], type:"tajweed" },
-    { ar:"ثُمَّ", question:"Quelle règle sur le مّ ?", correct:"Ghunna", options:["Ghunna","Qalqala","Madd","Ikhfāʾ"], type:"tajweed" },
-    { ar:"الشَّمْسُ", question:"Le ل de ال est ici...", correct:"Laam solaire", options:["Laam solaire","Laam lunaire","Ghunna","Madd"], type:"tajweed" },
+  const genLetterName = () =>
+    [...ALPHABET].sort(()=>Math.random()-0.5).slice(0,12).map(l => {
+      const wrong = ALPHABET.filter(x=>x.name!==l.name).sort(()=>Math.random()-0.5).slice(0,3);
+      return { type:"letter", ar:l.ar, correct:l.name, options:[...wrong.map(x=>x.name),l.name].sort(()=>Math.random()-0.5) };
+    });
+
+  const genTajweed = () => [
+    {ar:"قُلْ",question:"Règle sur le ق ?",correct:"Qalqala",options:["Qalqala","Ghunna","Madd","Ikhfāʾ"],type:"tajweed"},
+    {ar:"إِنَّ",question:"Règle sur le نّ ?",correct:"Ghunna",options:["Ghunna","Qalqala","Iqlāb","Madd"],type:"tajweed"},
+    {ar:"الرَّحِيمِ",question:"Le ل de ال est...",correct:"Laam solaire",options:["Laam solaire","Laam lunaire","Madd","Sukūn"],type:"tajweed"},
+    {ar:"الْكِتَابُ",question:"Le ل de ال est...",correct:"Laam lunaire",options:["Laam lunaire","Laam solaire","Ghunna","Qalqala"],type:"tajweed"},
+    {ar:"أَحَدٌ",question:"Règle sur le د final ?",correct:"Qalqala",options:["Qalqala","Ghunna","Madd","Iqlab"],type:"tajweed"},
+    {ar:"إِنَّا",question:"Règle sur le نّ ?",correct:"Ghunna",options:["Ghunna","Ikhfa","Iqlab","Madd"],type:"tajweed"},
+    {ar:"مِن بَعْدِ",question:"ن + ب → règle ?",correct:"Iqlāb",options:["Iqlāb","Ikhfāʾ","Idghām","Ghunna"],type:"tajweed"},
+    {ar:"مِن قَبْلِ",question:"ن + ق → règle ?",correct:"Ikhfāʾ",options:["Ikhfāʾ","Iqlāb","Idghām","Qalqala"],type:"tajweed"},
+    {ar:"الشَّمْسُ",question:"Le ل de ال est...",correct:"Laam solaire",options:["Laam solaire","Laam lunaire","Ghunna","Madd"],type:"tajweed"},
+    {ar:"الرَّحْمَٰنِ",question:"Le ٰ signifie...",correct:"Madd long",options:["Madd long","Ghunna","Qalqala","Sukūn"],type:"tajweed"},
+    {ar:"ثُمَّ",question:"Règle sur le مّ ?",correct:"Ghunna",options:["Ghunna","Qalqala","Madd","Ikhfāʾ"],type:"tajweed"},
+    {ar:"بِسْمِ",question:"Le س porte...",correct:"Sukūn",options:["Sukūn","Fatha","Ghunna","Qalqala"],type:"tajweed"},
   ];
 
   const start = (type) => {
     let qs;
-    if (type === "letters") qs = generateLetterQuiz();
-    else if (type === "vocab") qs = generateVocabQuiz();
-    else qs = generateTajweedQuiz();
-    setMode(type);
-    setQuestions(qs);
-    setQIdx(0);
-    setSelected(null);
-    setAnswered(false);
-    setScore(0);
-    setStreak(0);
+    if (type==="letter_forms") qs=genLetterForms();
+    else if (type==="letter_sound") qs=genLetterSound();
+    else if (type==="word_meaning") qs=genWordMeaning();
+    else if (type==="word_arabic")  qs=genWordArabic();
+    else if (type==="letters")      qs=genLetterName();
+    else qs=genTajweed();
+    setMode(type); setQuestions(qs); setQIdx(0);
+    setSelected(null); setAnswered(false); setScore(0); setStreak(0);
   };
 
-  const answer = (opt) => {
+  const answer = useCallback((opt) => {
     if (answered) return;
-    setSelected(opt);
-    setAnswered(true);
-    const correct = opt === questions[qIdx].correct;
-    if (correct) { setScore(s => s+1); setStreak(s => s+1); }
-    else setStreak(0);
-  };
+    const q = questions[qIdx];
+    const correct = opt === q.correct;
+    setSelected(opt); setAnswered(true); setLastCorrect(correct);
+    if (correct) { setScore(s=>s+1); setStreak(s=>s+1); } else setStreak(0);
+    // Voix du prof : prononce la bonne réponse
+    if (q.type==="letter_forms"||q.type==="letter_sound"||q.type==="letter") {
+      setTimeout(()=>speakArabic(q.ar, 0.4), 400);
+    } else if (q.type==="word_meaning"||q.type==="word_arabic") {
+      setTimeout(()=>speakArabic(q.ar, 0.55), 300);
+      setTimeout(()=>speakFeedback(q.correct||"", "fr-FR"), 1400);
+    }
+  }, [answered, questions, qIdx]);
 
-  const next = () => {
-    if (qIdx < questions.length - 1) { setQIdx(i => i+1); setSelected(null); setAnswered(false); }
-    else setMode("done");
-  };
-
-  if (!mode) {
-    return (
-      <div className="space-y-4">
-        <div className="p-4 bg-yellow-900/20 border border-yellow-500/20 rounded-2xl">
-          <p className="text-yellow-300 font-bold text-sm mb-1">🎯 Quiz interactifs</p>
-          <p className="text-slate-500 text-xs">3 types de quiz pour tester et consolider tes connaissances.</p>
-        </div>
-        {[
-          {type:"letters", emoji:"ح", title:"Reconnais les lettres", desc:"Vois la lettre arabe → trouve son nom", color:"from-blue-600 to-blue-700"},
-          {type:"vocab", emoji:"📝", title:"Vocabulaire coranique", desc:"Vois le mot arabe → trouve la traduction", color:"from-purple-600 to-purple-700"},
-          {type:"tajweed", emoji:"🎨", title:"Règles de tajweed", desc:"Identifie la règle qui s'applique", color:"from-orange-600 to-orange-700"},
-        ].map(q => (
-          <motion.button key={q.type} whileTap={{scale:0.97}} onClick={() => start(q.type)}
-            className={`w-full flex items-center gap-4 p-5 rounded-3xl bg-gradient-to-r ${q.color} text-white text-left shadow-lg`}>
-            <span className="text-3xl">{q.emoji}</span>
-            <div>
-              <p className="font-black text-base">{q.title}</p>
-              <p className="text-white/70 text-sm mt-0.5">{q.desc}</p>
-            </div>
-          </motion.button>
-        ))}
+  // ── Menu ──────────────────────────────────────────────
+  if (!mode) return (
+    <div className="space-y-3">
+      <div className="p-4 bg-yellow-900/20 border border-yellow-500/20 rounded-2xl">
+        <p className="text-yellow-300 font-bold text-sm mb-1">🎯 6 types de quiz</p>
+        <p className="text-slate-500 text-xs">La voix du professeur lit la bonne réponse après chaque question.</p>
       </div>
-    );
-  }
+      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Alphabet</p>
+      {[
+        {type:"letter_forms", emoji:"🔠", title:"4 formes de la lettre", desc:"Vois isolée · initiale · médiane · finale → trouve le nom", color:"from-blue-700 to-blue-800"},
+        {type:"letter_sound", emoji:"🔊", title:"Reconnais par le son",  desc:"Appuie pour entendre → trouve la bonne lettre arabe", color:"from-cyan-700 to-blue-700"},
+        {type:"letters",      emoji:"ح",  title:"Nom de la lettre",      desc:"Vois la lettre → trouve son nom en 4 choix", color:"from-indigo-700 to-indigo-800"},
+      ].map(q=>(
+        <motion.button key={q.type} whileTap={{scale:0.97}} onClick={()=>start(q.type)}
+          className={`w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r ${q.color} text-white text-left shadow-md`}>
+          <span className="text-2xl font-serif">{q.emoji}</span>
+          <div><p className="font-black text-sm">{q.title}</p><p className="text-white/65 text-xs mt-0.5">{q.desc}</p></div>
+        </motion.button>
+      ))}
+      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider pt-1">Vocabulaire coranique</p>
+      {[
+        {type:"word_meaning", emoji:"📖", title:"Mot arabe → sens",       desc:"30 mots les plus fréquents du Coran · trouve la signification", color:"from-purple-700 to-violet-700"},
+        {type:"word_arabic",  emoji:"📝", title:"Sens → mot arabe",       desc:"Lis la traduction → retrouve le mot arabe parmi 4", color:"from-violet-700 to-purple-800"},
+        {type:"tajweed",      emoji:"🎨", title:"Règles de tajweed",       desc:"Identifie qalqala, ghunna, madd, ikhfa…", color:"from-orange-600 to-orange-700"},
+      ].map(q=>(
+        <motion.button key={q.type} whileTap={{scale:0.97}} onClick={()=>start(q.type)}
+          className={`w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r ${q.color} text-white text-left shadow-md`}>
+          <span className="text-2xl">{q.emoji}</span>
+          <div><p className="font-black text-sm">{q.title}</p><p className="text-white/65 text-xs mt-0.5">{q.desc}</p></div>
+        </motion.button>
+      ))}
+    </div>
+  );
 
-  if (mode === "done") {
-    const pct = Math.round((score/questions.length)*100);
+  // ── Résultat ──────────────────────────────────────────
+  if (mode==="done") {
+    const pct=Math.round((score/questions.length)*100);
     return (
       <div className="text-center space-y-5 py-6">
-        <motion.div initial={{scale:0}} animate={{scale:1}} className="text-7xl">{pct >= 80 ? "🏆" : pct >= 60 ? "⭐" : "📚"}</motion.div>
-        <p className="text-white font-black text-2xl">{score}/{questions.length}</p>
-        <p className="text-slate-400">{pct >= 80 ? "Excellent !" : pct >= 60 ? "Bien !" : "Continue à pratiquer !"}</p>
-        <div className="flex gap-2 justify-center">
-          {questions.map((_,i) => (
-            <div key={i} className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${i < score ? "bg-emerald-500" : "bg-red-500/50"}`}>
-              {i < score ? "✓" : "✗"}
+        <motion.div initial={{scale:0}} animate={{scale:1}} className="text-7xl">{pct>=90?"🏆":pct>=70?"⭐":pct>=50?"👍":"📚"}</motion.div>
+        <p className="text-white font-black text-3xl">{score}<span className="text-xl text-slate-400">/{questions.length}</span></p>
+        <p className="text-slate-400">{pct>=90?"Mashā Allāh !":pct>=70?"Très bien !":pct>=50?"Continue !":"Réessaie !"}</p>
+        <div className="flex gap-1.5 justify-center flex-wrap">
+          {questions.map((_,i)=>(
+            <div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i<score?"bg-emerald-500 text-white":"bg-red-500/40 text-red-300"}`}>
+              {i<score?"✓":"✗"}
             </div>
           ))}
         </div>
         <div className="flex gap-2 justify-center pt-2">
-          <button onClick={() => start(mode === "done" ? "letters" : mode)} className="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl">Rejouer</button>
-          <button onClick={() => setMode(null)} className="px-5 py-2.5 bg-white/10 text-white rounded-xl">Menu</button>
+          <button onClick={()=>start(mode)} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl">🔄 Rejouer</button>
+          <button onClick={()=>setMode(null)} className="px-5 py-2.5 bg-white/10 text-white rounded-xl">Menu</button>
         </div>
       </div>
     );
   }
 
+  // ── Question ──────────────────────────────────────────
   const q = questions[qIdx];
+  const isArabicOpt = q.type==="letter_sound"||q.type==="word_arabic";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <button onClick={() => setMode(null)} className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+        <button onClick={()=>setMode(null)} className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
         <div className="flex items-center gap-2">
-          {streak >= 2 && <span className="text-xs text-amber-400 font-bold">🔥 {streak}</span>}
-          <span className="text-emerald-400 font-bold">{score} ✓</span>
+          {streak>=2 && <span className="text-xs text-amber-400 font-bold">🔥 {streak}</span>}
+          <span className="text-emerald-400 font-bold text-sm">{score} ✓</span>
           <span className="text-slate-500 text-xs">{qIdx+1}/{questions.length}</span>
         </div>
       </div>
       <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
-        <motion.div className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full" animate={{width:`${((qIdx)/questions.length)*100}%`}}/>
+        <motion.div className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full" animate={{width:`${(qIdx/questions.length)*100}%`}}/>
       </div>
-      <p className="text-slate-400 text-sm text-center">{q.question || (q.type === "vocab" ? "Que signifie ce mot ?" : "Comment s'appelle cette lettre ?")}</p>
-      <div className="py-8 text-center bg-white/5 border border-white/10 rounded-3xl">
-        <p className="font-serif text-white" style={{fontSize:"3.5rem"}} dir="rtl">{q.ar}</p>
-        {q.tr && <p className="text-blue-300/60 text-sm italic mt-2">{q.tr}</p>}
-      </div>
+      <p className="text-slate-400 text-sm text-center font-semibold">{q.question}</p>
+
+      {/* Zone centrale selon type */}
+      {q.type==="letter_forms" && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-4 gap-2">
+            {q.variants.map(v=>(
+              <div key={v.label} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"16px",padding:"12px 4px",textAlign:"center"}}>
+                <p style={{fontSize:"0.6rem",color:"#94a3b8",marginBottom:"6px"}}>{v.label}</p>
+                <p style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"1.8rem",color:"white",lineHeight:"2"}} dir="rtl">{v.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <button onClick={()=>speakArabic(q.ar, 0.4)}
+              style={{background:"rgba(16,185,129,0.15)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:"12px",padding:"8px 20px",color:"#6ee7b7",fontSize:"0.85rem",cursor:"pointer",fontWeight:"bold"}}>
+              🔊 Écouter
+            </button>
+            <p style={{color:"#64748b",fontSize:"0.75rem",marginTop:"6px"}}>Son : <span style={{color:"white",fontWeight:"bold"}}>{q.sound}</span></p>
+          </div>
+        </div>
+      )}
+
+      {q.type==="letter_sound" && (
+        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"24px",padding:"32px",textAlign:"center"}}>
+          <p style={{color:"#94a3b8",fontSize:"0.85rem",marginBottom:"16px"}}>Appuie pour entendre la lettre</p>
+          <button onClick={()=>speakArabic(q.ar, 0.35)}
+            style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)",border:"none",borderRadius:"50%",width:"80px",height:"80px",fontSize:"2rem",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 20px rgba(124,58,237,0.4)"}}>
+            🔊
+          </button>
+          <p style={{color:"#64748b",fontSize:"0.8rem",marginTop:"12px"}}>Son attendu : <span style={{color:"white",fontWeight:"bold"}}>{q.sound}</span></p>
+        </div>
+      )}
+
+      {(q.type==="word_meaning"||q.type==="word_arabic"||q.type==="tajweed") && (
+        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"24px",padding:"24px",textAlign:"center"}}>
+          <div style={{lineHeight:"3"}}>
+            <LetterByLetter text={q.ar} size="clamp(1.5rem,5vw,2rem)"/>
+          </div>
+          {q.tr && <p style={{color:"rgba(147,197,253,0.6)",fontSize:"0.75rem",fontStyle:"italic",marginTop:"4px"}} dir="ltr">{q.tr}</p>}
+          {q.freq && <p style={{color:"#475569",fontSize:"0.7rem",marginTop:"2px"}}>{q.freq.toLocaleString()}× dans le Coran</p>}
+          <button onClick={()=>speakArabic(q.ar,0.55)}
+            style={{marginTop:"12px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:"10px",padding:"6px 16px",color:"#6ee7b7",fontSize:"0.75rem",cursor:"pointer"}}>
+            🔊 Écouter
+          </button>
+        </div>
+      )}
+
+      {q.type==="letter" && (
+        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"24px",padding:"40px",textAlign:"center"}}>
+          <p style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"4rem",color:"white"}} dir="rtl">{q.ar}</p>
+          <button onClick={()=>speakArabic(q.ar,0.4)}
+            style={{marginTop:"12px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:"10px",padding:"6px 16px",color:"#6ee7b7",fontSize:"0.75rem",cursor:"pointer"}}>
+            🔊 Écouter
+          </button>
+        </div>
+      )}
+
+      {/* Options */}
       <div className="grid grid-cols-2 gap-2">
-        {q.options.map(opt => {
-          const isCorrect = opt === q.correct;
-          const isSelected = opt === selected;
-          let bg = "rgba(255,255,255,0.05)"; let border = "rgba(255,255,255,0.15)"; let color = "white";
-          if (answered && isCorrect)  { bg="rgba(16,185,129,0.25)"; border="#10b981"; color="#6ee7b7"; }
-          else if (answered && isSelected && !isCorrect) { bg="rgba(239,68,68,0.25)"; border="#ef4444"; color="#fca5a5"; }
+        {q.options.map((opt,oi)=>{
+          const isCorrect=opt===q.correct, isSelected=opt===selected;
+          let bg="rgba(255,255,255,0.05)",border="rgba(255,255,255,0.15)",color="white";
+          if(answered&&isCorrect){bg="rgba(16,185,129,0.25)";border="#10b981";color="#6ee7b7";}
+          else if(answered&&isSelected&&!isCorrect){bg="rgba(239,68,68,0.25)";border="#ef4444";color="#fca5a5";}
           return (
-            <button key={opt} onClick={() => { if(answered) return; setSelected(opt); setAnswered(true); if(opt===q.correct) setScore(s=>s+1); if(streak>=2&&opt!==q.correct) setStreak(0); if(opt===q.correct) setStreak(s=>s+1); }}
-              style={{padding:"14px 10px",borderRadius:"16px",border:`1px solid ${border}`,background:bg,color,fontWeight:"bold",fontSize:"0.875rem",cursor:"pointer",transition:"all 0.2s",textAlign:"center"}}>
+            <button key={oi} onClick={()=>answer(opt)} style={{
+              padding:isArabicOpt?"16px 8px":"14px 10px",borderRadius:"16px",
+              border:`1px solid ${border}`,background:bg,color,fontWeight:"bold",
+              fontSize:isArabicOpt?"1.5rem":"0.875rem",cursor:"pointer",transition:"all 0.2s",
+              textAlign:"center",fontFamily:isArabicOpt?"'Amiri Quran','Scheherazade New',serif":"inherit",
+              direction:isArabicOpt?"rtl":"ltr",lineHeight:isArabicOpt?"2":"1.4",
+            }}>
               {opt}
+              {answered&&isCorrect&&<span style={{display:"block",fontSize:"0.6rem",fontFamily:"system-ui",color:"#6ee7b7",marginTop:"2px"}}>✓</span>}
             </button>
           );
         })}
       </div>
+
       {answered && (
-        <motion.button initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
-          onClick={() => { if(qIdx<questions.length-1){setQIdx(i=>i+1);setSelected(null);setAnswered(false);}else setMode("done"); }}
-          className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl">
-          {qIdx < questions.length-1 ? "Suivant →" : "Voir le résultat →"}
-        </motion.button>
+        <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-2">
+          <div style={{background:lastCorrect?"rgba(16,185,129,0.1)":"rgba(239,68,68,0.1)",border:`1px solid ${lastCorrect?"rgba(16,185,129,0.3)":"rgba(239,68,68,0.3)"}`,borderRadius:"16px",padding:"12px",textAlign:"center"}}>
+            <p style={{color:lastCorrect?"#6ee7b7":"#fca5a5",fontWeight:"bold"}}>
+              {lastCorrect?"✅ Correct !":"❌ Réponse : "+q.correct}
+            </p>
+            {q.type==="letter_forms" && <p style={{color:"#93c5fd",fontSize:"0.75rem",marginTop:"4px"}}>Son : {q.sound}</p>}
+            {(q.type==="word_meaning"||q.type==="word_arabic")&&q.tr && <p style={{color:"#93c5fd",fontSize:"0.75rem",fontStyle:"italic",marginTop:"4px"}} dir="ltr">{q.tr}</p>}
+          </div>
+          <button onClick={()=>{if(qIdx<questions.length-1){setQIdx(i=>i+1);setSelected(null);setAnswered(false);}else setMode("done");}}
+            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl">
+            {qIdx<questions.length-1?"Suivant →":"Voir le résultat →"}
+          </button>
+        </motion.div>
       )}
     </div>
   );
