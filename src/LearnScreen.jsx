@@ -492,7 +492,7 @@ const LESSONS = [
 // ═══════════════════════════════════════════════════════
 // DONNÉES — Vocabulaire coranique (100 mots les plus fréquents)
 // ═══════════════════════════════════════════════════════
-import VOCAB from "./vocabData.js";
+import VOCAB from "./vocabData";
 
 // RÉPÉTITION ESPACÉE — Algorithme SM-2 simplifié
 // ═══════════════════════════════════════════════════════
