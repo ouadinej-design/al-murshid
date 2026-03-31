@@ -683,7 +683,15 @@ function AlphabetTab() {
             <div className="grid grid-cols-4 gap-2 mb-2">
               {row.map(l => (
                 <button key={l.name}
-                  onClick={() => setSel(sel?.name === l.name ? null : l)}
+                  onClick={() => {
+                    const isOpening = sel?.name !== l.name;
+                    setSel(isOpening ? l : null);
+                    if (isOpening) {
+                      // Le prof prononce la lettre puis son nom
+                      speakArabic(l.ar, 0.4);
+                      setTimeout(() => speakFeedback(`${l.name} — ${l.sound}`, "fr-FR"), 1200);
+                    }
+                  }}
                   className={`p-3 rounded-2xl border text-center transition-all active:scale-95 ${
                     sel?.name === l.name ? "bg-blue-600 border-blue-400" :
                     l.group === "solaire" ? "bg-emerald-900/40 border-emerald-700/40" :
@@ -706,6 +714,16 @@ function AlphabetTab() {
                         <p className="font-black text-xl" style={{color:"white"}}>{sel.name}</p>
                         <p className="text-blue-300 text-sm font-bold">{sel.sound}</p>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${sel.group==="solaire" ? "bg-emerald-900/50 text-emerald-300" : "bg-blue-900/50 text-blue-300"}`}>{sel.group}</span>
+                        <div className="flex gap-2 mt-2">
+                          <button onClick={() => speakArabic(sel.ar, 0.4)}
+                            style={{background:"rgba(59,130,246,0.2)",border:"1px solid rgba(96,165,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#93c5fd",fontSize:"0.75rem",cursor:"pointer"}}>
+                            🔊 Lettre
+                          </button>
+                          <button onClick={() => speakFeedback(`${sel.name}. Son : ${sel.sound}`, "fr-FR")}
+                            style={{background:"rgba(139,92,246,0.2)",border:"1px solid rgba(167,139,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#c4b5fd",fontSize:"0.75rem",cursor:"pointer"}}>
+                            🧑‍🏫 Explication
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
@@ -1084,7 +1102,14 @@ function RevisionTab() {
       <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
         <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all" style={{width:`${((idx)/totalDue)*100}%`}}/>
       </div>
-      <motion.button key={card?.id + String(flipped)} onClick={() => !flipped && setFlipped(true)}
+      <motion.button key={card?.id + String(flipped)} onClick={() => {
+        if (!flipped) {
+          setFlipped(true);
+          // Le prof lit le mot arabe puis la traduction
+          speakArabic(card?.ar, 0.55);
+          setTimeout(() => speakFeedback(card?.fr, "fr-FR"), 1800);
+        }
+      }}
         className="w-full min-h-48 rounded-3xl border border-white/15 bg-white/5 flex flex-col items-center justify-center p-6 gap-3 active:scale-98 transition-all"
         whileTap={{scale:0.98}}>
         {!flipped ? (
