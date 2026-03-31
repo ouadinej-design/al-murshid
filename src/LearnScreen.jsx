@@ -1283,6 +1283,63 @@ function QuizTab() {
   );
 }
 
+// ═══════════════════════════════════════════════════════
+// DONNÉES + HELPERS pour le Professeur
+// ═══════════════════════════════════════════════════════
+const PROF_SURAHS = LEARN_SURAHS.slice(0, 6);
+
+function normalizeAr(text) {
+  return text
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[أإآا]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compareWords(expected, spoken) {
+  const expWords = normalizeAr(expected).split(" ");
+  const spkWords = normalizeAr(spoken).split(" ");
+  return expWords.map((w, i) => {
+    const s = spkWords[i] || "";
+    if (!s) return { word: w, status: "missing" };
+    if (s === w) return { word: w, status: "correct" };
+    let diff = 0;
+    for (let j = 0; j < Math.max(w.length, s.length); j++) { if (w[j] !== s[j]) diff++; }
+    return { word: w, status: diff <= 1 ? "close" : "wrong", spoken: s };
+  });
+}
+
+function calcScore(results) {
+  if (!results.length) return 0;
+  const pts = results.reduce((a, r) => a + (r.status === "correct" ? 1 : r.status === "close" ? 0.5 : 0), 0);
+  return Math.round((pts / results.length) * 100);
+}
+
+function ensureVoices() {
+  return new Promise(resolve => {
+    if (!window.speechSynthesis) { resolve([]); return; }
+    const v = window.speechSynthesis.getVoices();
+    if (v.length > 0) { resolve(v); return; }
+    window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
+    setTimeout(() => resolve(window.speechSynthesis?.getVoices() || []), 1000);
+  });
+}
+
+async function speakArabic(text, rate) {
+  if (!TTS_READY) return;
+  window.speechSynthesis.cancel();
+  const voices = await ensureVoices();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ar-SA"; u.rate = rate || 0.6; u.pitch = 1.1;
+  const ar = voices.find(v => v.lang === "ar-SA")
+    || voices.find(v => v.lang === "ar-EG")
+    || voices.find(v => v.lang.startsWith("ar"));
+  if (ar) u.voice = ar;
+  window.speechSynthesis.speak(u);
+}
+
 function ProfesseurTab() {
   const [mode, setMode] = useState(null);
   const [selectedSurah, setSelectedSurah] = useState(PROF_SURAHS[0]);
