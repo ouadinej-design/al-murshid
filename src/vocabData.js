@@ -1,6 +1,4 @@
-// 500 mots les plus utilisés du Coran
-// DONNÉES — Vocabulaire coranique (500 mots les plus utilisés)
-// ═══════════════════════════════════════════════════════
+// Vocabulaire coranique — 500 mots les plus fréquents
 const VOCAB = [
   {id:1,ar:"اللَّهُ",tr:"Allāhu",fr:"Allah",freq:2699,cat:"essentiel"},
   {id:2,ar:"رَبِّ",tr:"rabbi",fr:"Seigneur (mon)",freq:980,cat:"essentiel"},
@@ -504,6 +502,5 @@ const VOCAB = [
   {id:500,ar:"صَلَّى اللَّهُ عَلَيْهِ",tr:"ṣallā llāhu ʿalayhi",fr:"Que la paix d'Allah soit sur lui",freq:0,cat:"expression"},
 ];
 
-// ═══════════════════════════════════════════════════════
 
 export default VOCAB;
