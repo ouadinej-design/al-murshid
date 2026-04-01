@@ -1951,16 +1951,30 @@ const TABS = [
 
 export default function LearnScreen() {
   const [tab, setTab] = useState("surahs");
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const lessonsProgress = ls("lessons_progress", {});
   const anki = ls("anki_cards", getInitialCardState());
   const ankiDue = getDueCards(anki).length;
   const lessonsDone = Object.keys(lessonsProgress).length;
 
+  // Déverrouille l'audio sur Android (nécessite un geste utilisateur)
+  const unlockAudio = () => {
+    const a = new Audio();
+    a.play().catch(() => {});
+    setAudioUnlocked(true);
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-      <div>
-        <h2 className="text-xl font-black text-white">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
-        <p className="text-slate-600 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed lettre par lettre · 🔊 <span className="text-amber-500">Son : ouvrir dans Chrome</span></p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black text-white">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
+          <p className="text-slate-600 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed</p>
+        </div>
+        <button onClick={unlockAudio}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${audioUnlocked ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse"}`}>
+          {audioUnlocked ? "🔊 Son OK" : "🔇 Activer le son"}
+        </button>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
