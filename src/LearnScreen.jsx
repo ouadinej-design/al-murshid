@@ -434,6 +434,29 @@ function getDueCards(cards) {
 // ═══════════════════════════════════════════════════════
 const TTS_READY = typeof window !== "undefined" && "speechSynthesis" in window;
 
+// ── Déverrouillage audio Android + fetch blob ─────────────
+const SILENT_WAV_LS = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+let _lsAudioUnlocked = false;
+function unlockAudioLS() {
+  if (_lsAudioUnlocked) return;
+  _lsAudioUnlocked = true;
+  try { new Audio(SILENT_WAV_LS).play().catch(()=>{}); } catch(e) {}
+}
+async function fetchAndPlayLS(url, audioEl, onEnded, onFail) {
+  try {
+    const resp = await fetch(url, {mode:"cors"});
+    if (!resp.ok) throw new Error(resp.status);
+    const blob = await resp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    if (audioEl._pb) URL.revokeObjectURL(audioEl._pb);
+    audioEl._pb = blobUrl;
+    audioEl.src = blobUrl;
+    audioEl.onended = () => { URL.revokeObjectURL(blobUrl); onEnded(); };
+    audioEl.onerror = onFail;
+    audioEl.play().catch(onFail);
+  } catch(e) { onFail(); }
+}
+
 // Convertit surah:verse en numéro de verset global (1-6236)
 const SURAH_OFFSETS = [0,7,293,493,669,789,954,1160,1235,1364,1473,1596,1707,1750,1802,1901,2029,2140,2250,2348,2483,2595,2673,2791,2855,2932,3159,3252,3340,3409,3469,3503,3533,3606,3660,3705,3788,3970,4058,4133,4218,4272,4325,4414,4473,4510,4545,4583,4612,4630,4675,4735,4784,4846,4901,4979,5075,5104,5126,5150,5163,5177,5188,5199,5217,5229,5241,5271,5323,5375,5419,5447,5475,5495,5551,5591,5622,5672,5712,5758,5800,5829,5848,5884,5909,5931,5948,5967,5993,6023,6043,6058,6079,6090,6098,6106,6125,6130,6138,6146,6157,6168,6176,6179,6188,6193,6197,6204,6207,6213,6216,6221,6225,6230,6236];
 const toGlobal = (surah, verse) => SURAH_OFFSETS[surah - 1] + verse;
@@ -591,38 +614,20 @@ function SuratesTab() {
     const slug = RECITER_SLUGS[rec.id] || "ar.alafasy";
     const gv = toGlobal(surahNum, v.n);
     const url = `https://cdn.islamic.network/quran/audio/128/${slug}/${gv}.mp3`;
-
-    if (audioRef2.current) { audioRef2.current.onended=null; audioRef2.current.onerror=null; audioRef2.current.pause(); }
-    const a = new Audio();
-    audioRef2.current = a;
-    let done = false;
-    const next = () => { if(done) return; done=true; playSurahChain(rec, surahNum, verses, idx+1); };
-    const fail = () => {
-      if(done) return; done=true;
-      if (rec.id !== "alafasy") {
-        const fa = new Audio();
-        audioRef2.current = fa;
-        fa.src = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${gv}.mp3`;
-        fa.preload = "auto";
-        fa.onended = next; fa.onerror = next;
-        fa.load();
-        const ft = setTimeout(()=>{ fa.play().catch(next); }, 100);
-        fa.oncanplaythrough = () => { clearTimeout(ft); fa.play().catch(next); };
-      } else { next(); }
-    };
-    const timeout = setTimeout(() => { a.play().catch(fail); }, 200);
-    a.oncanplaythrough = () => { clearTimeout(timeout); a.play().catch(fail); };
-    a.onended = next;
-    a.onerror = fail;
-    a.src = url;
-    a.preload = "auto";
-    a.load();
+    const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${gv}.mp3`;
+    if (!audioRef2.current) audioRef2.current = new Audio();
+    const a = audioRef2.current;
+    const next = () => { if (!stopRef2.current) playSurahChain(rec, surahNum, verses, idx+1); };
+    const fail = () => { if (rec.id !== "alafasy") fetchAndPlayLS(fallbackUrl, a, next, next); else next(); };
+    fetchAndPlayLS(url, a, next, fail);
   };
 
   const handlePlaySurah = (rec, surah) => {
+    unlockAudioLS();
     stopRef2.current = false;
     setPlayingSurah(surah.number);
     setShowReciterMenu(null);
+    audioRef2.current = new Audio();
     playSurahChain(rec, surah.number, surah.verses, 0);
   };
 
