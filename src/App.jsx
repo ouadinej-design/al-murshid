@@ -1116,27 +1116,36 @@ function ImamAudioButton({ surah, verses }) {
     }
     const v = verseList[idx];
     setCurrentV(v.number);
-    const url = `https://cdn.islamic.network/quran/audio/128/${RECITER_SLUGS_APP[rec.id]||"ar.alafasy"}/${toGlobalApp(surahNum,v.number)}.mp3`;
-    const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${toGlobalApp(surahNum,v.number)}.mp3`;
-    const a = new Audio(url);
+    const slug = RECITER_SLUGS_APP[rec.id] || "ar.alafasy";
+    const gv = toGlobalApp(surahNum, v.number);
+    const url = `https://cdn.islamic.network/quran/audio/128/${slug}/${gv}.mp3`;
+
+    if (audioRef.current) { audioRef.current.onended=null; audioRef.current.onerror=null; audioRef.current.pause(); }
+    const a = new Audio();
     audioRef.current = a;
-    a.onended = () => playChain(rec, surahNum, verseList, idx + 1);
-    a.onerror = () => {
-      // Fallback Alafasy si autre récitateur échoue
+    let done = false;
+    const next = () => { if(done) return; done=true; playChain(rec, surahNum, verseList, idx+1); };
+    const fail = () => {
+      if(done) return; done=true;
+      // Essaie Alafasy en fallback si récitateur différent
       if (rec.id !== "alafasy") {
-        const fallback = new Audio(fallbackUrl);
-        audioRef.current = fallback;
-        fallback.onended = () => playChain(rec, surahNum, verseList, idx + 1);
-        fallback.onerror = () => playChain(rec, surahNum, verseList, idx + 1);
-        fallback.play().catch(() => playChain(rec, surahNum, verseList, idx + 1));
-      } else {
-        playChain(rec, surahNum, verseList, idx + 1);
-      }
+        const fa = new Audio();
+        audioRef.current = fa;
+        fa.src = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${gv}.mp3`;
+        fa.preload = "auto";
+        fa.onended = next; fa.onerror = next;
+        fa.load();
+        const ft = setTimeout(()=>{ fa.play().catch(next); }, 100);
+        fa.oncanplaythrough = () => { clearTimeout(ft); fa.play().catch(next); };
+      } else { next(); }
     };
-    a.play().catch(() => {
-      // Sur Android, si bloqué → essaie quand même le suivant
-      a.onerror && a.onerror();
-    });
+    const timeout = setTimeout(() => { a.play().catch(fail); }, 200);
+    a.oncanplaythrough = () => { clearTimeout(timeout); a.play().catch(fail); };
+    a.onended = next;
+    a.onerror = fail;
+    a.src = url;
+    a.preload = "auto";
+    a.load();
   };
 
   const handlePlay = (rec) => {
