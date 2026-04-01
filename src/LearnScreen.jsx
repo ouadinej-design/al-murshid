@@ -430,14 +430,15 @@ function getDueCards(cards) {
 }
 
 // ═══════════════════════════════════════════════════════
-// AUDIO — everyayah CDN (fonctionne dans Chrome)
-// ═══════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════
-// AUDIO — TTS arabe (fonctionne partout) + MP3 Alafasy
+// AUDIO — Imam Alafasy MP3 (2 CDN) + TTS dernier recours
 // ═══════════════════════════════════════════════════════
 const TTS_READY = typeof window !== "undefined" && "speechSynthesis" in window;
 
-// Parle un texte arabe via la synthèse vocale du système
+const AUDIO_CDNS = [
+  (s,v) => `https://audio.qurancdn.com/Alafasy/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+  (s,v) => `https://everyayah.com/data/Alafasy_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+];
+
 function speakArabicTTS(text, rate = 0.65, onEnd) {
   if (!TTS_READY) { onEnd && onEnd(); return; }
   window.speechSynthesis.cancel();
@@ -453,64 +454,58 @@ function speakArabicTTS(text, rate = 0.65, onEnd) {
   window.speechSynthesis.speak(u);
 }
 
-// Texte de chaque verset pour TTS (texte arabe simplifié)
 function getVerseText(surahNum, verseNum) {
   const surah = LEARN_SURAHS.find(s => s.number === surahNum);
   const verse = surah?.verses.find(v => v.n === verseNum);
   return verse?.ar || "";
 }
 
-function getAudioUrl(surah, verse) {
-  return `https://everyayah.com/data/Alafasy_128kbps/${String(surah).padStart(3,"0")}${String(verse).padStart(3,"0")}.mp3`;
-}
-
 function useAudio() {
   const ref = useRef(null);
   const [playing, setPlaying] = useState(null);
   const [loading, setLoading] = useState(null);
-  const [useTTS, setUseTTS] = useState(false); // se bascule auto si MP3 échoue
 
   const stop = useCallback(() => {
-    if (ref.current) { ref.current.onended = null; ref.current.onerror = null; ref.current.pause(); ref.current = null; }
+    if (ref.current) {
+      ref.current.onended = null; ref.current.onerror = null;
+      ref.current.pause(); ref.current = null;
+    }
     if (TTS_READY) window.speechSynthesis.cancel();
     setPlaying(null); setLoading(null);
   }, []);
 
-  const playWithTTS = useCallback((text, key, onDone) => {
-    setLoading(null); setPlaying(key);
-    speakArabicTTS(text, 0.65, () => { setPlaying(null); onDone && onDone(); });
-  }, []);
-
-  const play = useCallback((url, key, text, onDone) => {
-    if (useTTS || !url) { playWithTTS(text, key, onDone); return; }
+  // Tente chaque CDN en séquence, TTS seulement si tous échouent
+  const tryPlay = useCallback((surah, verse, key, cdnIdx, onDone) => {
+    if (cdnIdx >= AUDIO_CDNS.length) {
+      // Tous CDN échoués → TTS en dernier recours
+      setLoading(null);
+      const text = getVerseText(surah, verse);
+      if (TTS_READY && text) {
+        setPlaying(key);
+        speakArabicTTS(text, 0.65, () => { setPlaying(null); onDone && onDone(); });
+      } else { setPlaying(null); onDone && onDone(); }
+      return;
+    }
+    const url = AUDIO_CDNS[cdnIdx](surah, verse);
     if (ref.current) { ref.current.onended = null; ref.current.onerror = null; ref.current.pause(); }
     const a = new Audio(url);
     ref.current = a;
-    setLoading(key);
+    if (cdnIdx === 0) setLoading(key);
     a.onended = () => { setPlaying(null); setLoading(null); onDone && onDone(); };
-    a.onerror = () => {
-      // MP3 échoue → bascule sur TTS pour le reste de la session
-      setUseTTS(true);
-      setLoading(null);
-      playWithTTS(text, key, onDone);
-    };
+    a.onerror = () => { setLoading(null); tryPlay(surah, verse, key, cdnIdx + 1, onDone); };
     const p = a.play();
     if (p) {
       p.then(() => { setLoading(null); setPlaying(key); })
-       .catch(() => {
-         setUseTTS(true); setLoading(null);
-         playWithTTS(text, key, onDone);
-       });
+       .catch(() => { setLoading(null); tryPlay(surah, verse, key, cdnIdx + 1, onDone); });
     } else { setLoading(null); setPlaying(key); }
-  }, [useTTS, playWithTTS]);
+  }, []);
 
   const playVerse = useCallback((surah, verse) => {
     const key = `${surah}:${verse}`;
     if (playing === key) { stop(); return; }
     stop();
-    const text = getVerseText(surah, verse);
-    play(getAudioUrl(surah, verse), key, text, null);
-  }, [playing, stop, play]);
+    tryPlay(surah, verse, key, 0, null);
+  }, [playing, stop, tryPlay]);
 
   const playSurah = useCallback((surah, verses) => {
     stop();
@@ -518,22 +513,13 @@ function useAudio() {
     const next = () => {
       if (i >= verses.length) { setPlaying(null); return; }
       const v = verses[i++];
-      const text = getVerseText(surah, v.n);
-      play(getAudioUrl(surah, v.n), `${surah}:${v.n}`, text, next);
+      tryPlay(surah, v.n, `${surah}:${v.n}`, 0, next);
     };
     next();
-  }, [stop, play]);
+  }, [stop, tryPlay]);
 
-  // Charger les voix au démarrage
-  useEffect(() => {
-    if (TTS_READY) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
-    return () => stop();
-  }, []);
-
-  return { playing, loading, playVerse, playSurah, stop, useTTS };
+  useEffect(() => () => stop(), []);
+  return { playing, loading, playVerse, playSurah, stop };
 }
 
 function speakLetter(text) { speakArabicTTS(text, 0.5); }
