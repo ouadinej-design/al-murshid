@@ -1062,17 +1062,23 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — QuranReader
 // ════════════════════════════════════════════════════════════════════
-// ── Imam Audio — lecture complète de la sourate ───────────────────────
-const IMAM_CDNS = [
-  (s,v) => `https://audio.qurancdn.com/Alafasy/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
-  (s,v) => `https://everyayah.com/data/Alafasy_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+// ── Récitateurs disponibles ────────────────────────────
+const RECITERS = [
+  { id:"alafasy",    name:"Alafasy",        url:(s,v)=>`https://everyayah.com/data/Alafasy_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3` },
+  { id:"husary",     name:"Al-Husary",      url:(s,v)=>`https://everyayah.com/data/Husary_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3` },
+  { id:"sudais",     name:"Al-Sudais",      url:(s,v)=>`https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3` },
+  { id:"ghamdi",     name:"Al-Ghamdi",      url:(s,v)=>`https://everyayah.com/data/Saad_Al-Ghamdi_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3` },
+  { id:"dosari",     name:"Al-Dosari",      url:(s,v)=>`https://everyayah.com/data/Yasser_Ad-Dossari_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3` },
+  { id:"minshawi",   name:"Al-Minshawi",    url:(s,v)=>`https://everyayah.com/data/Minshawy_Murattal_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3` },
 ];
 
+let _selectedReciter = RECITERS[0];
+
 function ImamAudioButton({ surah, verses }) {
-  const [state, setState] = useState("idle"); // idle | loading | playing
+  const [state, setState] = useState("idle"); // idle | picking | loading | playing
   const [currentV, setCurrentV] = useState(0);
+  const [reciter, setReciter] = useState(_selectedReciter);
   const audioRef = useRef(null);
-  const cdnRef = useRef(0);
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -1087,54 +1093,108 @@ function ImamAudioButton({ surah, verses }) {
 
   useEffect(() => () => stop(), [surah?.number]);
 
-  const playVerse = useCallback((surahNum, verseNum, onDone) => {
+  const playVerse = useCallback((surahNum, verseNum, rec, onDone) => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-    const url = IMAM_CDNS[cdnRef.current % IMAM_CDNS.length](surahNum, verseNum);
+    // Essaie l'URL principale du récitateur
+    const url = rec.url(surahNum, verseNum);
+    const fallbackUrl = RECITERS[0].url(surahNum, verseNum); // Alafasy en fallback
     const a = new Audio(url);
     audioRef.current = a;
     a.onended = () => onDone && onDone();
     a.onerror = () => {
-      cdnRef.current++;
-      if (cdnRef.current < IMAM_CDNS.length) playVerse(surahNum, verseNum, onDone);
-      else { cdnRef.current = 0; onDone && onDone(); }
+      // Si pas Alafasy, essaie Alafasy en fallback
+      if (url !== fallbackUrl) {
+        const b = new Audio(fallbackUrl);
+        audioRef.current = b;
+        b.onended = () => onDone && onDone();
+        b.onerror = () => onDone && onDone();
+        b.play().catch(() => onDone && onDone());
+      } else { onDone && onDone(); }
     };
-    const p = a.play();
-    if (p) p.catch(() => { cdnRef.current++; onDone && onDone(); });
+    a.play().catch(() => {
+      a.onerror && a.onerror();
+    });
   }, []);
 
-  const startReading = useCallback(() => {
+  const startReading = useCallback((rec) => {
     if (!verses?.length) return;
     setState("loading");
     let idx = 0;
     const next = () => {
+      if (!audioRef.current && idx > 0) return; // stop() appelé
       if (idx >= verses.length) { setState("idle"); setCurrentV(0); return; }
       const v = verses[idx];
       setCurrentV(v.number);
       setState("playing");
       idx++;
-      playVerse(surah.number, v.number, next);
+      playVerse(surah.number, v.number, rec, next);
     };
     next();
   }, [verses, surah, playVerse]);
 
+  // Menu choix récitateur
+  if (state === "picking") return (
+    <div style={{position:"relative", display:"inline-block"}}>
+      <div style={{
+        position:"absolute", top:"100%", right:0, zIndex:50,
+        background:"#0f172a", border:"1px solid rgba(255,255,255,0.15)",
+        borderRadius:"16px", padding:"8px", minWidth:"180px",
+        boxShadow:"0 8px 32px rgba(0,0,0,0.5)"
+      }}>
+        <p style={{color:"#64748b",fontSize:"0.7rem",fontWeight:"bold",padding:"4px 8px",marginBottom:"4px"}}>Choisir le récitateur</p>
+        {RECITERS.map(r => (
+          <button key={r.id} onClick={() => {
+            setReciter(r); _selectedReciter = r;
+            setState("idle");
+            startReading(r);
+          }} style={{
+            display:"block", width:"100%", textAlign:"left",
+            padding:"8px 12px", borderRadius:"10px", border:"none",
+            background: r.id === reciter.id ? "rgba(16,185,129,0.2)" : "transparent",
+            color: r.id === reciter.id ? "#6ee7b7" : "white",
+            fontSize:"0.85rem", fontWeight:"bold", cursor:"pointer",
+            marginBottom:"2px"
+          }}>
+            {r.id === reciter.id ? "✓ " : ""}{r.name}
+          </button>
+        ))}
+        <button onClick={() => setState("idle")} style={{
+          display:"block",width:"100%",textAlign:"center",padding:"6px",
+          background:"rgba(255,255,255,0.05)",border:"none",borderRadius:"8px",
+          color:"#64748b",fontSize:"0.75rem",cursor:"pointer",marginTop:"4px"
+        }}>Annuler</button>
+      </div>
+      <button onClick={() => setState("idle")}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl text-xs font-bold">
+        <Volume2 className="w-3.5 h-3.5"/> {reciter.name}
+      </button>
+    </div>
+  );
+
   if (state === "idle") return (
-    <button onClick={startReading}
-      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-500/25 transition-all active:scale-95">
-      <Volume2 className="w-3.5 h-3.5"/> Imam
-    </button>
+    <div className="flex gap-1">
+      <button onClick={() => startReading(reciter)}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold active:scale-95 transition-all">
+        <Volume2 className="w-3.5 h-3.5"/> Imam
+      </button>
+      <button onClick={() => setState("picking")}
+        className="px-2 py-1.5 bg-white/8 border border-white/15 text-slate-400 rounded-xl text-xs font-bold active:scale-95 transition-all" title="Choisir le récitateur">
+        ▾
+      </button>
+    </div>
   );
 
   if (state === "loading") return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/25 text-blue-300 rounded-xl text-xs font-bold">
+    <button onClick={stop} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/25 text-blue-300 rounded-xl text-xs font-bold">
       <motion.div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full" animate={{rotate:360}} transition={{duration:0.7,repeat:Infinity,ease:"linear"}}/>
       Chargement…
-    </div>
+    </button>
   );
 
   return (
     <button onClick={stop}
-      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 text-red-400 rounded-xl text-xs font-bold hover:bg-red-500/25 transition-all">
-      <Pause className="w-3.5 h-3.5"/> v.{currentV}
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 text-red-400 rounded-xl text-xs font-bold active:scale-95">
+      <Pause className="w-3.5 h-3.5"/> ⏹ v.{currentV}
     </button>
   );
 }
