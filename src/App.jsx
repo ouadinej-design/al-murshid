@@ -1977,45 +1977,52 @@ export default function App() {
   }, []);
 
   return (
-    <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
-      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0">
-        <div>
-          <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5">
-            <span className="text-lg">🕌</span> Al-Murshid
-          </h1>
-          <p className="text-[9px] text-slate-600 font-medium tracking-widest uppercase -mt-0.5">المرشد — Guide Coranique</p>
+    <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
+
+      {/* Nav verticale gauche — icônes + labels + stats */}
+      <nav className="shrink-0 flex flex-col items-center gap-1 py-3 px-1.5 bg-slate-950/95 backdrop-blur-xl border-r border-white/8 w-16">
+        {/* Logo compact */}
+        <div className="flex flex-col items-center mb-2">
+          <span className="text-xl">🕌</span>
+          <p className="text-[7px] text-slate-600 font-bold tracking-wider uppercase text-center leading-tight">Al-<br/>Murshid</p>
         </div>
-        <button onClick={() => setStatsOpen(true)} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-500 hover:text-white border border-white/8 hover:border-white/20">
-          <Activity className="w-4 h-4"/>
-        </button>
-      </header>
 
-      {/* Layout principal : nav gauche + contenu */}
-      <div className="flex flex-1 overflow-hidden">
+        {/* Onglets */}
+        {PAGES.map(({ key, shortLabel }) => {
+          const active = page === key;
+          return (
+            <motion.button key={key} whileTap={{ scale: 0.88 }} onClick={() => setPage(key)}
+              className={`w-12 flex flex-col items-center justify-center gap-0.5 rounded-xl py-2 px-0.5 transition-all ${active ? "bg-gradient-to-b from-emerald-600/30 to-teal-600/20 border border-emerald-500/40 shadow-md shadow-emerald-500/15" : "hover:bg-white/8 border border-transparent"}`}>
+              <span className="text-base leading-none">
+                {key === "quran"     && "📖"}
+                {key === "program"   && "📅"}
+                {key === "bookmarks" && "🔖"}
+                {key === "adhkar"    && "📿"}
+                {key === "learn"     && "🎓"}
+              </span>
+              <span className={`text-[7px] font-bold leading-tight text-center w-full ${active ? "text-emerald-300" : "text-slate-600"}`}>{shortLabel}</span>
+            </motion.button>
+          );
+        })}
 
-        {/* Nav verticale gauche — icônes seules */}
-        <nav className="shrink-0 flex flex-col items-center gap-1 py-3 px-1 bg-slate-950/95 backdrop-blur-xl border-r border-white/8 w-11">
-          {PAGES.map(({ key }) => {
-            const active = page === key;
-            return (
-              <motion.button key={key} whileTap={{ scale: 0.88 }} onClick={() => setPage(key)}
-                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${active ? "bg-gradient-to-b from-emerald-600/30 to-teal-600/20 border border-emerald-500/40 shadow-md shadow-emerald-500/15" : "hover:bg-white/8 border border-transparent"}`}>
-                <span className="text-base leading-none">
-                  {key === "quran"     && "📖"}
-                  {key === "program"   && "📅"}
-                  {key === "bookmarks" && "🔖"}
-                  {key === "adhkar"    && "📿"}
-                  {key === "learn"     && "🎓"}
-                </span>
-              </motion.button>
-            );
-          })}
-        </nav>
-        <main className="flex-1 overflow-hidden relative">
+        {/* Séparateur */}
+        <div className="flex-1"/>
+        <div className="w-8 h-px bg-white/10 mb-1"/>
+
+        {/* Bouton Stats */}
+        <motion.button whileTap={{ scale: 0.88 }} onClick={() => setStatsOpen(true)}
+          className="w-12 flex flex-col items-center justify-center gap-0.5 rounded-xl py-2 px-0.5 hover:bg-white/8 border border-transparent transition-all">
+          <Activity className="w-4 h-4 text-slate-500"/>
+          <span className="text-[7px] font-bold text-slate-600 leading-tight">Stats</span>
+        </motion.button>
+      </nav>
+
+      {/* Contenu principal */}
+      <main className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {page === "quran" && (
             <motion.div key="quran" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
               <QuranReader
                 initialSurahNum={navTarget?.surahNum}
                 initialVerseNum={navTarget?.verseNum}
@@ -2029,31 +2036,30 @@ export default function App() {
           )}
           {page === "program" && (
             <motion.div key="program" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
               <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>
             </motion.div>
           )}
           {page === "bookmarks" && (
             <motion.div key="bookmarks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
               <BookmarksPage/>
             </motion.div>
           )}
           {page === "adhkar" && (
             <motion.div key="adhkar" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
               <AdhkarPage fridayKahf={fridayKahf}/>
             </motion.div>
           )}
           {page === "learn" && (
             <motion.div key="learn" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
               <LearnScreen/>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
-      </div>{/* end flex row */}
       <StatsDrawer isOpen={statsOpen} onClose={() => setStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram}/>
     </div>
   );
