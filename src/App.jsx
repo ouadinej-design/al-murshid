@@ -5,7 +5,7 @@ import {
   BookOpen, Bookmark, Activity, ArrowRight, Star, Heart,
   Timer, X, Clock, Award, Copy, CheckCircle,
   RotateCcw, ChevronLeft, ChevronRight, Play, Pause,
-  Plus, Trash2, Target, TrendingUp, Calendar, Zap
+  Plus, Trash2, Target, TrendingUp, Calendar, Zap, Volume2
 } from "lucide-react";
 import LearnScreen from "./LearnScreen";
 
