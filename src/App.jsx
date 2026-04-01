@@ -1,3 +1,4 @@
+
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
@@ -780,9 +781,11 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
         </div>
         <div className="space-y-3">
           {[
-            { days: 30, label: "30 jours", icon: "⚡", desc: "~207 versets/jour · ~20 pages/jour", color: "from-orange-600 to-red-600" },
-            { days: 60, label: "60 jours", icon: "🌿", desc: "~104 versets/jour · ~10 pages/jour", color: "from-emerald-600 to-teal-600" },
-            { days: 90, label: "90 jours", icon: "🌊", desc: "~70 versets/jour · ~7 pages/jour",   color: "from-blue-600 to-indigo-600" },
+            { days: 30,  label: "30 jours",  icon: "⚡", desc: "~207 versets/jour · ~20 pages/jour", color: "from-orange-600 to-red-600" },
+            { days: 60,  label: "60 jours",  icon: "🌿", desc: "~104 versets/jour · ~10 pages/jour", color: "from-emerald-600 to-teal-600" },
+            { days: 90,  label: "90 jours",  icon: "🌊", desc: "~70 versets/jour · ~7 pages/jour",   color: "from-blue-600 to-indigo-600" },
+            { days: 180, label: "6 mois",    icon: "🌙", desc: "~35 versets/jour · ~3 pages/jour",   color: "from-violet-600 to-purple-600" },
+            { days: 365, label: "1 an",      icon: "⭐", desc: "~17 versets/jour · ~2 pages/jour",   color: "from-amber-600 to-yellow-600" },
           ].map(opt => {
             const endDate = new Date(); endDate.setDate(endDate.getDate() + opt.days);
             return (
