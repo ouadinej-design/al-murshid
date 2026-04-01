@@ -435,8 +435,8 @@ function getDueCards(cards) {
 const TTS_READY = typeof window !== "undefined" && "speechSynthesis" in window;
 
 const AUDIO_CDNS = [
-  (s,v) => `https://audio.qurancdn.com/Alafasy/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
   (s,v) => `https://everyayah.com/data/Alafasy_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+  (s,v) => `https://everyayah.com/data/Husary_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
 ];
 
 function speakArabicTTS(text, rate = 0.65, onEnd) {
