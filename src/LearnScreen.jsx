@@ -430,28 +430,25 @@ function getDueCards(cards) {
 }
 
 // ═══════════════════════════════════════════════════════
-// AUDIO — cdn.islamic.network (CORS activé, fiable)
+// AUDIO — everyayah.com (standard apps Coran, fichiers par verset)
 // ═══════════════════════════════════════════════════════
 const TTS_READY = typeof window !== "undefined" && "speechSynthesis" in window;
 
-// ── mp3quran.net — fiable, format simple SSS+VVV.mp3 ─────
 const LEARN_RECITERS = [
-  { id:"alafasy",  name:"Alafasy",    base:"https://server8.mp3quran.net/afs/" },
-  { id:"husary",   name:"Al-Husary",  base:"https://server7.mp3quran.net/s_hsd/" },
-  { id:"sudais",   name:"Al-Sudais",  base:"https://server11.mp3quran.net/sds/" },
-  { id:"ghamdi",   name:"Al-Ghamdi",  base:"https://server8.mp3quran.net/sa3d/" },
-  { id:"dosari",   name:"Al-Dosari",  base:"https://server12.mp3quran.net/yasser/" },
+  { id:"alafasy",  name:"Alafasy",     folder:"Alafasy_128kbps" },
+  { id:"husary",   name:"Al-Husary",   folder:"Husary_128kbps" },
+  { id:"sudais",   name:"Al-Sudais",   folder:"Abdurrahmaan_As-Sudais_192kbps" },
+  { id:"ghamdi",   name:"Al-Ghamdi",   folder:"Saad_Al-Ghamdi_128kbps" },
+  { id:"dosari",   name:"Al-Dosari",   folder:"Yasser_Ad-Dossari_128kbps" },
 ];
-const learnUrl = (rec, s, v) =>
-  `${rec.base}${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`;
 
-// Même CDN pour useAudio (boutons par verset)
+const p3ls = n => String(n).padStart(3, "0");
+const learnUrl = (rec, surahNum, verseNum) =>
+  `https://everyayah.com/data/${rec.folder}/${p3ls(surahNum)}${p3ls(verseNum)}.mp3`;
+
 const AUDIO_CDNS = [
-  (s,v) => `https://server8.mp3quran.net/afs/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+  (s,v) => learnUrl(LEARN_RECITERS[0], s, v),
 ];
-
-  return `https://${rec.server}.mp3quran.net/${rec.code}/${String(surahNum).padStart(3,"0")}.mp3`;
-}
 
 function speakArabicTTS(text, rate = 0.65, onEnd) {
   if (!TTS_READY) { onEnd && onEnd(); return; }
