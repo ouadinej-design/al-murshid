@@ -1062,138 +1062,85 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — QuranReader
 // ════════════════════════════════════════════════════════════════════
-// ── Récitateurs disponibles ────────────────────────────
-// Convertit surah:verse en numéro global (islamic.network)
-const SURAH_OFFSETS_APP = [0,7,293,493,669,789,954,1160,1235,1364,1473,1596,1707,1750,1802,1901,2029,2140,2250,2348,2483,2595,2673,2791,2855,2932,3159,3252,3340,3409,3469,3503,3533,3606,3660,3705,3788,3970,4058,4133,4218,4272,4325,4414,4473,4510,4545,4583,4612,4630,4675,4735,4784,4846,4901,4979,5075,5104,5126,5150,5163,5177,5188,5199,5217,5229,5241,5271,5323,5375,5419,5447,5475,5495,5551,5591,5622,5672,5712,5758,5800,5829,5848,5884,5909,5931,5948,5967,5993,6023,6043,6058,6079,6090,6098,6106,6125,6130,6138,6146,6157,6168,6176,6179,6188,6193,6197,6204,6207,6213,6216,6221,6225,6230,6236];
-const toGlobalApp = (s,v) => SURAH_OFFSETS_APP[s-1] + v;
-
-// ── Déverrouillage audio Android ─────────────────────────
-// Sur Android, play() doit être appelé dans un geste utilisateur.
-// Astuce : jouer un silence de 0.1s dans le clic pour déverrouiller,
-// puis le vrai audio peut jouer de façon asynchrone.
-const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
-let _audioCtxUnlocked = false;
-function unlockAudioCtx() {
-  if (_audioCtxUnlocked) return;
-  _audioCtxUnlocked = true;
-  try { new Audio(SILENT_WAV).play().catch(()=>{}); } catch(e) {}
-}
-
-// Fetch + blob URL → play() sans restriction CORS ni autoplay
-async function fetchAndPlayAudio(url, audioEl, onEnded, onFail) {
-  try {
-    const resp = await fetch(url, {mode:"cors"});
-    if (!resp.ok) throw new Error(resp.status);
-    const blob = await resp.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    if (audioEl._prevBlob) URL.revokeObjectURL(audioEl._prevBlob);
-    audioEl._prevBlob = blobUrl;
-    audioEl.src = blobUrl;
-    audioEl.onended = () => { URL.revokeObjectURL(blobUrl); onEnded(); };
-    audioEl.onerror = onFail;
-    audioEl.play().catch(onFail);
-  } catch(e) { onFail(); }
-}
-
-const RECITER_SLUGS_APP = {
-  alafasy: "ar.alafasy",
-  husary:  "ar.husary",
-  sudais:  "ar.abdurrahmaansudais",
-  ghamdi:  "ar.saoodshuraym",
-  dosari:  "ar.yassereladawlawy",
-  minshawi:"ar.minshawi",
-};
-
+// ══════════════════════════════════════════════════════════
+// IMAM AUDIO — mp3quran.net (approche standard apps Coran)
+// ── Récitateurs — mp3quran.net (format SSS+VVV.mp3, pas de conversion) ──
 const RECITERS = [
-  { id:"alafasy",  name:"Alafasy"     },
-  { id:"husary",   name:"Al-Husary"   },
-  { id:"sudais",   name:"Al-Sudais"   },
-  { id:"ghamdi",   name:"Al-Ghamdi"   },
-  { id:"dosari",   name:"Al-Dosari"   },
-  { id:"minshawi", name:"Al-Minshawi" },
+  { id:"alafasy",  name:"Alafasy",    base:"https://server8.mp3quran.net/afs/" },
+  { id:"husary",   name:"Al-Husary",  base:"https://server7.mp3quran.net/s_hsd/" },
+  { id:"sudais",   name:"Al-Sudais",  base:"https://server11.mp3quran.net/sds/" },
+  { id:"ghamdi",   name:"Al-Ghamdi",  base:"https://server8.mp3quran.net/sa3d/" },
+  { id:"dosari",   name:"Al-Dosari",  base:"https://server12.mp3quran.net/yasser/" },
+  { id:"minshawi", name:"Al-Minshawi",base:"https://server10.mp3quran.net/minsh/" },
 ];
+const imamUrl = (reciter, s, v) =>
+  `${reciter.base}${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`;
 
 function ImamAudioButton({ surah, verses }) {
-  const [reciterId, setReciterId] = useState("alafasy");
-  const [showPicker, setShowPicker] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [currentV, setCurrentV] = useState(0);
+  const [reciterId, setReciterId] = useState("alafasy");
   const audioRef = useRef(null);
-  const stopRef = useRef(false);
+  // Garde l'état dans une ref pour éviter les closures périmées
+  const playState = useRef({ idx: 0, recId: "alafasy", stop: false });
 
   const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
 
-  const stopAll = () => {
-    stopRef.current = true;
-    if (audioRef.current) {
-      audioRef.current.onended = null;
-      audioRef.current.onerror = null;
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    setIsPlaying(false);
-    setCurrentV(0);
+  // Joue le verset à l'index idx
+  const playIdx = useCallback((idx) => {
+    const { recId, stop } = playState.current;
+    if (stop || !verses || idx >= verses.length) { setIsPlaying(false); setCurrentV(0); return; }
+    const v = verses[idx];
+    playState.current.idx = idx;
+    setCurrentV(v.number);
+    const a = audioRef.current;
+    if (!a) return;
+    const rec = RECITERS.find(r => r.id === recId) || RECITERS[0];
+    a.src = imamUrl(rec, surah.number, v.number);
+    a.play().catch(() => {
+      // Fallback Alafasy
+      a.src = imamUrl(RECITERS[0], surah.number, v.number);
+      a.play().catch(() => playIdx(idx + 1));
+    });
+  }, [verses, surah]);
+
+  // Lance la lecture depuis le clic (geste utilisateur → play() autorisé)
+  const handlePlay = (recId) => {
+    if (!verses?.length || !audioRef.current) return;
+    playState.current = { idx: 0, recId, stop: false };
+    setReciterId(recId);
+    setIsPlaying(true);
+    setShowPicker(false);
+    const a = audioRef.current;
+    a.onended = () => playIdx(playState.current.idx + 1);
+    const rec = RECITERS.find(r => r.id === recId) || RECITERS[0];
+    const v = verses[0];
+    setCurrentV(v.number);
+    a.src = imamUrl(rec, surah.number, v.number);
+    a.play().catch(() => {
+      a.src = imamUrl(RECITERS[0], surah.number, v.number);
+      a.play().catch(() => setIsPlaying(false));
+    });
   };
+
+  const stopAll = useCallback(() => {
+    playState.current.stop = true;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    setIsPlaying(false); setCurrentV(0);
+  }, []);
 
   useEffect(() => () => stopAll(), [surah?.number]);
 
-  // playChain: appelle play() directement dans le handler du clic
-  const playChain = (rec, surahNum, verseList, idx) => {
-    if (stopRef.current || idx >= verseList.length) {
-      setIsPlaying(false); setCurrentV(0); return;
-    }
-    const v = verseList[idx];
-    setCurrentV(v.number);
-    const slug = RECITER_SLUGS_APP[rec.id] || "ar.alafasy";
-    const gv = toGlobalApp(surahNum, v.number);
-    const url = `https://cdn.islamic.network/quran/audio/128/${slug}/${gv}.mp3`;
-    const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${gv}.mp3`;
-
-    if (!audioRef.current) audioRef.current = new Audio();
-    const a = audioRef.current;
-    const next = () => { if (!stopRef.current) playChain(rec, surahNum, verseList, idx+1); };
-    const fail = () => {
-      if (rec.id !== "alafasy") fetchAndPlayAudio(fallbackUrl, a, next, next);
-      else next();
-    };
-    fetchAndPlayAudio(url, a, next, fail);
-  };
-
-  const handlePlay = (rec) => {
-    if (!verses?.length) return;
-    unlockAudioCtx(); // déverrouille dans le geste utilisateur
-    stopRef.current = false;
-    setIsPlaying(true);
-    setShowPicker(false);
-    audioRef.current = new Audio();
-    playChain(rec, surah.number, verses, 0);
-  };
-
   if (showPicker) return (
     <div style={{position:"relative", display:"inline-block"}}>
-      <div style={{
-        position:"fixed", top:0, left:0, right:0, bottom:0, zIndex:40
-      }} onClick={() => setShowPicker(false)}/>
-      <div style={{
-        position:"absolute", top:"calc(100% + 4px)", right:0, zIndex:50,
-        background:"#0f172a", border:"1px solid rgba(255,255,255,0.15)",
-        borderRadius:"16px", padding:"8px", minWidth:"190px",
-        boxShadow:"0 8px 32px rgba(0,0,0,0.6)"
-      }}>
-        <p style={{color:"#64748b",fontSize:"0.7rem",fontWeight:"bold",padding:"4px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"6px"}}>
-          Récitateur
-        </p>
+      <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>
+      <div style={{position:"absolute",top:"calc(100% + 4px)",right:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"16px",padding:"8px",minWidth:"190px",boxShadow:"0 8px 32px rgba(0,0,0,0.6)"}}>
+        <p style={{color:"#64748b",fontSize:"0.7rem",fontWeight:"bold",padding:"4px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"6px"}}>Récitateur</p>
         {RECITERS.map(r => (
-          <button key={r.id}
-            onClick={() => { setReciterId(r.id); handlePlay(r); }}
-            style={{
-              display:"block", width:"100%", textAlign:"left",
-              padding:"10px 12px", borderRadius:"10px", border:"none",
-              background: r.id === reciterId ? "rgba(16,185,129,0.2)" : "transparent",
-              color: r.id === reciterId ? "#6ee7b7" : "white",
-              fontSize:"0.875rem", fontWeight:"bold", cursor:"pointer",
-            }}>
-            {r.id === reciterId ? "▶ " : "   "}{r.name}
+          <button key={r.id} onClick={() => handlePlay(r.id)}
+            style={{display:"block",width:"100%",textAlign:"left",padding:"10px 12px",borderRadius:"10px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.875rem",fontWeight:"bold",cursor:"pointer"}}>
+            {r.id===reciterId?"▶ ":""}{r.name}
           </button>
         ))}
       </div>
@@ -1203,87 +1150,26 @@ function ImamAudioButton({ surah, verses }) {
     </div>
   );
 
-  if (isPlaying) return (
-    <button onClick={stopAll}
-      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 text-red-400 rounded-xl text-xs font-bold active:scale-95">
-      <Pause className="w-3.5 h-3.5"/> ⏹ {currentV > 0 ? `v.${currentV}` : "…"}
-    </button>
-  );
-
   return (
-    <div className="flex gap-1">
-      <button onClick={() => handlePlay(reciter)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold active:scale-95 transition-all">
-        <Volume2 className="w-3.5 h-3.5"/> {reciter.name}
-      </button>
-      <button onClick={() => setShowPicker(true)}
-        className="px-2 py-1.5 bg-white/8 border border-white/15 text-slate-400 rounded-xl text-xs font-bold active:scale-95">
-        ▾
-      </button>
+    <div style={{display:"contents"}}>
+      {/* Élément audio dans le DOM = plus fiable sur Android */}
+      <audio ref={audioRef} style={{display:"none"}} onEnded={() => playIdx(playState.current.idx + 1)}/>
+      {isPlaying ? (
+        <button onClick={stopAll} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 text-red-400 rounded-xl text-xs font-bold active:scale-95">
+          <Pause className="w-3.5 h-3.5"/> ⏹ v.{currentV}
+        </button>
+      ) : (
+        <div className="flex gap-1">
+          <button onClick={() => handlePlay(reciterId)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold active:scale-95">
+            <Volume2 className="w-3.5 h-3.5"/> {reciter.name}
+          </button>
+          <button onClick={() => setShowPicker(true)} className="px-2 py-1.5 bg-white/8 border border-white/15 text-slate-400 rounded-xl text-xs active:scale-95">▾</button>
+        </div>
+      )}
     </div>
   );
 }
 
-
-function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBounds, checked, toggle, counts }) {
-  const quranBM = useBookmarks("quran");
-  const [currentSurah, setCurrentSurah] = useState(() => initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null);
-  const [targetVerse, setTargetVerse] = useState(initialVerseNum || null);
-  const [activeJuzBounds, setActiveJuzBounds] = useState(juzBounds || null);
-  useEffect(() => {
-    if (!initialSurahNum) return;
-    const surah = QURAN_SURAHS[initialSurahNum - 1];
-    if (!surah) return;
-    setCurrentSurah(surah);
-    if (initialVerseNum && initialVerseNum > 1) setTargetVerse(initialVerseNum);
-  }, [initialSurahNum, initialVerseNum]);
-  const lastScrollPos = useRef(0);
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const save = () => { lastScrollPos.current = el.scrollTop; };
-    el.addEventListener("scroll", save, { passive: true });
-    return () => el.removeEventListener("scroll", save);
-  }, []);
-  useEffect(() => { if (juzBounds) setActiveJuzBounds(juzBounds); }, [juzBounds]);
-  const verseRefs = useRef({});
-  const { verses, loading: versesLoading, error: versesError } = useVerses(currentSurah?.number);
-  const [filter, setFilter] = useState("");
-  const [autoScroll, setAutoScroll] = useState(false);
-  const [scrollSpeed, setScrollSpeed] = useState(2);
-  const [bookmarkToast, setBookmarkToast] = useState(null);
-  const scrollRef = useRef(null);
-  const autoRef = useRef(null);
-  const [dlStatus, setDlStatus] = useState(() => {
-    const init = {};
-    Object.keys(EMBEDDED_VERSES).forEach(k => { init[k] = "done"; });
-    _versesMemCache.forEach((_, k) => { init[k] = "done"; });
-    return init;
-  });
-  const downloadSurah = async (surah, e) => {
-    e.stopPropagation();
-    const n = surah.number;
-    if (dlStatus[n] === "done" || dlStatus[n] === "loading") return;
-    setDlStatus(prev => ({ ...prev, [n]: "loading" }));
-    try {
-      const verses = await fetchSurahFromAPI(n, surah);
-      _versesMemCache.set(n, verses);
-      setDlStatus(prev => ({ ...prev, [n]: "done" }));
-    } catch { setDlStatus(prev => ({ ...prev, [n]: "error" })); }
-  };
-  const touchStart = useRef(null);
-  const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
-  const handleTouchEnd = (e) => {
-    if (!touchStart.current || !currentSurah) return;
-    const diff = touchStart.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 60) {
-      if (diff > 0 && currentSurah.number < 114) { setCurrentSurah(QURAN_SURAHS[currentSurah.number]); setActiveJuzBounds(null); }
-      if (diff < 0 && currentSurah.number > 1) { setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2]); setActiveJuzBounds(null); }
-    }
-    touchStart.current = null;
-  };
-  useEffect(() => {
-    if (autoScroll && scrollRef.current) { autoRef.current = setInterval(() => { scrollRef.current?.scrollBy({ top: scrollSpeed, behavior: "smooth" }); }, 50); }
     else { clearInterval(autoRef.current); }
     return () => clearInterval(autoRef.current);
   }, [autoScroll, scrollSpeed]);
