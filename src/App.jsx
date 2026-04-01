@@ -1977,22 +1977,15 @@ export default function App() {
   }, []);
 
   return (
-    <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
+    <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
 
-      {/* Nav verticale gauche — icônes + labels + stats */}
-      <nav className="shrink-0 flex flex-col items-center gap-1 py-3 px-1.5 bg-slate-950/95 backdrop-blur-xl border-r border-white/8 w-16">
-        {/* Logo compact */}
-        <div className="flex flex-col items-center mb-2">
-          <span className="text-xl">🕌</span>
-          <p className="text-[7px] text-slate-600 font-bold tracking-wider uppercase text-center leading-tight">Al-<br/>Murshid</p>
-        </div>
-
-        {/* Onglets */}
+      {/* Barre de navigation en haut */}
+      <nav className="shrink-0 flex items-center bg-slate-950/95 backdrop-blur-xl border-b border-white/8 px-1 py-1.5">
         {PAGES.map(({ key, shortLabel }) => {
           const active = page === key;
           return (
-            <motion.button key={key} whileTap={{ scale: 0.88 }} onClick={() => setPage(key)}
-              className={`w-12 flex flex-col items-center justify-center gap-0.5 rounded-xl py-2 px-0.5 transition-all ${active ? "bg-gradient-to-b from-emerald-600/30 to-teal-600/20 border border-emerald-500/40 shadow-md shadow-emerald-500/15" : "hover:bg-white/8 border border-transparent"}`}>
+            <motion.button key={key} whileTap={{ scale: 0.90 }} onClick={() => setPage(key)}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-all ${active ? "bg-gradient-to-b from-emerald-600/25 to-teal-600/15 border border-emerald-500/30" : "border border-transparent hover:bg-white/5"}`}>
               <span className="text-base leading-none">
                 {key === "quran"     && "📖"}
                 {key === "program"   && "📅"}
@@ -2000,24 +1993,18 @@ export default function App() {
                 {key === "adhkar"    && "📿"}
                 {key === "learn"     && "🎓"}
               </span>
-              <span className={`text-[7px] font-bold leading-tight text-center w-full ${active ? "text-emerald-300" : "text-slate-600"}`}>{shortLabel}</span>
+              <span className={`text-[8px] font-bold leading-none ${active ? "text-emerald-300" : "text-slate-600"}`}>{shortLabel}</span>
             </motion.button>
           );
         })}
-
-        {/* Séparateur */}
-        <div className="flex-1"/>
-        <div className="w-8 h-px bg-white/10 mb-1"/>
-
-        {/* Bouton Stats */}
-        <motion.button whileTap={{ scale: 0.88 }} onClick={() => setStatsOpen(true)}
-          className="w-12 flex flex-col items-center justify-center gap-0.5 rounded-xl py-2 px-0.5 hover:bg-white/8 border border-transparent transition-all">
+        {/* Stats */}
+        <motion.button whileTap={{ scale: 0.90 }} onClick={() => setStatsOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 px-2 border border-transparent hover:bg-white/5 transition-all">
           <Activity className="w-4 h-4 text-slate-500"/>
-          <span className="text-[7px] font-bold text-slate-600 leading-tight">Stats</span>
+          <span className="text-[8px] font-bold text-slate-600 leading-none">Stats</span>
         </motion.button>
       </nav>
 
-      {/* Contenu principal */}
       <main className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {page === "quran" && (
