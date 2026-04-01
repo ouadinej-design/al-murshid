@@ -1,5 +1,5 @@
-
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { ADHKAR_MALIKITES, EMBEDDED_VERSES } from "./appData";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   BookOpen, Bookmark, Activity, ArrowRight, Star, Heart,
@@ -74,156 +74,6 @@ function getEncouragement(juz) {
 // ════════════════════════════════════════════════════════════════════
 // DONNÉES ADHKAR MALIKITES — Muwatta + Cabinet Maher
 // ════════════════════════════════════════════════════════════════════
-const ADHKAR_MALIKITES = [
-  { id:1, title:"1. Āyat al-Kursī — Verset du Trône",
-    arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
-    transliteration:"Allāhou Lā Ilāha Illā Houwa Al-Ĥayyou Al-Qayyoum. Lā ta'khoudzouhou sinatoun wa lā nawm. Lahou mā fis-samāwāti wa mā fil-ard. Man dhal-ladhī yashfa'ou 'indahou illā bi-idznih. Ya'lamou mā bayna aydīhim wa mā khalfahum. Wa lā youhīthouna bi-shay'in min 'ilmihi illā bi-mā shā'a. Wasi'a koursiyyouhou s-samāwāti wal-ard. Wa lā ya'oudouhou hifdzouhoumā. Wa houwa l-'Aliyyou l-'Azīm.",
-    french:"Allah ! Point de divinité à part Lui, le Vivant. Ni somnolence ni sommeil ne Le saisissent. À Lui appartient tout ce qui est dans les cieux et sur la terre. Son Trône déborde les cieux et la terre. Il est le Très Haut, le Très Grand.",
-    benefice:"Protection contre Satan tout au long de la journée et de la nuit.",
-    source:"Sourate 2 Al-Baqara v.255 — Bukhāri", repetition:1, category:"MATIN_SOIR" },
-  { id:2, title:"2. Al-Ikhlāṣ + Al-Falaq + An-Nās (3×)",
-    arabic:"﴿ قُلْ هُوَ اللَّهُ أَحَدٌ ۞ اللَّهُ الصَّمَدُ ۞ لَمْ يَلِدْ وَلَمْ يُولَدْ ۞ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ ﴾\n\n﴿ قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۞ مِن شَرِّ مَا خَلَقَ ۞ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۞ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۞ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ ﴾\n\n﴿ قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۞ مَلِكِ النَّاسِ ۞ إِلَٰهِ النَّاسِ ۞ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۞ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۞ مِنَ الْجِنَّةِ وَالنَّاسِ ﴾",
-    transliteration:"Al-Ikhlāṣ : Qul huwa llāhu aḥad — Allāhu ṣ-ṣamad — Lam yalid wa lam yūlad — Wa lam yakun lahū kufuwan aḥad\n\nAl-Falaq : Qul aʿūdhu bi-rabbi l-falaq — Min sharri mā khalaq — Wa min sharri ghāsiqin idhā waqab — Wa min sharri n-naffāthāti fī l-ʿuqad — Wa min sharri ḥāsidin idhā ḥasad\n\nAn-Nās : Qul aʿūdhu bi-rabbi n-nās — Maliki n-nās — Ilāhi n-nās — Min sharri l-waswāsi l-khannās — Alladhī yuwaswisu fī ṣudūri n-nās — Mina l-jinnati wa-n-nās",
-    french:"Al-Ikhlāṣ : Dis : Il est Allah, Unique. Allah, le Seul à être imploré. Il n'a pas engendré et n'a pas été engendré. Et nul n'est égal à Lui.\n\nAl-Falaq : Dis : Je cherche refuge auprès du Seigneur de l'aurore, contre le mal de ce qu'Il a créé, contre le mal de l'obscurité quand elle s'étend, contre le mal de celles qui soufflent sur les nœuds, contre le mal de l'envieux quand il envie.\n\nAn-Nās : Dis : Je cherche refuge auprès du Seigneur des hommes, du Roi des hommes, de la Divinité des hommes, contre le mal du tentateur furtif, qui souffle le mal dans les poitrines des hommes, qu'il soit parmi les djinns ou parmi les hommes.",
-    benefice:"Celui qui dit 3 fois ces sourates matin et soir, cela lui suffira et le protégera contre toute chose.",
-    source:"Abū Dāwūd, at-Tirmidhī — Sourates 112, 113, 114", repetition:3, category:"MATIN_SOIR" },
-  { id:3, title:"3. Aṣbaḥnā (matin) / Amsaynā (soir)",
-    arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
-    transliteration:"Asbahna wa asbahal-mulku lillāh, wal-hamdu lillāh, lā ilāha illallāhu wahdahu lā sharīka lah, lahul-mulku wa lahul-hamdu wa huwa alā kulli shayin qadīr",
-    french:"Nous voilà au matin (soir) et le règne appartient à Allah. Louange à Allah. Il n'y a de divinités sauf Allah Seul, sans associés. À Lui la royauté, à Lui la louange et Il est capable de toute chose.",
-    benefice:"Invocation authentique du matin et du soir.",
-    source:"Muwatta Mālik, Kitab al-Nida", repetition:1, category:"MATIN_SOIR" },
-  { id:4, title:"4. Rabbi assalouka khayra… (matin/soir)",
-    arabic:"رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذَا الْيَوْمِ وَخَيْرَ مَا بَعْدَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ، رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
-    transliteration:"Rabbi assalouka khayra ma fi hadha el youmi wa khayra ma bahdah. Wa a'houdoubika min charri ma fi hada el youmi wa charri ma bahdah. Rabbi a'houdou bika min al kassali wa soûilkibar. Rabbi ahoudou bika min adhabine fi nari wa hadabine fil kabr.",
-    french:"Seigneur ! Je te demande le bien de ce jour et le bien qui vient après. Je me mets sous ta protection contre le mal de ce jour et le mal qui vient après. Protection contre la paresse, les maux de la vieillesse, le châtiment de l'enfer et les tourments de la tombe.",
-    benefice:"Protection contre le mal de la journée et de ce qui vient après.",
-    source:"Muslim, n°2723 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:5, title:"5. Allāhumma bika aṣbaḥnā… (matin/soir)",
-    arabic:"اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ",
-    transliteration:"Allāhumma bika asbahna wa bika amsayna, wa bika nahya wa bika namutu wa ilayka n-nushūr (le soir : ...wa ilayka l-masīr)",
-    french:"Ô Seigneur ! C'est par Toi que nous nous retrouvons au matin (soir). C'est par Toi que nous vivons et mourons et c'est vers Toi que se fera la résurrection.",
-    benefice:"Invocation prophétique du matin et du soir.",
-    source:"At-Tirmidhī, n°3391 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:6, title:"6. Sayyid al-Istighfār",
-    arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
-    transliteration:"Allāhumma anta rabbī lā ilāha illā anta, khalaqtanī wa anā abduk, wa anā alā ahdika wa wadika mastatatu, audhu bika min sharri mā sanatu, abūu laka bi-nimmatika alayya wa abūu bi-dhanbī, faghfir lī fa-innahu lā yaghfiru dh-dhunūba illā ant",
-    french:"Ô Seigneur ! Tu es mon Dieu. Il n'y a de divinités que Toi. Tu m'as créé et je suis Ton serviteur. Je me conforme à mon engagement. Je me mets sous Ta protection contre le mal que j'ai commis. Je reconnais Ton bienfait et mon péché. Pardonne-moi car il n'y a que Toi qui pardonnes.",
-    benefice:"Celui qui le dit le matin et le soir avec conviction et meurt en ce jour entre au paradis.",
-    source:"Bukhāri, n°6306 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:7, title:"7. Allāhumma innī aṣbaḥtu ushhhiduka… (4×)",
-    arabic:"اللَّهُمَّ إِنِّي أَصْبَحْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّداً عَبْدُكَ وَرَسُولُكَ",
-    transliteration:"Allāhumma innī asbahtu ushhiduka wa ushhidu hamalata arshika, wa malāikataka wa jamīa khalqika, annaka anta Allāhu lā ilāha illā anta wahdaka lā sharīka lak, wa anna Muhammadan abduka wa rasūluk",
-    french:"Ô Seigneur ! Me voici au matin, je Te prends à témoin et prends à témoin les porteurs de Ton Trône, Tes anges et toutes Tes créatures : Tu es Allah, il n'y a de divinité que Toi, Seul, sans associé. Et Muhammad est Ton serviteur et Ton messager.",
-    benefice:"Celui qui dit cette invocation 4 fois le matin ou le soir, Allah l'affranchira de l'enfer.",
-    source:"Abū Dāwūd, n°5069 — 4× matin et soir", repetition:4, category:"MATIN_SOIR" },
-  { id:8, title:"8. Allāhumma mā aṣbaḥa bī min niʿmah…",
-    arabic:"اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ، فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ، فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ",
-    transliteration:"Allāhumma mā asbaha bī min nimatin aw bi-ahadin min khalqika, fa-minka wahdaka lā sharīka lak, falakal-hamdu wa lakashshukr",
-    french:"Ô Seigneur ! En ce jour, tout bienfait qui m'arrive ou arrive à toute créature provient de Toi l'Unique, sans associé. À Toi la louange et le remerciement.",
-    benefice:"Celui qui le récite au matin aura accompli le devoir de montrer sa reconnaissance pour la journée.",
-    source:"Abū Dāwūd, n°5073 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:9, title:"9. Allāhumma āfinī fī badanī… (3×)",
-    arabic:"اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ",
-    transliteration:"Allāhumma āfinī fī badanī, Allāhumma āfinī fī samī, Allāhumma āfinī fī basarī, lā ilāha illā ant. Allāhumma innī audhu bika minal-kufri, wal-faqri, wa audhu bika min adhābil-qabri, lā ilāha illā ant",
-    french:"Ô Seigneur ! Accorde-moi la santé dans mon corps, dans mon ouïe, dans ma vue. Je cherche protection contre la mécréance, la pauvreté et les tourments de la tombe.",
-    benefice:"Protection de la santé du corps, de l'ouïe et de la vue.",
-    source:"Abū Dāwūd, n°5090 — 3× matin et soir", repetition:3, category:"MATIN_SOIR" },
-  { id:10, title:"10. Hasbiyallāhu lā ilāha illā huw… (7×)",
-    arabic:"حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
-    transliteration:"Hasbiyallāhu lā ilāha illā huwa alayhi tawakkaltu wa huwa rabbul-arshil-azīm",
-    french:"Allah me suffit, il n'y a de divinité que Lui. C'est en Lui que je place ma confiance et Il est le Seigneur du Trône immense.",
-    benefice:"Celui qui le dit 7 fois le matin et le soir, Allah le protégera dans la vie d'ici-bas et dans l'au-delà.",
-    source:"Abū Dāwūd, n°5081 — 7× matin et soir", repetition:7, category:"MATIN_SOIR" },
-  { id:11, title:"11. Allāhumma innī as'aluka al-afwa…",
-    arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي، اللَّهُمَّ اسْتُرْ عَوْرَاتِي وَآمِنْ رَوْعَاتِي",
-    transliteration:"Allāhumma innī asaluka al-afwa wal-āfiyata fid-dunyā wal-ākhirah. Allāhumma innī asaluka al-afwa wal-āfiyata fī dīnī wa dunyāya wa ahlī wa mālī. Allāhummastur awrātī wa āmin rawātī. Allāhumma hfadznī min bayni yadayya wa min khalfī wa 'an yamīnī wa 'an shimālī wa min fawqī. Wa a'oudhu bi-'adhamatika an ughtāla min tahtī.",
-    french:"Ô Seigneur ! Je Te demande le pardon et la santé dans cette vie et dans l'au-delà. Cache mes défauts et mets-moi à l'abri de mes effrois. Protège-moi de toutes les directions.",
-    benefice:"Protection complète de toutes les directions.",
-    source:"Abū Dāwūd, n°5074 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:12, title:"12. Allāhumma ālima l-ghayb…",
-    arabic:"اللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَالْأَرْضِ رَبَّ كُلِّ شَيْءٍ وَمَلِيكَهُ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ",
-    transliteration:"Allāhumma ālimal-ghaybi wash-shahādati fātiras-samāwāti wal-ardi, rabba kulli shay'in wa malīkah, ashhadu an lā ilāha illā ant. A'oudhu bika min sharri nafsī wa min sharrish-shaytāni wa shirkihi. Wa an aqtarifa 'alā nafsī sū'an aw ajurrahu ilā muslim.",
-    french:"Ô Seigneur ! Connaisseur de l'invisible et du visible, créateur des cieux et de la terre. J'atteste qu'il n'y a de divinité que Toi. Je me mets sous Ta protection contre le mal de mon âme, du diable et son polythéisme.",
-    benefice:"Protection contre les maux de l'âme et du diable.",
-    source:"At-Tirmidhī, n°3529 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:13, title:"13. Bismillāhil-ladhī lā yaḍurru… (3×)",
-    arabic:"بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
-    transliteration:"Bismillāhil-ladhī lā yadurru maasmihī shaun fil-ardi wa lā fis-samāi, wa huwas-samīul-alīm",
-    french:"Au nom d'Allah, nul ne peut nuire en présence de Son Nom ni sur terre ni dans le ciel et Il est l'Audient et l'Omniscient.",
-    benefice:"Celui qui dira 3 fois le matin et le soir, nul mal ne le touchera.",
-    source:"Abū Dāwūd, n°5088 — 3× matin et soir", repetition:3, category:"MATIN_SOIR" },
-  { id:14, title:"14. Radītu billāhi rabban… (3×)",
-    arabic:"رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا",
-    transliteration:"Radītu billāhi rabban wa bil-islāmi dīnan wa bi-muhammadin nabiyyan",
-    french:"J'ai agréé Allah comme mon Seigneur, l'islam comme ma religion et Muhammad (sws) comme mon prophète.",
-    benefice:"Celui qui le dit 3 fois matin et soir, Allah se fera un devoir de lui accorder Son agrément.",
-    source:"Abū Dāwūd, n°5072 — 3× matin et soir", repetition:3, category:"MATIN_SOIR" },
-  { id:15, title:"15. Yā Hayyu Yā Qayyūm bi-rahmatika astaghīth…",
-    arabic:"يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ، وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ",
-    transliteration:"Yā hayyu yā qayyūmu bi-rahmatika astaghīth, aslih lī shānī kullahu, wa lā takilnī ilā nafsī tarfata ayn",
-    french:"Ô le Vivant, Celui qui veille éternellement ! J'implore secours auprès de Ta miséricorde. Améliore ma situation et ne me laisse pas à mon propre sort ne serait-ce le temps d'un clin d'oeil.",
-    benefice:"Protection et amélioration de la situation du croyant.",
-    source:"Al-Hākim, n°2000 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:16, title:"16. Asbahna wa asbahal-mulku lillāh…",
-    arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذَا الْيَوْمِ فَتْحَهُ وَنَصْرَهُ وَنُورَهُ وَبَرَكَتَهُ وَهُدَاهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهِ وَشَرِّ مَا بَعْدَهُ",
-    transliteration:"Asbahna wa asbahal-mulku lillāhi rabbil-ālamīn. Allāhumma innī asaluka khayra hādhal-yawmi: fathahou wa nasrahou wa nūrahou wa barakatahu wa hudāh. Wa a'oudhu bika min sharri mā fīhi wa sharri mā ba'dahou.",
-    french:"Nous voilà au matin et le règne appartient à Allah le Seigneur de l'univers. Ô Seigneur ! Je Te demande le bien de ce jour : conquêtes, victoires, lumières, bénédiction et guidée.",
-    benefice:"Demande du bien de la journée et protection contre ses maux.",
-    source:"Abū Dāwūd — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:17, title:"17. Asbahna alā fitrātil-islām…",
-    arabic:"أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ، وَعَلَى كَلِمَةِ الْإِخْلَاصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ، وَعَلَى مِلَّةِ أَبِينَا إِبْرَاهِيمَ حَنِيفاً مُسْلِماً وَمَا كَانَ مِنَ الْمُشْرِكِينَ",
-    transliteration:"Asbahna alā fitrātil-islāmi, wa alā kalimatil-ikhlāsi, wa alā dīni nabiyyinā Muhammadin, wa alā millati abīnā Ibrāhīma hanīfan musliman wa mā kāna minal-mushrikīn",
-    french:"Nous voici au matin en conformité avec la saine disposition qu'est l'Islam, avec la parole du monothéisme, avec la religion de notre Prophète Muhammad (sws) et sur la voie de notre père Ibrāhīm, soumis à Allah.",
-    benefice:"Affirmation de la foi et de l'appartenance à l'Islam.",
-    source:"Ahmad, n°14248 — matin et soir", repetition:1, category:"MATIN_SOIR" },
-  { id:18, title:"18. Subhān Allāhi wa bihamdih (100×)",
-    arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-    transliteration:"Subhānallāhi wa bihamdih",
-    french:"Gloire et louange sont à Allah.",
-    benefice:"Celui qui dit 100 fois dans la journée aura ses péchés effacés même s'ils sont aussi nombreux que l'écume de la mer. (Bukhāri n°6405, Muslim n°2691)",
-    source:"Bukhāri n°6405 — Muslim n°2691 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
-  { id:19, title:"19. Lā ilāha illallāhu wahdahu… (100×)",
-    arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
-    transliteration:"Lā ilāha illallāhu wahdahu lā sharīka lah, lahul-mulku wa lahul-hamdu wa huwa alā kulli shayin qadīr",
-    french:"Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté et la louange, et Il est capable de toute chose.",
-    benefice:"Récompense de celui qui a affranchi 10 esclaves. 100 bonnes actions inscrites, 100 péchés effacés. Protection contre Satan.",
-    source:"Bukhāri n°3293 — Muslim n°2691 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
-  { id:20, title:"20. Subhānallāhi wa bihamdih, adada khalqih… (3×)",
-    arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ",
-    transliteration:"Subhānallāhi wa bihamdih, adada khalqih, wa ridā nafsih, wa zinata arshih, wa midāda kalimātih",
-    french:"Gloire et louange à Allah autant de fois que l'univers compte de créatures, autant pour Le satisfaire, égal au poids de Son Trône et au nombre de Ses paroles.",
-    benefice:"Cette formule surpasse en mérite toutes les autres formes de dhikr.",
-    source:"Muslim, n°2726 — 3× le matin", repetition:3, category:"MATIN" },
-  { id:21, title:"21. Allāhumma innī asaluka ilman nāfian…",
-    arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْماً نَافِعاً، وَرِزْقاً طَيِّباً، وَعَمَلاً مُتَقَبَّلاً",
-    transliteration:"Allāhumma innī asaluka ilman nāfian, wa rizqan tayyiban, wa amalan mutaqabbalan",
-    french:"Ô Seigneur ! Je Te demande un savoir utile, une bonne subsistance et des oeuvres agréées par Toi.",
-    benefice:"Demande des trois fondements : savoir, provision et actes agréés.",
-    source:"Ibn Mājah, n°925 — le matin", repetition:1, category:"MATIN" },
-  { id:22, title:"22. Astaghfirullāha wa atūbu ilayh (100×)",
-    arabic:"أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
-    transliteration:"Astaghfirullāha wa atūbu ilayh",
-    french:"Je demande pardon à Allah et je me repens à Lui.",
-    benefice:"Quiconque persévère dans l'istighfār, Allah lui accordera une issue lors de chaque difficulté, un soulagement à toute inquiétude et lui accordera sa subsistance par des moyens inattendus.",
-    source:"Abū Dāwūd, n°1518 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
-  { id:23, title:"23. Allāhumma salli wa sallim alā nabiyyinā Muhammad (100×)",
-    arabic:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَىٰ نَبِيِّنَا مُحَمَّدٍ",
-    transliteration:"Allāhumma salli wa sallim alā nabiyyinā Muhammad",
-    french:"Ô Seigneur ! Prie et salue sur notre prophète Muhammad (sws).",
-    benefice:"Celui qui prie sur le Prophète une fois, Allah le bénit dix fois, lui efface dix péchés et l'élève de dix degrés.",
-    source:"Muslim, n°408 — 100× matin et soir", repetition:100, category:"MATIN_SOIR" },
-  { id:24, title:"Après le Fard — Istighfar Malikite",
-    arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",
-    transliteration:"Astaghfirullāhal-azīmal-ladhī lā ilāha illā huwal-hayyul-qayyūmu wa atūbu ilayh",
-    french:"Je demande pardon à Allah le Sublime — le Vivant, le Subsistant — et je me repens à Lui.",
-    source:"At-Tirmidhī — 3× après chaque Fard selon le madhhab malikite", repetition:3, category:"PRIERE" },
-  { id:25, title:"Tasbīh après la prière — méthode Mālik",
-    arabic:"سُبْحَانَ اللَّهِ ۞ الْحَمْدُ لِلَّهِ ۞ اللَّهُ أَكْبَرُ",
-    transliteration:"Subhānallāh (33×) — Al-hamdu lillāh (33×) — Allāhu akbar (33×) — puis : Lā ilāha illallāhu wahdahu lā sharīka lahu, lahul-mulku wa lahul-hamdu wa huwa 'alā kulli shay'in qadīr.",
-    french:"Gloire à Allah (33×) — Toute louange à Allah (33×) — Allah est le Plus Grand (33×) — puis : Il n'y a de divinité qu'Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est Omnipotent.",
-    source:"Muwatta Mālik, Kitab Qasr as-Salat", repetition:100, category:"PRIERE" },
-];
 
 const QURAN_SURAHS = Array.from({ length: 114 }, (_, i) => ({
   number: i + 1,
@@ -1212,6 +1062,83 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — QuranReader
 // ════════════════════════════════════════════════════════════════════
+// ── Imam Audio — lecture complète de la sourate ───────────────────────
+const IMAM_CDNS = [
+  (s,v) => `https://audio.qurancdn.com/Alafasy/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+  (s,v) => `https://everyayah.com/data/Alafasy_128kbps/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
+];
+
+function ImamAudioButton({ surah, verses }) {
+  const [state, setState] = useState("idle"); // idle | loading | playing
+  const [currentV, setCurrentV] = useState(0);
+  const audioRef = useRef(null);
+  const cdnRef = useRef(0);
+
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setState("idle");
+    setCurrentV(0);
+  }, []);
+
+  useEffect(() => () => stop(), [surah?.number]);
+
+  const playVerse = useCallback((surahNum, verseNum, onDone) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const url = IMAM_CDNS[cdnRef.current % IMAM_CDNS.length](surahNum, verseNum);
+    const a = new Audio(url);
+    audioRef.current = a;
+    a.onended = () => onDone && onDone();
+    a.onerror = () => {
+      cdnRef.current++;
+      if (cdnRef.current < IMAM_CDNS.length) playVerse(surahNum, verseNum, onDone);
+      else { cdnRef.current = 0; onDone && onDone(); }
+    };
+    const p = a.play();
+    if (p) p.catch(() => { cdnRef.current++; onDone && onDone(); });
+  }, []);
+
+  const startReading = useCallback(() => {
+    if (!verses?.length) return;
+    setState("loading");
+    let idx = 0;
+    const next = () => {
+      if (idx >= verses.length) { setState("idle"); setCurrentV(0); return; }
+      const v = verses[idx];
+      setCurrentV(v.number);
+      setState("playing");
+      idx++;
+      playVerse(surah.number, v.number, next);
+    };
+    next();
+  }, [verses, surah, playVerse]);
+
+  if (state === "idle") return (
+    <button onClick={startReading}
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold hover:bg-emerald-500/25 transition-all active:scale-95">
+      <Volume2 className="w-3.5 h-3.5"/> Imam
+    </button>
+  );
+
+  if (state === "loading") return (
+    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/15 border border-blue-500/25 text-blue-300 rounded-xl text-xs font-bold">
+      <motion.div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full" animate={{rotate:360}} transition={{duration:0.7,repeat:Infinity,ease:"linear"}}/>
+      Chargement…
+    </div>
+  );
+
+  return (
+    <button onClick={stop}
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 text-red-400 rounded-xl text-xs font-bold hover:bg-red-500/25 transition-all">
+      <Pause className="w-3.5 h-3.5"/> v.{currentV}
+    </button>
+  );
+}
+
 function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBounds, checked, toggle, counts }) {
   const quranBM = useBookmarks("quran");
   const [currentSurah, setCurrentSurah] = useState(() => initialSurahNum ? QURAN_SURAHS[initialSurahNum - 1] || null : null);
@@ -1322,6 +1249,8 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             <p className="font-bold text-white text-sm">{currentSurah.name}</p>
             <p className="text-slate-500 text-xs">{versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}</p>
           </div>
+          {/* Bouton Imam audio */}
+          <ImamAudioButton surah={currentSurah} verses={verses}/>
           <button onClick={() => toggle(currentSurah.number)}
             className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`} title="Marquer comme lue">
             <CheckCircle className="w-5 h-5"/>
@@ -1475,77 +1404,6 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
 // ════════════════════════════════════════════════════════════════════
 // DONNÉES VERSETS INTÉGRÉES
 // ════════════════════════════════════════════════════════════════════
-const EMBEDDED_VERSES = {
-  1:[
-    {number:1,arabic:"بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Bismi llāhi r-raḥmāni r-raḥīm",french:"Au nom d'Allah, le Tout Miséricordieux, le Très Miséricordieux",
-     tajweed:`بِسْمِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">للَّ</span>هِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حْمَـٰنِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حِيمِ`},
-    {number:2,arabic:"الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",transliteration:"Al-ḥamdu li-llāhi rabbi l-ʿālamīn",french:"Louange à Allah, Seigneur de l'univers",
-     tajweed:`<span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لْ</span>حَمْدُ <span style="color:#AAAAAA">لِ</span>للَّهِ رَبِّ <span style="color:#AAAAAA">ٱ</span><span style="color:#537FFF">لْعَـٰ</span>لَمِينَ`},
-    {number:3,arabic:"الرَّحْمَٰنِ الرَّحِيمِ",transliteration:"Ar-raḥmāni r-raḥīm",french:"Le Tout Miséricordieux, le Très Miséricordieux",
-     tajweed:`<span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حْمَـٰنِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لرَّ</span>حِيمِ`},
-    {number:4,arabic:"مَالِكِ يَوْمِ الدِّينِ",transliteration:"Māliki yawmi d-dīn",french:"Maître du Jour de la rétribution",
-     tajweed:`مَـٰلِكِ يَوْمِ <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">ل</span>دِّينِ`},
-    {number:5,arabic:"إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",transliteration:"Iyyāka naʿbudu wa-iyyāka nastaʿīn",french:"C'est Toi Seul que nous adorons, et c'est Toi Seul dont nous implorons le secours",
-     tajweed:`إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ`},
-    {number:6,arabic:"اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",transliteration:"Ihdinā ṣ-ṣirāṭa l-mustaqīm",french:"Guide-nous dans le droit chemin",
-     tajweed:`<span style="color:#AAAAAA">ٱ</span>هْدِنَا <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">لصِّ</span>رَٰطَ <span style="color:#AAAAAA">ٱ</span><span style="color:#537FFF">لْمُسْتَقِيمَ</span>`},
-    {number:7,arabic:"صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",transliteration:"Ṣirāṭa lladhīna anʿamta ʿalayhim ġayri l-maġḍūbi ʿalayhim wa-lā ḍ-ḍāllīn",french:"Le chemin de ceux que Tu as comblés de faveurs, non ceux qui ont encouru Ta colère ni des égarés",
-     tajweed:`صِرَٰطَ <span style="color:#AAAAAA">ٱ</span>لَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ <span style="color:#AAAAAA">ٱ</span>لْمَغْضُوبِ عَلَيْهِمْ وَلَا <span style="color:#AAAAAA">ٱ</span><span style="color:#AAAAAA">ل</span>ضَّ<span style="color:#537FFF">آ</span>لِّينَ`},
-  ],
-  93:[
-    {number:1,arabic:"وَالضُّحَىٰ",transliteration:"Wa-ḍ-ḍuḥā",french:"Par le matin lumineux !"},
-    {number:2,arabic:"وَاللَّيْلِ إِذَا سَجَىٰ",transliteration:"Wa-l-layli idhā sajā",french:"Par la nuit quand elle est tranquille !"},
-    {number:3,arabic:"مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ",transliteration:"Mā waddaʿaka rabbuka wa-mā qalā",french:"Ton Seigneur ne t'a pas abandonné et ne te hait point"},
-    {number:4,arabic:"وَلَلْآخِرَةُ خَيْرٌ لَّكَ مِنَ الْأُولَىٰ",transliteration:"Wa-la-l-ākhiratu khayrun laka mina l-ūlā",french:"L'au-delà est certainement meilleur pour toi que la vie ici-bas"},
-    {number:5,arabic:"وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",transliteration:"Wa-la-sawfa yuʿṭīka rabbuka fa-tarḍā",french:"Et ton Seigneur te donnera et tu seras satisfait"},
-    {number:6,arabic:"أَلَمْ يَجِدْكَ يَتِيمًا فَآوَىٰ",transliteration:"Alam yajidka yatīman fa-āwā",french:"Ne t'a-t-Il pas trouvé orphelin et recueilli ?"},
-    {number:7,arabic:"وَوَجَدَكَ ضَالًّا فَهَدَىٰ",transliteration:"Wa-wajadaka ḍāllan fa-hadā",french:"Ne t'a-t-Il pas trouvé égaré et guidé ?"},
-    {number:8,arabic:"وَوَجَدَكَ عَائِلًا فَأَغْنَىٰ",transliteration:"Wa-wajadaka ʿāʾilan fa-aġnā",french:"Ne t'a-t-Il pas trouvé pauvre et enrichi ?"},
-    {number:9,arabic:"فَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ",transliteration:"Fa-ammā l-yatīma fa-lā taqhar",french:"Quant à l'orphelin, ne le brime donc pas"},
-    {number:10,arabic:"وَأَمَّا السَّائِلَ فَلَا تَنْهَرْ",transliteration:"Wa-ammā s-sāʾila fa-lā tanhar",french:"Quant au mendiant, ne le rabroue donc pas"},
-    {number:11,arabic:"وَأَمَّا بِنِعْمَةِ رَبِّكَ فَحَدِّثْ",transliteration:"Wa-ammā bi-niʿmati rabbika fa-ḥaddith",french:"Et quant aux bienfaits de ton Seigneur, proclame-les"},
-  ],
-  94:[
-    {number:1,arabic:"أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ",transliteration:"Alam našraḥ laka ṣadrak",french:"N'avons-Nous pas déployé ta poitrine ?"},
-    {number:2,arabic:"وَوَضَعْنَا عَنكَ وِزْرَكَ",transliteration:"Wa-waḍaʿnā ʿanka wizrak",french:"Et n'avons-Nous pas déposé ton fardeau"},
-    {number:3,arabic:"الَّذِي أَنقَضَ ظَهْرَكَ",transliteration:"Alladhī anqaḍa ẓahrak",french:"qui alourdissait ton dos ?"},
-    {number:4,arabic:"وَرَفَعْنَا لَكَ ذِكْرَكَ",transliteration:"Wa-rafaʿnā laka dhikrak",french:"N'avons-Nous pas élevé pour toi ta renommée ?"},
-    {number:5,arabic:"فَإِنَّ مَعَ الْعُسْرِ يُسْرًا",transliteration:"Fa-inna maʿa l-ʿusri yusrā",french:"En vérité, avec la difficulté vient la facilité"},
-    {number:6,arabic:"إِنَّ مَعَ الْعُسْرِ يُسْرًا",transliteration:"Inna maʿa l-ʿusri yusrā",french:"Oui, avec la difficulté vient la facilité"},
-    {number:7,arabic:"فَإِذَا فَرَغْتَ فَانصَبْ",transliteration:"Fa-idhā faraġta fa-nṣab",french:"Quand tu te libères, travaille ardemment"},
-    {number:8,arabic:"وَإِلَىٰ رَبِّكَ فَارْغَب",transliteration:"Wa-ilā rabbika fa-rġab",french:"et vers ton Seigneur aspire"},
-  ],
-  95:[
-    {number:1,arabic:"وَالتِّينِ وَالزَّيْتُونِ",transliteration:"Wa-t-tīni wa-z-zaytūn",french:"Par le figuier et l'olivier !"},
-    {number:2,arabic:"وَطُورِ سِينِينَ",transliteration:"Wa-ṭūri sīnīn",french:"Par le Mont Sinaï !"},
-    {number:3,arabic:"وَهَٰذَا الْبَلَدِ الْأَمِينِ",transliteration:"Wa-hādhā l-baladi l-amīn",french:"Par cette Cité sûre !"},
-    {number:4,arabic:"لَقَدْ خَلَقْنَا الْإِنسَانَ فِي أَحْسَنِ تَقْوِيمٍ",transliteration:"Laqad khalaqnā l-insāna fī aḥsani taqwīm",french:"Nous avons certes créé l'homme dans la plus belle forme"},
-    {number:5,arabic:"ثُمَّ رَدَدْنَاهُ أَسْفَلَ سَافِلِينَ",transliteration:"Thumma radadnāhu asfala sāfilīn",french:"puis Nous l'avons ramené au niveau le plus bas"},
-    {number:6,arabic:"إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ فَلَهُمْ أَجْرٌ غَيْرُ مَمْنُونٍ",transliteration:"Illā lladhīna āmanū wa-ʿamilū ṣ-ṣāliḥāti fa-lahum ajrun ġayru mamnūn",french:"sauf ceux qui croient et font de bonnes oeuvres, ils auront une récompense sans fin"},
-    {number:7,arabic:"فَمَا يُكَذِّبُكَ بَعْدُ بِالدِّينِ",transliteration:"Fa-mā yukadhdhibuka baʿdu bi-d-dīn",french:"Alors qu'est-ce qui te fait nier le Jugement ?"},
-    {number:8,arabic:"أَلَيْسَ اللَّهُ بِأَحْكَمِ الْحَاكِمِينَ",transliteration:"A-laysa llāhu bi-aḥkami l-ḥākimīn",french:"Allah n'est-Il pas le plus sage des juges ?"},
-  ],
-  103:[{number:1,arabic:"وَالْعَصْرِ",transliteration:"Wa-l-ʿaṣr",french:"Par le Temps !"},{number:2,arabic:"إِنَّ الْإِنسَانَ لَفِي خُسْرٍ",transliteration:"Inna l-insāna la-fī khusr",french:"L'être humain est certes en perdition"},{number:3,arabic:"إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",transliteration:"Illā lladhīna āmanū wa-ʿamilū ṣ-ṣāliḥāti wa-tawāṣaw bi-l-ḥaqqi wa-tawāṣaw bi-ṣ-ṣabr",french:"sauf ceux qui ont cru, accompli les bonnes oeuvres, se sont recommandé mutuellement la vérité et la patience"}],
-  105:[{number:1,arabic:"أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَابِ الْفِيلِ",transliteration:"Alam tara kayfa faʿala rabbuka bi-aṣḥābi l-fīl",french:"N'as-tu pas vu comment ton Seigneur a agi avec les Compagnons de l'Éléphant ?"},{number:2,arabic:"أَلَمْ يَجْعَلْ كَيْدَهُمْ فِي تَضْلِيلٍ",transliteration:"Alam yajʿal kaydahum fī taḍlīl",french:"N'a-t-Il pas rendu vaine leur ruse ?"},{number:3,arabic:"وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ",transliteration:"Wa-arsala ʿalayhim ṭayran abābīl",french:"Il envoya contre eux des oiseaux par volées"},{number:4,arabic:"تَرْمِيهِم بِحِجَارَةٍ مِّن سِجِّيلٍ",transliteration:"Tarmīhim bi-ḥijāratin min sijjīl",french:"qui leur lançaient des pierres d'argile cuite"},{number:5,arabic:"فَجَعَلَهُمْ كَعَصْفٍ مَّأْكُولٍ",transliteration:"Fa-jaʿalahum ka-ʿaṣfin maʾkūl",french:"et Il les rendit pareils à des feuilles dévorées"}],
-  106:[{number:1,arabic:"لِإِيلَافِ قُرَيْشٍ",transliteration:"Li-ʾīlāfi qurayš",french:"Pour la cohésion des Quraysh"},{number:2,arabic:"إِيلَافِهِمْ رِحْلَةَ الشِّتَاءِ وَالصَّيْفِ",transliteration:"Īlāfihim riḥlata š-šitāʾi wa-ṣ-ṣayf",french:"leur cohésion lors des voyages d'hiver et d'été"},{number:3,arabic:"فَلْيَعْبُدُوا رَبَّ هَٰذَا الْبَيْتِ",transliteration:"Fa-l-yaʿbudū rabba hādhā l-bayt",french:"Qu'ils adorent donc le Seigneur de cette Maison"},{number:4,arabic:"الَّذِي أَطْعَمَهُم مِّن جُوعٍ وَآمَنَهُم مِّنْ خَوْفٍ",transliteration:"Alladhī aṭʿamahum min jūʿin wa-āmanahum min khawf",french:"qui les a nourris contre la faim et préservés de la crainte"}],
-  107:[{number:1,arabic:"أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ",transliteration:"Araʾayta lladhī yukadhdhibu bi-d-dīn",french:"As-tu vu celui qui traite de mensonge la Rétribution ?"},{number:2,arabic:"فَذَٰلِكَ الَّذِي يَدُعُّ الْيَتِيمَ",transliteration:"Fadhālika lladhī yadhuʿʿu l-yatīm",french:"C'est lui qui repousse l'orphelin brutalement"},{number:3,arabic:"وَلَا يَحُضُّ عَلَىٰ طَعَامِ الْمِسْكِينِ",transliteration:"Wa-lā yaḥuḍḍu ʿalā ṭaʿāmi l-miskīn",french:"et qui n'encourage pas à nourrir le pauvre"},{number:4,arabic:"فَوَيْلٌ لِّلْمُصَلِّينَ",transliteration:"Fa-waylun li-l-muṣallīn",french:"Malheur donc à ceux qui font la Salāt"},{number:5,arabic:"الَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ",transliteration:"Alladhīna hum ʿan ṣalātihim sāhūn",french:"qui sont distraits dans leur Salāt"},{number:6,arabic:"الَّذِينَ هُمْ يُرَاءُونَ",transliteration:"Alladhīna hum yurāʾūn",french:"qui font de l'ostentation"},{number:7,arabic:"وَيَمْنَعُونَ الْمَاعُونَ",transliteration:"Wa-yamnaʿūna l-māʿūn",french:"et refusent l'entraide courante"}],
-  108:[{number:1,arabic:"إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ",transliteration:"Innā aʿṭaynāka l-kawthar",french:"Nous t'avons accordé l'Abondance"},{number:2,arabic:"فَصَلِّ لِرَبِّكَ وَانْحَرْ",transliteration:"Faṣalli li-rabbika wa-nḥar",french:"Accomplis donc la Salāt pour ton Seigneur et sacrifie"},{number:3,arabic:"إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ",transliteration:"Inna šāniʾaka huwa l-abtar",french:"C'est bien ton ennemi qui est sans postérité"}],
-  109:[{number:1,arabic:"قُلْ يَا أَيُّهَا الْكَافِرُونَ",transliteration:"Qul yā ayyuhā l-kāfirūn",french:"Dis : Ô vous les mécréants"},{number:2,arabic:"لَا أَعْبُدُ مَا تَعْبُدُونَ",transliteration:"Lā aʿbudu mā taʿbudūn",french:"Je n'adore pas ce que vous adorez"},{number:3,arabic:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ",transliteration:"Wa-lā antum ʿābidūna mā aʿbud",french:"Et vous n'adorez pas ce que j'adore"},{number:4,arabic:"وَلَا أَنَا عَابِدٌ مَّا عَبَدتُّمْ",transliteration:"Wa-lā anā ʿābidun mā ʿabadtum",french:"Je ne suis pas adorateur de ce que vous avez adoré"},{number:5,arabic:"وَلَا أَنتُمْ عَابِدُونَ مَا أَعْبُدُ",transliteration:"Wa-lā antum ʿābidūna mā aʿbud",french:"Et vous n'êtes pas adorateurs de ce que j'adore"},{number:6,arabic:"لَكُمْ دِينُكُمْ وَلِيَ دِينِ",transliteration:"Lakum dīnukum wa-liya dīn",french:"À vous votre religion, et à moi la mienne"}],
-  110:[{number:1,arabic:"إِذَا جَاءَ نَصْرُ اللَّهِ وَالْفَتْحُ",transliteration:"Idhā jāʾa naṣru llāhi wa-l-fatḥ",french:"Quand vient le secours d'Allah et la victoire"},{number:2,arabic:"وَرَأَيْتَ النَّاسَ يَدْخُلُونَ فِي دِينِ اللَّهِ أَفْوَاجًا",transliteration:"Wa-raʾayta n-nāsa yadkhulūna fī dīni llāhi afwājā",french:"et que tu vois les gens entrer en foule dans la religion d'Allah"},{number:3,arabic:"فَسَبِّحْ بِحَمْدِ رَبِّكَ وَاسْتَغْفِرْهُ إِنَّهُ كَانَ تَوَّابًا",transliteration:"Fasabbiḥ bi-ḥamdi rabbika wa-staġfirhu innahū kāna tawwābā",french:"alors célèbre la gloire de ton Seigneur et implore Son pardon. Certes Il est le Grand Repentant"}],
-  112:[{number:1,arabic:"قُلْ هُوَ اللَّهُ أَحَدٌ",transliteration:"Qul huwa llāhu aḥad",french:"Dis : Il est Allah, Unique"},{number:2,arabic:"اللَّهُ الصَّمَدُ",transliteration:"Allāhu ṣ-ṣamad",french:"Allah, le Seul à être imploré pour ce que nous désirons"},{number:3,arabic:"لَمْ يَلِدْ وَلَمْ يُولَدْ",transliteration:"Lam yalid wa-lam yūlad",french:"Il n'a pas engendré, et n'a pas été engendré"},{number:4,arabic:"وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",transliteration:"Wa-lam yakun lahū kufuwan aḥad",french:"Et nul n'est égal à Lui"}],
-  113:[{number:1,arabic:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",transliteration:"Qul aʿūdhu bi-rabbi l-falaq",french:"Dis : Je cherche refuge auprès du Seigneur de l'aurore"},{number:2,arabic:"مِن شَرِّ مَا خَلَقَ",transliteration:"Min šarri mā khalaq",french:"contre le mal de ce qu'Il a créé"},{number:3,arabic:"وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",transliteration:"Wa-min šarri ġāsiqin idhā waqab",french:"contre le mal de l'obscurité quand elle s'étend"},{number:4,arabic:"وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",transliteration:"Wa-min šarri n-naffāthāti fī l-ʿuqad",french:"contre le mal de celles qui soufflent sur les noeuds"},{number:5,arabic:"وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",transliteration:"Wa-min šarri ḥāsidin idhā ḥasad",french:"contre le mal de l'envieux quand il envie"}],
-  114:[{number:1,arabic:"قُلْ أَعُوذُ بِرَبِّ النَّاسِ",transliteration:"Qul aʿūdhu bi-rabbi n-nās",french:"Dis : Je cherche refuge auprès du Seigneur des hommes"},{number:2,arabic:"مَلِكِ النَّاسِ",transliteration:"Maliki n-nās",french:"du Roi des hommes"},{number:3,arabic:"إِلَٰهِ النَّاسِ",transliteration:"Ilāhi n-nās",french:"de la Divinité des hommes"},{number:4,arabic:"مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",transliteration:"Min šarri l-waswāsi l-khannās",french:"contre le mal du tentateur furtif"},{number:5,arabic:"الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",transliteration:"Alladhī yuwaswisu fī ṣudūri n-nās",french:"qui souffle le mal dans les poitrines des hommes"},{number:6,arabic:"مِنَ الْجِنَّةِ وَالنَّاسِ",transliteration:"Mina l-jinnati wa-n-nās",french:"qu'il soit parmi les djinns ou parmi les hommes"}],
-  96:[{number:1,arabic:"اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ",transliteration:"Iqraʾ bi-smi rabbika lladhī khalaq",french:"Lis au nom de ton Seigneur qui a créé"},{number:2,arabic:"خَلَقَ الْإِنسَانَ مِنْ عَلَقٍ",transliteration:"Khalaqa l-insāna min ʿalaq",french:"Il a créé l'homme d'une adhérence"},{number:3,arabic:"اقْرَأْ وَرَبُّكَ الْأَكْرَمُ",transliteration:"Iqraʾ wa-rabbuka l-akram",french:"Lis, et ton Seigneur est le Plus Généreux"},{number:4,arabic:"الَّذِي عَلَّمَ بِالْقَلَمِ",transliteration:"Alladhī ʿallama bi-l-qalam",french:"Celui qui a enseigné par le calame"},{number:5,arabic:"عَلَّمَ الْإِنسَانَ مَا لَمْ يَعْلَمْ",transliteration:"ʿAllama l-insāna mā lam yaʿlam",french:"Il a enseigné à l'homme ce qu'il ne savait pas"},{number:6,arabic:"كَلَّا إِنَّ الْإِنسَانَ لَيَطْغَىٰ",transliteration:"Kallā inna l-insāna la-yaṭġā",french:"Mais non, l'homme se rebelle vraiment"},{number:7,arabic:"أَن رَّآهُ اسْتَغْنَىٰ",transliteration:"An raʾāhu staġnā",french:"parce qu'il se voit à l'aise"},{number:8,arabic:"إِنَّ إِلَىٰ رَبِّكَ الرُّجْعَىٰ",transliteration:"Inna ilā rabbika r-rujʿā",french:"Certes, vers ton Seigneur est le retour"},{number:9,arabic:"أَرَأَيْتَ الَّذِي يَنْهَىٰ",transliteration:"Araʾayta lladhī yanhā",french:"As-tu vu celui qui interdit"},{number:10,arabic:"عَبْدًا إِذَا صَلَّىٰ",transliteration:"ʿAbdan idhā ṣallā",french:"à un serviteur de faire la salāt ?"},{number:11,arabic:"أَرَأَيْتَ إِن كَانَ عَلَى الْهُدَىٰ",transliteration:"Araʾayta in kāna ʿalā l-hudā",french:"As-tu vu s'il est dans la bonne direction"},{number:12,arabic:"أَوْ أَمَرَ بِالتَّقْوَىٰ",transliteration:"Aw amara bi-t-taqwā",french:"ou s'il ordonne la piété ?"},{number:13,arabic:"أَرَأَيْتَ إِن كَذَّبَ وَتَوَلَّىٰ",transliteration:"Araʾayta in kadhdhaba wa-tawallā",french:"As-tu vu s'il dément et se détourne ?"},{number:14,arabic:"أَلَمْ يَعْلَم بِأَنَّ اللَّهَ يَرَىٰ",transliteration:"Alam yaʿlam bi-anna llāha yarā",french:"Ne sait-il pas qu'Allah voit ?"},{number:15,arabic:"كَلَّا لَئِن لَّمْ يَنتَهِ لَنَسْفَعًا بِالنَّاصِيَةِ",transliteration:"Kallā la-in lam yantahi la-nasfahʿan bi-n-nāṣiya",french:"Si vraiment il ne cesse pas, Nous le saisirons par la mèche"},{number:16,arabic:"نَاصِيَةٍ كَاذِبَةٍ خَاطِئَةٍ",transliteration:"Nāṣiyatin kādhibatin khāṭiʾa",french:"une mèche menteuse et pécheresse"},{number:17,arabic:"فَلْيَدْعُ نَادِيَهُ",transliteration:"Fa-l-yadʿu nādiyah",french:"Qu'il appelle donc ses partisans"},{number:18,arabic:"سَنَدْعُ الزَّبَانِيَةَ",transliteration:"Sa-nadʿu z-zabāniya",french:"Nous appellerons les anges gardiens du feu"},{number:19,arabic:"كَلَّا لَا تُطِعْهُ وَاسْجُدْ وَاقْتَرِب",transliteration:"Kallā lā tuṭiʿhu wa-sjud wa-qtarib",french:"Non ! Ne lui obéis pas ; prosterne-toi et rapproche-toi"}],
-  97:[{number:1,arabic:"إِنَّا أَنزَلْنَاهُ فِي لَيْلَةِ الْقَدْرِ",transliteration:"Innā anzalnāhu fī laylati l-qadr",french:"Nous l'avons certes fait descendre lors de la Nuit du Destin"},{number:2,arabic:"وَمَا أَدْرَاكَ مَا لَيْلَةُ الْقَدْرِ",transliteration:"Wa-mā adrāka mā laylatu l-qadr",french:"Et qui te dira ce qu'est la Nuit du Destin ?"},{number:3,arabic:"لَيْلَةُ الْقَدْرِ خَيْرٌ مِّنْ أَلْفِ شَهْرٍ",transliteration:"Laylatu l-qadri khayrun min alfi shahr",french:"La Nuit du Destin est meilleure que mille mois"},{number:4,arabic:"تَنَزَّلُ الْمَلَائِكَةُ وَالرُّوحُ فِيهَا بِإِذْنِ رَبِّهِم مِّن كُلِّ أَمْرٍ",transliteration:"Tanazzalu l-malāʾikatu wa-r-rūḥu fīhā bi-idhni rabbihim min kulli amr",french:"Les anges et l'Esprit y descendent par permission de leur Seigneur pour tout ordre"},{number:5,arabic:"سَلَامٌ هِيَ حَتَّىٰ مَطْلَعِ الْفَجْرِ",transliteration:"Salāmun hiya ḥattā maṭlaʿi l-fajr",french:"Paix en cette nuit jusqu'à l'apparition de l'aube"}],
-  98:[{number:1,arabic:"لَمْ يَكُنِ الَّذِينَ كَفَرُوا مِنْ أَهْلِ الْكِتَابِ وَالْمُشْرِكِينَ مُنفَكِّينَ",transliteration:"Lam yakuni lladhīna kafarū min ahli l-kitābi wa-l-mushrikīna munfakkīn",french:"Ceux qui ont mécru, parmi les gens du Livre et les associateurs, n'allaient pas cesser"},{number:2,arabic:"حَتَّىٰ تَأْتِيَهُمُ الْبَيِّنَةُ",transliteration:"Ḥattā taʾtiyahumu l-bayyina",french:"jusqu'à ce que leur vienne la preuve claire"},{number:3,arabic:"رَسُولٌ مِّنَ اللَّهِ يَتْلُو صُحُفًا مُّطَهَّرَةً",transliteration:"Rasūlun mina llāhi yatlū ṣuḥufan muṭahhara",french:"un Messager d'Allah récitant des pages purifiées"},{number:4,arabic:"فِيهَا كُتُبٌ قَيِّمَةٌ",transliteration:"Fīhā kutubun qayyima",french:"où se trouvent des écrits de valeur"},{number:5,arabic:"وَمَا أُمِرُوا إِلَّا لِيَعْبُدُوا اللَّهَ مُخْلِصِينَ لَهُ الدِّينَ",transliteration:"Wa-mā umirū illā li-yaʿbudū llāha mukhlisīna lahū d-dīn",french:"Il ne leur a été commandé que d'adorer Allah avec une dévotion sincère"},{number:6,arabic:"حُنَفَاءَ وَيُقِيمُوا الصَّلَاةَ وَيُؤْتُوا الزَّكَاةَ ۚ وَذَٰلِكَ دِينُ الْقَيِّمَةِ",transliteration:"Ḥunafāʾa wa-yuqīmū ṣ-ṣalāta wa-yuʾtū z-zakāta wa-dhālika dīnu l-qayyima",french:"comme des exclusifs, accomplir la salāt et acquitter la zakāt. C'est là la religion de droiture"},{number:7,arabic:"إِنَّ الَّذِينَ كَفَرُوا مِنْ أَهْلِ الْكِتَابِ وَالْمُشْرِكِينَ فِي نَارِ جَهَنَّمَ",transliteration:"Inna lladhīna kafarū min ahli l-kitābi wa-l-mushrikīna fī nāri jahannama",french:"Ceux qui ont mécru, parmi les gens du Livre et les associateurs, iront au feu de la Géhenne"},{number:8,arabic:"إِنَّ الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ أُولَٰئِكَ هُمْ خَيْرُ الْبَرِيَّةِ",transliteration:"Inna lladhīna āmanū wa-ʿamilū ṣ-ṣāliḥāti ulāʾika hum khayru l-bariyya",french:"Ceux qui croient et font de bonnes oeuvres, ceux-là sont les meilleures créatures"}],
-  99:[{number:1,arabic:"إِذَا زُلْزِلَتِ الْأَرْضُ زِلْزَالَهَا",transliteration:"Idhā zulzilati l-arḍu zilzālahā",french:"Quand la terre sera secouée de son séisme"},{number:2,arabic:"وَأَخْرَجَتِ الْأَرْضُ أَثْقَالَهَا",transliteration:"Wa-akhrajati l-arḍu athqālahā",french:"et que la terre expulsera ses fardeaux"},{number:3,arabic:"وَقَالَ الْإِنسَانُ مَا لَهَا",transliteration:"Wa-qāla l-insānu mā lahā",french:"et que l'homme dira : Qu'a-t-elle ?"},{number:4,arabic:"يَوْمَئِذٍ تُحَدِّثُ أَخْبَارَهَا",transliteration:"Yawmaʾidhin tuḥaddithu akhbārahā",french:"Ce jour-là, elle relatera ses nouvelles"},{number:5,arabic:"بِأَنَّ رَبَّكَ أَوْحَىٰ لَهَا",transliteration:"Bi-anna rabbaka awḥā lahā",french:"parce que ton Seigneur lui aura révélé cela"},{number:6,arabic:"يَوْمَئِذٍ يَصْدُرُ النَّاسُ أَشْتَاتًا لِّيُرَوْا أَعْمَالَهُمْ",transliteration:"Yawmaʾidhin yaṣduru n-nāsu ashtātan li-yuraw aʿmālahum",french:"Ce jour-là, les gens sortiront en groupes distincts pour qu'on leur montre leurs oeuvres"},{number:7,arabic:"فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ",transliteration:"Fa-man yaʿmal mithqāla dharratin khayran yarah",french:"Quiconque fait le poids d'un atome de bien le verra"},{number:8,arabic:"وَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ شَرًّا يَرَهُ",transliteration:"Wa-man yaʿmal mithqāla dharratin sharran yarah",french:"et quiconque fait le poids d'un atome de mal le verra"}],
-  100:[{number:1,arabic:"وَالْعَادِيَاتِ ضَبْحًا",transliteration:"Wa-l-ʿādiyāti ḍabḥā",french:"Par les cavales soufflantes"},{number:2,arabic:"فَالْمُورِيَاتِ قَدْحًا",transliteration:"Fa-l-mūriyāti qadḥā",french:"et celles qui font jaillir des étincelles"},{number:3,arabic:"فَالْمُغِيرَاتِ صُبْحًا",transliteration:"Fa-l-muġīrāti ṣubḥā",french:"et celles qui attaquent au matin"},{number:4,arabic:"فَأَثَرْنَ بِهِ نَقْعًا",transliteration:"Fa-atharna bihī naqʿā",french:"et soulèvent un nuage de poussière"},{number:5,arabic:"فَوَسَطْنَ بِهِ جَمْعًا",transliteration:"Fa-wasaṭna bihī jamʿā",french:"et se trouvent au milieu d'un rassemblement"},{number:6,arabic:"إِنَّ الْإِنسَانَ لِرَبِّهِ لَكَنُودٌ",transliteration:"Inna l-insāna li-rabbihī la-kanūd",french:"L'homme est vraiment ingrat envers son Seigneur"},{number:7,arabic:"وَإِنَّهُ عَلَىٰ ذَٰلِكَ لَشَهِيدٌ",transliteration:"Wa-innahū ʿalā dhālika la-shahīd",french:"et lui-même en est témoin"},{number:8,arabic:"وَإِنَّهُ لِحُبِّ الْخَيْرِ لَشَدِيدٌ",transliteration:"Wa-innahū li-ḥubbi l-khayri la-shadīd",french:"et il est vraiment ardent dans l'amour des richesses"},{number:9,arabic:"أَفَلَا يَعْلَمُ إِذَا بُعْثِرَ مَا فِي الْقُبُورِ",transliteration:"Afa-lā yaʿlamu idhā buʿthira mā fī l-qubūr",french:"Ne sait-il pas que lorsque sera dispersé ce qui est dans les tombes"},{number:10,arabic:"وَحُصِّلَ مَا فِي الصُّدُورِ",transliteration:"Wa-ḥuṣṣila mā fī ṣ-ṣudūr",french:"et que sera divulgué ce qui est dans les poitrines"},{number:11,arabic:"إِنَّ رَبَّهُم بِهِمْ يَوْمَئِذٍ لَّخَبِيرٌ",transliteration:"Inna rabbahum bihim yawmaʾidhin la-khabīr",french:"leur Seigneur, ce jour-là, les connaît parfaitement"}],
-  101:[{number:1,arabic:"الْقَارِعَةُ",transliteration:"Al-qāriʿa",french:"La Frappe"},{number:2,arabic:"مَا الْقَارِعَةُ",transliteration:"Ma l-qāriʿa",french:"Qu'est-ce que la Frappe ?"},{number:3,arabic:"وَمَا أَدْرَاكَ مَا الْقَارِعَةُ",transliteration:"Wa-mā adrāka ma l-qāriʿa",french:"Et qui te dira ce qu'est la Frappe ?"},{number:4,arabic:"يَوْمَ يَكُونُ النَّاسُ كَالْفَرَاشِ الْمَبْثُوثِ",transliteration:"Yawma yakūnu n-nāsu ka-l-farāshi l-mabthūth",french:"Le jour où les gens seront comme des papillons éparpillés"},{number:5,arabic:"وَتَكُونُ الْجِبَالُ كَالْعِهْنِ الْمَنفُوشِ",transliteration:"Wa-takūnu l-jibālu ka-l-ʿihni l-manfūsh",french:"et les montagnes comme de la laine cardée"},{number:6,arabic:"فَأَمَّا مَن ثَقُلَتْ مَوَازِينُهُ",transliteration:"Fa-ammā man thaqulat mawāzīnuh",french:"Quant à celui dont la balance est lourde"},{number:7,arabic:"فَهُوَ فِي عِيشَةٍ رَّاضِيَةٍ",transliteration:"Fa-huwa fī ʿīshatin rāḍiya",french:"il sera dans une vie agréable"},{number:8,arabic:"وَأَمَّا مَنْ خَفَّتْ مَوَازِينُهُ",transliteration:"Wa-ammā man khaffat mawāzīnuh",french:"Mais quant à celui dont la balance est légère"},{number:9,arabic:"فَأُمُّهُ هَاوِيَةٌ",transliteration:"Fa-ummuhū hāwiya",french:"sa mère est le gouffre"},{number:10,arabic:"وَمَا أَدْرَاكَ مَا هِيَهْ",transliteration:"Wa-mā adrāka mā hiyah",french:"Et qui te dira ce que c'est ?"},{number:11,arabic:"نَارٌ حَامِيَةٌ",transliteration:"Nārun ḥāmiya",french:"C'est un feu ardent"}],
-  102:[{number:1,arabic:"أَلْهَاكُمُ التَّكَاثُرُ",transliteration:"Alhākumu t-takāthur",french:"La course aux richesses vous distrait"},{number:2,arabic:"حَتَّىٰ زُرْتُمُ الْمَقَابِرَ",transliteration:"Ḥattā zurtumu l-maqābir",french:"jusqu'à ce que vous visitiez les tombes"},{number:3,arabic:"كَلَّا سَوْفَ تَعْلَمُونَ",transliteration:"Kallā sawfa taʿlamūn",french:"Certainement, vous saurez bientôt"},{number:4,arabic:"ثُمَّ كَلَّا سَوْفَ تَعْلَمُونَ",transliteration:"Thumma kallā sawfa taʿlamūn",french:"Puis certes, vous saurez bientôt"},{number:5,arabic:"كَلَّا لَوْ تَعْلَمُونَ عِلْمَ الْيَقِينِ",transliteration:"Kallā law taʿlamūna ʿilma l-yaqīn",french:"Certes, si vous saviez d'une certitude absolue"},{number:6,arabic:"لَتَرَوُنَّ الْجَحِيمَ",transliteration:"La-tarawunna l-jaḥīm",french:"vous verrez certainement la Fournaise"},{number:7,arabic:"ثُمَّ لَتَرَوُنَّهَا عَيْنَ الْيَقِينِ",transliteration:"Thumma la-tarawunnahā ʿayna l-yaqīn",french:"puis vous la verrez de la certitude absolue"},{number:8,arabic:"ثُمَّ لَتُسْأَلُنَّ يَوْمَئِذٍ عَنِ النَّعِيمِ",transliteration:"Thumma la-tusʾalunna yawmaʾidhin ʿani n-naʿīm",french:"puis ce jour-là, vous serez interrogés sur les délices"}],
-  104:[{number:1,arabic:"وَيْلٌ لِّكُلِّ هُمَزَةٍ لُّمَزَةٍ",transliteration:"Waylun li-kulli humazatin lumazah",french:"Malheur à tout calomniateur, diffamateur"},{number:2,arabic:"الَّذِي جَمَعَ مَالًا وَعَدَّدَهُ",transliteration:"Alladhī jamaʿa mālan wa-ʿaddadah",french:"qui amasse des richesses et les compte"},{number:3,arabic:"يَحْسَبُ أَنَّ مَالَهُ أَخْلَدَهُ",transliteration:"Yaḥsabu anna mālahu akhladah",french:"Il pense que sa richesse le rendra immortel"},{number:4,arabic:"كَلَّا لَيُنبَذَنَّ فِي الْحُطَمَةِ",transliteration:"Kallā la-yunbadhanna fī l-ḥuṭama",french:"Mais non ! Il sera jeté dans Al-Hutama"},{number:5,arabic:"وَمَا أَدْرَاكَ مَا الْحُطَمَةُ",transliteration:"Wa-mā adrāka ma l-ḥuṭama",french:"Et qui te dira ce qu'est Al-Hutama ?"},{number:6,arabic:"نَارُ اللَّهِ الْمُوقَدَةُ",transliteration:"Nāru llāhi l-mūqada",french:"C'est le feu d'Allah allumé"},{number:7,arabic:"الَّتِي تَطَّلِعُ عَلَى الْأَفْئِدَةِ",transliteration:"Allatī taṭṭaliʿu ʿalā l-afʾida",french:"qui monte jusqu'aux coeurs"},{number:8,arabic:"إِنَّهَا عَلَيْهِم مُّؤْصَدَةٌ",transliteration:"Innahā ʿalayhim muʾṣada",french:"Il se referme sur eux"},{number:9,arabic:"فِي عَمَدٍ مُّمَدَّدَةٍ",transliteration:"Fī ʿamadin mumaddada",french:"en colonnes allongées"}],
-  111:[{number:1,arabic:"تَبَّتْ يَدَا أَبِي لَهَبٍ وَتَبَّ",transliteration:"Tabbat yadā abī lahabin wa-tabb",french:"Que périssent les deux mains d'Abī Lahab, et qu'il périsse"},{number:2,arabic:"مَا أَغْنَىٰ عَنْهُ مَالُهُ وَمَا كَسَبَ",transliteration:"Mā aġnā ʿanhu māluhu wa-mā kasab",french:"Sa richesse et ce qu'il a acquis ne lui ont servi à rien"},{number:3,arabic:"سَيَصْلَىٰ نَارًا ذَاتَ لَهَبٍ",transliteration:"Sa-yaṣlā nāran dhāta lahab",french:"Il sera brûlé dans un feu plein de flammes"},{number:4,arabic:"وَامْرَأَتُهُ حَمَّالَةَ الْحَطَبِ",transliteration:"Wa-mraʾatuhū ḥammālata l-ḥaṭab",french:"Et sa femme, la porteuse de bois"},{number:5,arabic:"فِي جِيدِهَا حَبْلٌ مِّن مَّسَدٍ",transliteration:"Fī jīdihā ḥablun min masad",french:"avec une corde de fibres autour du cou"}],
-
-};
 
 // ════════════════════════════════════════════════════════════════════
 // API & HOOKS VERSETS
