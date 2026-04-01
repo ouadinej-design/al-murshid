@@ -1978,36 +1978,35 @@ export default function App() {
 
   return (
     <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
-      <header className="flex items-center justify-between px-5 py-3.5 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0">
+      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
-            <span className="text-2xl">🕌</span> Al-Murshid
+          <h1 className="text-base font-black tracking-tight text-white flex items-center gap-1.5">
+            <span className="text-lg">🕌</span> Al-Murshid
           </h1>
-          <p className="text-[10px] text-slate-600 font-medium tracking-widest uppercase -mt-0.5">المرشد — Guide Coranique</p>
+          <p className="text-[9px] text-slate-600 font-medium tracking-widest uppercase -mt-0.5">المرشد — Guide Coranique</p>
         </div>
-        <button onClick={() => setStatsOpen(true)} className="p-2.5 hover:bg-white/10 rounded-2xl transition-all text-slate-500 hover:text-white border border-white/8 hover:border-white/20">
-          <Activity className="w-5 h-5"/>
+        <button onClick={() => setStatsOpen(true)} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-500 hover:text-white border border-white/8 hover:border-white/20">
+          <Activity className="w-4 h-4"/>
         </button>
       </header>
 
       {/* Layout principal : nav gauche + contenu */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Nav verticale gauche */}
-        <nav className="shrink-0 flex flex-col items-center gap-1 py-3 px-1.5 bg-slate-950/95 backdrop-blur-xl border-r border-white/8 w-16">
-          {PAGES.map(({ key, shortLabel }) => {
+        {/* Nav verticale gauche — icônes seules */}
+        <nav className="shrink-0 flex flex-col items-center gap-1 py-3 px-1 bg-slate-950/95 backdrop-blur-xl border-r border-white/8 w-11">
+          {PAGES.map(({ key }) => {
             const active = page === key;
             return (
-              <motion.button key={key} whileTap={{ scale: 0.90 }} onClick={() => setPage(key)}
-                className={`w-12 flex flex-col items-center justify-center gap-1 rounded-2xl py-3 transition-all ${active ? "bg-gradient-to-b from-emerald-600/25 to-teal-600/15 border border-emerald-500/30 shadow-lg shadow-emerald-500/10" : "hover:bg-white/5 border border-transparent"}`}>
-                <span className="text-xl leading-none">
+              <motion.button key={key} whileTap={{ scale: 0.88 }} onClick={() => setPage(key)}
+                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${active ? "bg-gradient-to-b from-emerald-600/30 to-teal-600/20 border border-emerald-500/40 shadow-md shadow-emerald-500/15" : "hover:bg-white/8 border border-transparent"}`}>
+                <span className="text-base leading-none">
                   {key === "quran"     && "📖"}
                   {key === "program"   && "📅"}
                   {key === "bookmarks" && "🔖"}
                   {key === "adhkar"    && "📿"}
                   {key === "learn"     && "🎓"}
                 </span>
-                <span className={`text-[8px] font-bold leading-none text-center w-full px-0.5 ${active ? "text-emerald-300" : "text-slate-600"}`} style={{wordBreak:"break-word"}}>{shortLabel}</span>
               </motion.button>
             );
           })}
