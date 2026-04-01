@@ -501,7 +501,6 @@ function useAudio() {
   // Tente chaque CDN en séquence, TTS seulement si tous échouent
   const tryPlay = useCallback((surah, verse, key, cdnIdx, onDone) => {
     if (cdnIdx >= AUDIO_CDNS.length) {
-      // Tous CDN échoués → TTS en dernier recours
       setLoading(null);
       const text = getVerseText(surah, verse);
       if (TTS_READY && text) {
@@ -511,17 +510,21 @@ function useAudio() {
       return;
     }
     const url = AUDIO_CDNS[cdnIdx](surah, verse);
-    if (ref.current) { ref.current.onended = null; ref.current.onerror = null; ref.current.pause(); }
-    const a = new Audio(url);
+    if (ref.current) { ref.current.onended=null; ref.current.onerror=null; ref.current.pause(); }
+    const a = new Audio();
     ref.current = a;
     if (cdnIdx === 0) setLoading(key);
-    a.onended = () => { setPlaying(null); setLoading(null); onDone && onDone(); };
-    a.onerror = () => { setLoading(null); tryPlay(surah, verse, key, cdnIdx + 1, onDone); };
-    const p = a.play();
-    if (p) {
-      p.then(() => { setLoading(null); setPlaying(key); })
-       .catch(() => { setLoading(null); tryPlay(surah, verse, key, cdnIdx + 1, onDone); });
-    } else { setLoading(null); setPlaying(key); }
+    let done = false;
+    const fail = () => { if(done) return; done=true; setLoading(null); tryPlay(surah, verse, key, cdnIdx+1, onDone); };
+    const succeed = () => { setLoading(null); setPlaying(key); };
+    const ended = () => { setPlaying(null); onDone && onDone(); };
+    const timeout = setTimeout(() => { a.play().then(succeed).catch(fail); }, 200);
+    a.oncanplaythrough = () => { clearTimeout(timeout); a.play().then(succeed).catch(fail); };
+    a.onended = ended;
+    a.onerror = fail;
+    a.src = url;
+    a.preload = "auto";
+    a.load();
   }, []);
 
   const playVerse = useCallback((surah, verse) => {
@@ -585,20 +588,35 @@ function SuratesTab() {
     if (stopRef2.current || idx >= verses.length) { setPlayingSurah(null); setPlayingVerse(0); return; }
     const v = verses[idx];
     setPlayingVerse(v.n);
-    const url = mkUrl(rec.id, surahNum, v.n);
-    const a = new Audio(url);
+    const slug = RECITER_SLUGS[rec.id] || "ar.alafasy";
+    const gv = toGlobal(surahNum, v.n);
+    const url = `https://cdn.islamic.network/quran/audio/128/${slug}/${gv}.mp3`;
+
+    if (audioRef2.current) { audioRef2.current.onended=null; audioRef2.current.onerror=null; audioRef2.current.pause(); }
+    const a = new Audio();
     audioRef2.current = a;
-    a.onended = () => playSurahChain(rec, surahNum, verses, idx+1);
-    a.onerror = () => {
+    let done = false;
+    const next = () => { if(done) return; done=true; playSurahChain(rec, surahNum, verses, idx+1); };
+    const fail = () => {
+      if(done) return; done=true;
       if (rec.id !== "alafasy") {
-        const fb = new Audio(mkUrl("alafasy", surahNum, v.n));
-        audioRef2.current = fb;
-        fb.onended = () => playSurahChain(rec, surahNum, verses, idx+1);
-        fb.onerror = () => playSurahChain(rec, surahNum, verses, idx+1);
-        fb.play().catch(() => playSurahChain(rec, surahNum, verses, idx+1));
-      } else playSurahChain(rec, surahNum, verses, idx+1);
+        const fa = new Audio();
+        audioRef2.current = fa;
+        fa.src = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${gv}.mp3`;
+        fa.preload = "auto";
+        fa.onended = next; fa.onerror = next;
+        fa.load();
+        const ft = setTimeout(()=>{ fa.play().catch(next); }, 100);
+        fa.oncanplaythrough = () => { clearTimeout(ft); fa.play().catch(next); };
+      } else { next(); }
     };
-    a.play().catch(() => a.onerror && a.onerror());
+    const timeout = setTimeout(() => { a.play().catch(fail); }, 200);
+    a.oncanplaythrough = () => { clearTimeout(timeout); a.play().catch(fail); };
+    a.onended = next;
+    a.onerror = fail;
+    a.src = url;
+    a.preload = "auto";
+    a.load();
   };
 
   const handlePlaySurah = (rec, surah) => {
