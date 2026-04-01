@@ -1989,11 +1989,34 @@ export default function App() {
           <Activity className="w-5 h-5"/>
         </button>
       </header>
-      <main className="flex-1 overflow-hidden relative">
+
+      {/* Layout principal : nav gauche + contenu */}
+      <div className="flex flex-1 overflow-hidden">
+
+        {/* Nav verticale gauche */}
+        <nav className="shrink-0 flex flex-col items-center gap-1 py-3 px-1.5 bg-slate-950/95 backdrop-blur-xl border-r border-white/8 w-16">
+          {PAGES.map(({ key, shortLabel }) => {
+            const active = page === key;
+            return (
+              <motion.button key={key} whileTap={{ scale: 0.90 }} onClick={() => setPage(key)}
+                className={`w-12 flex flex-col items-center justify-center gap-1 rounded-2xl py-3 transition-all ${active ? "bg-gradient-to-b from-emerald-600/25 to-teal-600/15 border border-emerald-500/30 shadow-lg shadow-emerald-500/10" : "hover:bg-white/5 border border-transparent"}`}>
+                <span className="text-xl leading-none">
+                  {key === "quran"     && "📖"}
+                  {key === "program"   && "📅"}
+                  {key === "bookmarks" && "🔖"}
+                  {key === "adhkar"    && "📿"}
+                  {key === "learn"     && "🎓"}
+                </span>
+                <span className={`text-[8px] font-bold leading-none text-center w-full px-0.5 ${active ? "text-emerald-300" : "text-slate-600"}`} style={{wordBreak:"break-word"}}>{shortLabel}</span>
+              </motion.button>
+            );
+          })}
+        </nav>
+        <main className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {page === "quran" && (
             <motion.div key="quran" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
               <QuranReader
                 initialSurahNum={navTarget?.surahNum}
                 initialVerseNum={navTarget?.verseNum}
@@ -2007,50 +2030,31 @@ export default function App() {
           )}
           {page === "program" && (
             <motion.div key="program" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
               <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>
             </motion.div>
           )}
           {page === "bookmarks" && (
             <motion.div key="bookmarks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
               <BookmarksPage/>
             </motion.div>
           )}
           {page === "adhkar" && (
             <motion.div key="adhkar" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
               <AdhkarPage fridayKahf={fridayKahf}/>
             </motion.div>
           )}
           {page === "learn" && (
             <motion.div key="learn" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 120px)" }}>
+              className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 64px)" }}>
               <LearnScreen/>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
-      <nav className="shrink-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/8 px-2 py-2 safe-area-bottom">
-        <div className="flex items-stretch gap-1 max-w-lg mx-auto">
-          {PAGES.map(({ key, label, shortLabel }) => {
-            const active = page === key;
-            return (
-              <motion.button key={key} whileTap={{ scale: 0.92 }} onClick={() => setPage(key)}
-                className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl py-2 px-1 transition-all min-w-0 ${active ? "bg-gradient-to-b from-emerald-600/25 to-teal-600/15 border border-emerald-500/30 shadow-lg shadow-emerald-500/10" : "hover:bg-white/5 border border-transparent"}`}>
-                <span className="text-lg leading-none">
-                  {key === "quran"     && "📖"}
-                  {key === "program"   && "📅"}
-                  {key === "bookmarks" && "🔖"}
-                  {key === "adhkar"    && "📿"}
-                  {key === "learn"     && "🎓"}
-                </span>
-                <span className={`text-[9px] font-bold leading-none truncate max-w-full ${active ? "text-emerald-300" : "text-slate-600"}`}>{shortLabel}</span>
-              </motion.button>
-            );
-          })}
-        </div>
-      </nav>
+      </div>{/* end flex row */}
       <StatsDrawer isOpen={statsOpen} onClose={() => setStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram}/>
     </div>
   );
