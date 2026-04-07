@@ -1091,7 +1091,7 @@ function ImamAudioButton({ surah }) {
 
   useEffect(()=>{
     const a=audioRef.current; if(!a) return;
-    a.pause(); a.currentTime=0; a.src=""; setStatus("idle");
+    a.pause(); a.currentTime=0; setStatus("idle");
   },[surah?.number]);
 
   // RÈGLE ANDROID : juste src= puis play(), JAMAIS load() entre les deux
@@ -1121,7 +1121,7 @@ function ImamAudioButton({ surah }) {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:"6px",width:"100%"}}>
-      <audio ref={audioRef} preload="none" style={{display:"none"}}/>
+      <audio ref={audioRef} preload="none" crossOrigin="anonymous" style={{display:"none"}}/>
 
       <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
         <div style={{position:"relative"}}>
