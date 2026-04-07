@@ -716,7 +716,7 @@ function SuratesTab() {
                                 )}
                               </div>
                               <span style={{color:"#64748b",fontSize:"0.7rem",fontStyle:"italic"}}>
-                                {playingSurah===surah.number ? {playing:"En lecture…",paused:"En pause",idle:""}[audioStatus] : ""}
+                                {playingSurah===surah.number && audioStatus==="playing" ? "En lecture…" : playingSurah===surah.number && audioStatus==="paused" ? "En pause" : ""}
                               </span>
                             </div>
                             {/* Play / Pause / Stop */}
