@@ -435,19 +435,19 @@ function getDueCards(cards) {
 const TTS_READY = typeof window !== "undefined" && "speechSynthesis" in window;
 
 const LEARN_RECITERS = [
-  { id:"alafasy",  name:"Alafasy",     folder:"Alafasy_128kbps" },
-  { id:"husary",   name:"Al-Husary",   folder:"Husary_128kbps" },
-  { id:"sudais",   name:"Al-Sudais",   folder:"Abdurrahmaan_As-Sudais_192kbps" },
-  { id:"ghamdi",   name:"Al-Ghamdi",   folder:"Saad_Al-Ghamdi_128kbps" },
-  { id:"dosari",   name:"Al-Dosari",   folder:"Yasser_Ad-Dossari_128kbps" },
+  { id:"alafasy", name:"Alafasy",   url: n => `https://server8.mp3quran.net/afs/${n}.mp3` },
+  { id:"sudais",  name:"Al-Sudais", url: n => `https://server11.mp3quran.net/sds/${n}.mp3` },
+  { id:"ghamdi",  name:"Al-Ghamdi", url: n => `https://server7.mp3quran.net/s_gmd/${n}.mp3` },
+  { id:"husary",  name:"Al-Husary", url: n => `https://server13.mp3quran.net/husr/${n}.mp3` },
+  { id:"dosari",  name:"Al-Dosari", url: n => `https://server11.mp3quran.net/yasser/${n}.mp3` },
 ];
 
 const p3ls = n => String(n).padStart(3, "0");
-const learnUrl = (rec, surahNum, verseNum) =>
-  `https://everyayah.com/data/${rec.folder}/${p3ls(surahNum)}${p3ls(verseNum)}.mp3`;
+// URL sourate complète
+const learnUrl = (rec, surahNum) => rec.url(p3ls(surahNum));
 
 const AUDIO_CDNS = [
-  (s,v) => learnUrl(LEARN_RECITERS[0], s, v),
+  (s,v) => `https://server8.mp3quran.net/afs/${p3ls(s)}.mp3`,
 ];
 
 function speakArabicTTS(text, rate = 0.65, onEnd) {
@@ -556,52 +556,26 @@ function SuratesTab() {
   const [reciterId, setReciterId] = useState("alafasy");
   const [showReciterMenu, setShowReciterMenu] = useState(null);
   const [playingSurah, setPlayingSurah] = useState(null);
-  const [playingVerse, setPlayingVerse] = useState(0);
   const audioRef2 = useRef(null);
-  // Garde l'état dans une ref pour les callbacks
-  const playStateLS = useRef({ idx:0, recId:"alafasy", surahNum:1, verses:[], stop:false });
   const audio = useAudio();
 
   const masteredCount = mastered.length;
   const reciter = LEARN_RECITERS.find(r => r.id === reciterId) || LEARN_RECITERS[0];
 
   const stopSurah = () => {
-    playStateLS.current.stop = true;
-    if (audioRef2.current) { audioRef2.current.pause(); audioRef2.current.src = ""; }
-    setPlayingSurah(null); setPlayingVerse(0);
+    if (audioRef2.current) { audioRef2.current.pause(); audioRef2.current.currentTime = 0; }
+    setPlayingSurah(null);
   };
-
-  const playIdxLS = useCallback((idx) => {
-    const { recId, surahNum, verses, stop } = playStateLS.current;
-    if (stop || idx >= verses.length) { setPlayingSurah(null); setPlayingVerse(0); return; }
-    const v = verses[idx];
-    playStateLS.current.idx = idx;
-    setPlayingVerse(v.n);
-    const a = audioRef2.current;
-    if (!a) return;
-    const rec = LEARN_RECITERS.find(r => r.id === recId) || LEARN_RECITERS[0];
-    a.src = learnUrl(rec, surahNum, v.n);
-    a.play().catch(() => {
-      a.src = learnUrl(LEARN_RECITERS[0], surahNum, v.n);
-      a.play().catch(() => playIdxLS(idx + 1));
-    });
-  }, []);
 
   const handlePlaySurah = (rec, surah) => {
     if (!audioRef2.current) return;
-    playStateLS.current = { idx:0, recId:rec.id, surahNum:surah.number, verses:surah.verses, stop:false };
+    const a = audioRef2.current;
     setReciterId(rec.id);
     setPlayingSurah(surah.number);
     setShowReciterMenu(null);
-    const a = audioRef2.current;
-    a.onended = () => playIdxLS(playStateLS.current.idx + 1);
-    const v = surah.verses[0];
-    setPlayingVerse(v.n);
-    a.src = learnUrl(rec, surah.number, v.n);
-    a.play().catch(() => {
-      a.src = learnUrl(LEARN_RECITERS[0], surah.number, v.n);
-      a.play().catch(() => setPlayingSurah(null));
-    });
+    a.src = learnUrl(rec, surah.number);
+    a.onended = () => setPlayingSurah(null);
+    a.play().catch(() => setPlayingSurah(null));
   };
 
   const markMastered = (surahNumber) => {
@@ -689,7 +663,7 @@ function SuratesTab() {
                             {playingSurah === surah.number ? (
                               <button onClick={stopSurah}
                                 style={{background:"#ef4444",color:"white",border:"none",borderRadius:"12px",padding:"8px 14px",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"6px"}}>
-                                ⏹ Stop · v.{playingVerse}
+                                ⏹ Stop
                               </button>
                             ) : (
                               <div style={{display:"flex",gap:"4px"}}>
