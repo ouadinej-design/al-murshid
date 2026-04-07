@@ -604,7 +604,7 @@ function SuratesTab() {
 
   return (
     <div className="space-y-4">
-      <audio ref={audioRef} preload="none" style={{display:"none"}}/>
+      <audio ref={audioRef} preload="none" crossOrigin="anonymous" style={{display:"none"}}/>
 
       {/* Progression */}
       <div className="p-4 bg-white/5 border border-white/8 rounded-2xl">
@@ -656,7 +656,7 @@ function SuratesTab() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-bold text-sm">{surah.name}</p>
-                        <p className="text-slate-600 text-xs">{surah.verses} versets</p>
+                        <p className="text-slate-600 text-xs">{surah.verses.length} versets</p>
                       </div>
                       {isMastered && <span className="text-emerald-400 text-lg shrink-0">✅</span>}
                       <p className="font-serif text-slate-500 text-xl shrink-0" dir="rtl">{surah.arabic}</p>
