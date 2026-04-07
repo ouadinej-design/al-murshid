@@ -1063,6 +1063,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
 // COMPOSANT — QuranReader
 // IMAM AUDIO — approche standard apps Coran
 // ── Récitateurs — sourate complète (mp3quran.net) ──────────────────
+// ── Récitateurs — mp3quran.net (sourate complète, même approche que les apps standard)
 const RECITERS = [
   { id:"alafasy", name:"Alafasy",     url: n => `https://server8.mp3quran.net/afs/${n}.mp3` },
   { id:"sudais",  name:"Al-Sudais",   url: n => `https://server11.mp3quran.net/sds/${n}.mp3` },
@@ -1075,34 +1076,55 @@ function ImamAudioButton({ surah }) {
   const audioRef = useRef(null);
   const [reciterId, setReciterId] = useState("alafasy");
   const [showPicker, setShowPicker] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | playing | paused
+  const [speed, setSpeed] = useState(1.0);
 
   const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
   const surahCode = String(surah?.number || 1).padStart(3, "0");
 
+  // Sync events
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    a.onplay  = () => setIsPlaying(true);
-    a.onpause = () => setIsPlaying(false);
-    a.onended = () => setIsPlaying(false);
+    const onPlay  = () => setStatus("playing");
+    const onPause = () => setStatus("paused");
+    const onEnded = () => setStatus("idle");
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
+    a.addEventListener("ended", onEnded);
+    return () => {
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
+      a.removeEventListener("ended", onEnded);
+    };
   }, []);
 
+  // Reset when surah changes
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
     a.pause();
-    a.src = reciter.url(surahCode);
-    setIsPlaying(false);
-  }, [surah?.number, reciterId]);
+    a.currentTime = 0;
+    a.src = "";
+    setStatus("idle");
+  }, [surah?.number]);
 
   const handlePlay = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (!a.src || a.src === window.location.href) {
-      a.src = reciter.url(surahCode);
+    if (status === "paused") {
+      a.play().catch(() => {});
+      return;
     }
+    // Nouvelle lecture
+    a.src = reciter.url(surahCode);
+    a.playbackRate = speed;
+    a.load();
     a.play().catch(() => {});
+  };
+
+  const handlePause = () => {
+    audioRef.current?.pause();
   };
 
   const handleStop = () => {
@@ -1110,45 +1132,88 @@ function ImamAudioButton({ surah }) {
     if (!a) return;
     a.pause();
     a.currentTime = 0;
+    setStatus("idle");
   };
 
+  const handleSpeed = (v) => {
+    setSpeed(v);
+    if (audioRef.current) audioRef.current.playbackRate = v;
+  };
+
+  const changeReciter = (id) => {
+    setReciterId(id);
+    setShowPicker(false);
+    // Si en cours → relancer avec nouveau récitateur
+    if (status === "playing" || status === "paused") {
+      const a = audioRef.current;
+      if (!a) return;
+      const wasPlaying = status === "playing";
+      const t = a.currentTime;
+      const rec = RECITERS.find(r => r.id === id) || RECITERS[0];
+      a.src = rec.url(surahCode);
+      a.playbackRate = speed;
+      a.load();
+      a.currentTime = t;
+      if (wasPlaying) a.play().catch(() => {});
+    }
+  };
+
+  const statusLabel = { idle:"Prêt", playing:"En lecture…", paused:"En pause" }[status];
+
   return (
-    <div style={{display:"inline-flex", gap:"4px", alignItems:"center"}}>
+    <div style={{display:"flex", flexDirection:"column", gap:"6px", flex:1}}>
       <audio ref={audioRef} preload="none" style={{display:"none"}}/>
 
-      {isPlaying ? (
-        <button onClick={handleStop}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold active:scale-95">
-          <Pause className="w-3.5 h-3.5"/> Stop
-        </button>
-      ) : (
-        <button onClick={handlePlay}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold active:scale-95">
-          <Volume2 className="w-3.5 h-3.5"/> {reciter.name}
-        </button>
-      )}
+      {/* Ligne récitateur + statut */}
+      <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
+        <div style={{position:"relative"}}>
+          <button onClick={() => setShowPicker(p => !p)}
+            style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"10px",padding:"5px 10px",color:"white",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer",display:"flex",alignItems:"center",gap:"4px"}}>
+            🎙️ {reciter.name} ▾
+          </button>
+          {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>}
+          {showPicker && (
+            <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"180px",boxShadow:"0 8px 32px rgba(0,0,0,0.8)"}}>
+              <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
+              {RECITERS.map(r => (
+                <button key={r.id} onClick={() => changeReciter(r.id)}
+                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.82rem",fontWeight:"bold",cursor:"pointer"}}>
+                  {r.id===reciterId?"▶ ":"   "}{r.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <span style={{color:"#64748b",fontSize:"0.7rem",fontStyle:"italic"}}>{statusLabel}</span>
+      </div>
 
-      <div style={{position:"relative"}}>
-        <button onClick={() => setShowPicker(p => !p)}
-          className="px-2 py-1.5 bg-white/8 border border-white/15 text-slate-400 rounded-xl text-xs font-bold active:scale-95">
-          ▾
+      {/* Boutons Play / Pause / Stop */}
+      <div style={{display:"flex", gap:"5px"}}>
+        <button onClick={handlePlay} disabled={status === "playing"}
+          style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:status==="playing"?"#064e3b":"#059669",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:status==="playing"?0.6:1,transition:"all 0.2s"}}>
+          ▶ PLAY
         </button>
-        {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>}
-        {showPicker && (
-          <div style={{position:"absolute",top:"calc(100% + 4px)",right:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"14px",padding:"6px",minWidth:"175px",boxShadow:"0 8px 32px rgba(0,0,0,0.7)"}}>
-            <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"4px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur — sourate complète</p>
-            {RECITERS.map(r => (
-              <button key={r.id} onClick={() => { setReciterId(r.id); setShowPicker(false); }}
-                style={{display:"block",width:"100%",textAlign:"left",padding:"9px 12px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
-                {r.id===reciterId?"▶ ":"   "}{r.name}
-              </button>
-            ))}
-          </div>
-        )}
+        <button onClick={handlePause} disabled={status !== "playing"}
+          style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#d97706",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:status!=="playing"?0.4:1,transition:"all 0.2s"}}>
+          ⏸ PAUSE
+        </button>
+        <button onClick={handleStop} disabled={status === "idle"}
+          style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#dc2626",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:status==="idle"?0.4:1,transition:"all 0.2s"}}>
+          ⏹ STOP
+        </button>
+      </div>
+
+      {/* Vitesse */}
+      <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"8px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
+        <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
+        <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
+          onChange={e => handleSpeed(parseFloat(e.target.value))}
+          style={{flex:1, accentColor:"#10b981", height:"4px"}}/>
       </div>
     </div>
   );
 }
+
 
 
 
@@ -1260,18 +1325,21 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="flex items-center gap-2 px-4 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0">
-          <button onClick={() => { setCurrentSurah(null); setAutoScroll(false); }} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><ChevronLeft className="w-5 h-5"/></button>
-          <div className="flex-1 text-center">
-            <p className="font-bold text-white text-sm">{currentSurah.name}</p>
-            <p className="text-slate-500 text-xs">{versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}</p>
+        <div className="px-4 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0 space-y-3">
+          {/* Ligne titre */}
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setCurrentSurah(null); setAutoScroll(false); }} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><ChevronLeft className="w-5 h-5"/></button>
+            <div className="flex-1 text-center">
+              <p className="font-bold text-white text-sm">{currentSurah.name}</p>
+              <p className="text-slate-500 text-xs">{versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}</p>
+            </div>
+            <button onClick={() => toggle(currentSurah.number)}
+              className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`} title="Marquer comme lue">
+              <CheckCircle className="w-5 h-5"/>
+            </button>
           </div>
-          {/* Bouton Imam audio */}
+          {/* Lecteur Imam */}
           <ImamAudioButton surah={currentSurah}/>
-          <button onClick={() => toggle(currentSurah.number)}
-            className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`} title="Marquer comme lue">
-            <CheckCircle className="w-5 h-5"/>
-          </button>
         </div>
         <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/80 border-b border-white/5 shrink-0">
           <button onClick={() => setAutoScroll(a => !a)}
