@@ -1072,111 +1072,81 @@ const RECITERS = [
   { id:"dosari",  name:"Al-Dosari",   url: n => `https://server11.mp3quran.net/yasser/${n}.mp3` },
 ];
 
+// ── Récitateurs mp3quran.net — 1 fichier MP3 par sourate ──────────
+const RECITERS = [
+  { id:"alafasy", name:"Alafasy",   url: n=>`https://server8.mp3quran.net/afs/${n}.mp3` },
+  { id:"sudais",  name:"Al-Sudais", url: n=>`https://server11.mp3quran.net/sds/${n}.mp3` },
+  { id:"ghamdi",  name:"Al-Ghamdi", url: n=>`https://server7.mp3quran.net/s_gmd/${n}.mp3` },
+  { id:"husary",  name:"Al-Husary", url: n=>`https://server13.mp3quran.net/husr/${n}.mp3` },
+  { id:"dosari",  name:"Al-Dosari", url: n=>`https://server11.mp3quran.net/yasser/${n}.mp3` },
+];
+
 function ImamAudioButton({ surah }) {
   const audioRef = useRef(null);
   const [reciterId, setReciterId] = useState("alafasy");
   const [showPicker, setShowPicker] = useState(false);
-  const [status, setStatus] = useState("idle"); // idle | playing | paused
+  const [status, setStatus] = useState("idle");
   const [speed, setSpeed] = useState(1.0);
+  const reciter = RECITERS.find(r=>r.id===reciterId)||RECITERS[0];
+  const code = String(surah?.number||1).padStart(3,"0");
 
-  const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
-  const surahCode = String(surah?.number || 1).padStart(3, "0");
+  useEffect(()=>{
+    const a=audioRef.current; if(!a) return;
+    const onPlay=()=>setStatus("playing");
+    const onPause=()=>setStatus("paused");
+    const onEnded=()=>setStatus("idle");
+    a.addEventListener("play",onPlay);
+    a.addEventListener("pause",onPause);
+    a.addEventListener("ended",onEnded);
+    return()=>{ a.removeEventListener("play",onPlay); a.removeEventListener("pause",onPause); a.removeEventListener("ended",onEnded); };
+  },[]);
 
-  // Sync events
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    const onPlay  = () => setStatus("playing");
-    const onPause = () => setStatus("paused");
-    const onEnded = () => setStatus("idle");
-    a.addEventListener("play", onPlay);
-    a.addEventListener("pause", onPause);
-    a.addEventListener("ended", onEnded);
-    return () => {
-      a.removeEventListener("play", onPlay);
-      a.removeEventListener("pause", onPause);
-      a.removeEventListener("ended", onEnded);
-    };
-  }, []);
+  useEffect(()=>{
+    const a=audioRef.current; if(!a) return;
+    a.pause(); a.currentTime=0; a.src=""; setStatus("idle");
+  },[surah?.number]);
 
-  // Reset when surah changes
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.pause();
-    a.currentTime = 0;
-    a.src = "";
-    setStatus("idle");
-  }, [surah?.number]);
-
-  const handlePlay = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (status === "paused") {
-      a.play().catch(() => {});
-      return;
-    }
-    // Nouvelle lecture
-    a.src = reciter.url(surahCode);
-    a.playbackRate = speed;
-    a.load();
-    a.play().catch(() => {});
+  // RÈGLE ANDROID : juste src= puis play(), JAMAIS load() entre les deux
+  const play=()=>{
+    const a=audioRef.current; if(!a) return;
+    if(status==="paused"){ a.play().catch(()=>{}); return; }
+    a.src=reciter.url(code);
+    a.playbackRate=speed;
+    a.play().catch(()=>{});
+  };
+  const pause=()=>audioRef.current?.pause();
+  const stop=()=>{ const a=audioRef.current; if(!a)return; a.pause(); a.currentTime=0; };
+  const changeSpeed=(v)=>{ setSpeed(v); if(audioRef.current) audioRef.current.playbackRate=v; };
+  const pickReciter=(id)=>{
+    setReciterId(id); setShowPicker(false);
+    const a=audioRef.current; if(!a||status==="idle") return;
+    const wasPlaying=status==="playing";
+    const t=a.currentTime;
+    const rec=RECITERS.find(r=>r.id===id)||RECITERS[0];
+    a.src=rec.url(code);
+    a.playbackRate=speed;
+    a.currentTime=t;
+    if(wasPlaying) a.play().catch(()=>{});
   };
 
-  const handlePause = () => {
-    audioRef.current?.pause();
-  };
-
-  const handleStop = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    a.pause();
-    a.currentTime = 0;
-    setStatus("idle");
-  };
-
-  const handleSpeed = (v) => {
-    setSpeed(v);
-    if (audioRef.current) audioRef.current.playbackRate = v;
-  };
-
-  const changeReciter = (id) => {
-    setReciterId(id);
-    setShowPicker(false);
-    // Si en cours → relancer avec nouveau récitateur
-    if (status === "playing" || status === "paused") {
-      const a = audioRef.current;
-      if (!a) return;
-      const wasPlaying = status === "playing";
-      const t = a.currentTime;
-      const rec = RECITERS.find(r => r.id === id) || RECITERS[0];
-      a.src = rec.url(surahCode);
-      a.playbackRate = speed;
-      a.load();
-      a.currentTime = t;
-      if (wasPlaying) a.play().catch(() => {});
-    }
-  };
-
-  const statusLabel = { idle:"Prêt", playing:"En lecture…", paused:"En pause" }[status];
+  const label={idle:"Prêt à lire",playing:"En lecture…",paused:"En pause"}[status];
 
   return (
-    <div style={{display:"flex", flexDirection:"column", gap:"6px", flex:1}}>
+    <div style={{display:"flex",flexDirection:"column",gap:"6px",width:"100%"}}>
       <audio ref={audioRef} preload="none" style={{display:"none"}}/>
 
-      {/* Ligne récitateur + statut */}
-      <div style={{display:"flex", alignItems:"center", gap:"6px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
         <div style={{position:"relative"}}>
-          <button onClick={() => setShowPicker(p => !p)}
-            style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"10px",padding:"5px 10px",color:"white",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer",display:"flex",alignItems:"center",gap:"4px"}}>
+          <button onClick={()=>setShowPicker(p=>!p)}
+            style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"10px",padding:"6px 12px",color:"white",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer"}}>
             🎙️ {reciter.name} ▾
           </button>
-          {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>}
-          {showPicker && (
-            <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"180px",boxShadow:"0 8px 32px rgba(0,0,0,0.8)"}}>
+          {showPicker&&<div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowPicker(false)}/>}
+          {showPicker&&(
+            <div style={{position:"absolute",top:"calc(100%+4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"180px",boxShadow:"0 8px 32px #000a"}}>
               <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
-              {RECITERS.map(r => (
-                <button key={r.id} onClick={() => changeReciter(r.id)}
+              {RECITERS.map(r=>(
+                <button key={r.id} onClick={()=>pickReciter(r.id)}
                   style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.82rem",fontWeight:"bold",cursor:"pointer"}}>
                   {r.id===reciterId?"▶ ":"   "}{r.name}
                 </button>
@@ -1184,35 +1154,34 @@ function ImamAudioButton({ surah }) {
             </div>
           )}
         </div>
-        <span style={{color:"#64748b",fontSize:"0.7rem",fontStyle:"italic"}}>{statusLabel}</span>
+        <span style={{color:"#64748b",fontSize:"0.72rem",fontStyle:"italic"}}>{label}</span>
       </div>
 
-      {/* Boutons Play / Pause / Stop */}
-      <div style={{display:"flex", gap:"5px"}}>
-        <button onClick={handlePlay} disabled={status === "playing"}
-          style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:status==="playing"?"#064e3b":"#059669",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:status==="playing"?0.6:1,transition:"all 0.2s"}}>
+      <div style={{display:"flex",gap:"6px"}}>
+        <button onClick={play}
+          style={{flex:1,padding:"9px 4px",borderRadius:"10px",border:"none",background:"#059669",color:"white",fontWeight:"bold",fontSize:"0.82rem",cursor:"pointer",opacity:status==="playing"?0.55:1}}>
           ▶ PLAY
         </button>
-        <button onClick={handlePause} disabled={status !== "playing"}
-          style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#d97706",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:status!=="playing"?0.4:1,transition:"all 0.2s"}}>
+        <button onClick={pause}
+          style={{flex:1,padding:"9px 4px",borderRadius:"10px",border:"none",background:"#d97706",color:"white",fontWeight:"bold",fontSize:"0.82rem",cursor:"pointer",opacity:status!=="playing"?0.4:1}}>
           ⏸ PAUSE
         </button>
-        <button onClick={handleStop} disabled={status === "idle"}
-          style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#dc2626",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:status==="idle"?0.4:1,transition:"all 0.2s"}}>
+        <button onClick={stop}
+          style={{flex:1,padding:"9px 4px",borderRadius:"10px",border:"none",background:"#dc2626",color:"white",fontWeight:"bold",fontSize:"0.82rem",cursor:"pointer",opacity:status==="idle"?0.4:1}}>
           ⏹ STOP
         </button>
       </div>
 
-      {/* Vitesse */}
-      <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"8px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
-        <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
+      <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
+        <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap",minWidth:"80px"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
         <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
-          onChange={e => handleSpeed(parseFloat(e.target.value))}
-          style={{flex:1, accentColor:"#10b981", height:"4px"}}/>
+          onChange={e=>changeSpeed(parseFloat(e.target.value))}
+          style={{flex:1,accentColor:"#10b981"}}/>
       </div>
     </div>
   );
 }
+
 
 
 
