@@ -702,7 +702,7 @@ function SuratesTab() {
                                   style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"10px",padding:"6px 10px",color:"white",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer"}}>
                                   🎙️ {reciter.name} ▾
                                 </button>
-                                {showReciterMenu===surah.number&&<div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowReciterMenu(null)}/>}
+                                {showReciterMenu===surah.number&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={()=>setShowReciterMenu(null)}/>}
                                 {showReciterMenu===surah.number&&(
                                   <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"175px",boxShadow:"0 8px 32px #000a"}}>
                                     <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
