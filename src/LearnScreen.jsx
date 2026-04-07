@@ -556,27 +556,63 @@ function SuratesTab() {
   const [reciterId, setReciterId] = useState("alafasy");
   const [showReciterMenu, setShowReciterMenu] = useState(null);
   const [playingSurah, setPlayingSurah] = useState(null);
+  const [audioStatus, setAudioStatus] = useState("idle"); // idle|playing|paused
+  const [speed, setSpeed] = useState(1.0);
   const audioRef2 = useRef(null);
   const audio = useAudio();
 
   const masteredCount = mastered.length;
   const reciter = LEARN_RECITERS.find(r => r.id === reciterId) || LEARN_RECITERS[0];
 
-  const stopSurah = () => {
-    if (audioRef2.current) { audioRef2.current.pause(); audioRef2.current.currentTime = 0; }
-    setPlayingSurah(null);
-  };
+  useEffect(() => {
+    const a = audioRef2.current; if (!a) return;
+    const onPlay  = () => setAudioStatus("playing");
+    const onPause = () => setAudioStatus("paused");
+    const onEnded = () => { setAudioStatus("idle"); setPlayingSurah(null); };
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
+    a.addEventListener("ended", onEnded);
+    return () => {
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
+      a.removeEventListener("ended", onEnded);
+    };
+  }, []);
 
-  const handlePlaySurah = (rec, surah) => {
-    if (!audioRef2.current) return;
-    const a = audioRef2.current;
+  // ANDROID : src= puis play() directement, jamais load() entre les deux
+  const playSurah = (rec, surah) => {
+    const a = audioRef2.current; if (!a) return;
     setReciterId(rec.id);
     setPlayingSurah(surah.number);
     setShowReciterMenu(null);
     a.src = learnUrl(rec, surah.number);
-    a.onended = () => setPlayingSurah(null);
-    a.play().catch(() => setPlayingSurah(null));
+    a.playbackRate = speed;
+    a.play().catch(() => { setAudioStatus("idle"); setPlayingSurah(null); });
   };
+
+  const handlePlay = (surah) => {
+    const a = audioRef2.current; if (!a) return;
+    if (audioStatus === "paused" && playingSurah === surah.number) {
+      a.play().catch(() => {}); return;
+    }
+    playSurah(reciter, surah);
+  };
+
+  const handlePause = () => audioRef2.current?.pause();
+
+  const handleStop = () => {
+    const a = audioRef2.current; if (!a) return;
+    a.pause(); a.currentTime = 0;
+    setPlayingSurah(null);
+  };
+
+  const handleSpeed = (v) => {
+    setSpeed(v);
+    if (audioRef2.current) audioRef2.current.playbackRate = v;
+  };
+
+  const stopSurah = handleStop;
+  const handlePlaySurah = playSurah;
 
   const markMastered = (surahNumber) => {
     const next = mastered.includes(surahNumber)
@@ -593,8 +629,8 @@ function SuratesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Élément audio dans le DOM — standard apps Coran */}
-      <audio ref={audioRef2} style={{display:"none"}}/>
+      {/* Élément audio dans le DOM */}
+      <audio ref={audioRef2} preload="none" style={{display:"none"}}/>
       {/* Progression globale */}
       <div className="p-4 bg-white/5 border border-white/8 rounded-2xl">
         <div className="flex items-center justify-between mb-2">
@@ -657,45 +693,63 @@ function SuratesTab() {
                     <AnimatePresence>
                       {isOpen && (
                         <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
-                          {/* Contrôles */}
-                          <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
-                            {/* Bouton Imam + sélecteur */}
-                            {playingSurah === surah.number ? (
-                              <button onClick={stopSurah}
-                                style={{background:"#ef4444",color:"white",border:"none",borderRadius:"12px",padding:"8px 14px",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"6px"}}>
-                                ⏹ Stop
-                              </button>
-                            ) : (
-                              <div style={{display:"flex",gap:"4px"}}>
-                                <button onClick={() => handlePlaySurah(reciter, surah)}
-                                  style={{background:"linear-gradient(135deg,#059669,#0d9488)",color:"white",border:"none",borderRadius:"12px",padding:"8px 14px",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",display:"flex",alignItems:"center",gap:"6px"}}>
-                                  ▶ {reciter.name}
+                          {/* Lecteur audio complet */}
+                          <div className="px-4 pb-3 space-y-2">
+                            {/* Sélecteur récitateur */}
+                            <div style={{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap"}}>
+                              <div style={{position:"relative"}}>
+                                <button onClick={()=>setShowReciterMenu(showReciterMenu===surah.number?null:surah.number)}
+                                  style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"10px",padding:"6px 10px",color:"white",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer"}}>
+                                  🎙️ {reciter.name} ▾
                                 </button>
-                                <div style={{position:"relative"}}>
-                                  <button onClick={() => setShowReciterMenu(showReciterMenu===surah.number?null:surah.number)}
-                                    style={{background:"rgba(255,255,255,0.1)",color:"white",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"10px",padding:"8px 10px",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer"}}>
-                                    ▾
-                                  </button>
-                                  {showReciterMenu===surah.number && (
-                                    <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"14px",padding:"6px",minWidth:"170px",boxShadow:"0 8px 32px rgba(0,0,0,0.6)"}}>
-                                      <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"2px 8px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
-                                      {LEARN_RECITERS.map(r => (
-                                        <button key={r.id} onClick={() => { setReciterId(r.id); handlePlaySurah(r, surah); }}
-                                          style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.8rem",fontWeight:"bold",cursor:"pointer"}}>
-                                          {r.id===reciterId?"✓ ":"   "}{r.name}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+                                {showReciterMenu===surah.number&&<div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowReciterMenu(null)}/>}
+                                {showReciterMenu===surah.number&&(
+                                  <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"175px",boxShadow:"0 8px 32px #000a"}}>
+                                    <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
+                                    {LEARN_RECITERS.map(r=>(
+                                      <button key={r.id} onClick={()=>{setReciterId(r.id);setShowReciterMenu(null);playSurah(r,surah);}}
+                                        style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.82rem",fontWeight:"bold",cursor:"pointer"}}>
+                                        {r.id===reciterId?"▶ ":"   "}{r.name}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            <button onClick={() => setShowTr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr?"bg-blue-500/20 text-blue-300 border border-blue-500/30":"bg-white/5 text-slate-600"}`}>ABC</button>
-                            <button onClick={() => setShowFr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr?"bg-purple-500/20 text-purple-300 border border-purple-500/30":"bg-white/5 text-slate-600"}`}>FR</button>
+                              <span style={{color:"#64748b",fontSize:"0.7rem",fontStyle:"italic"}}>
+                                {playingSurah===surah.number ? {playing:"En lecture…",paused:"En pause",idle:""}[audioStatus] : ""}
+                              </span>
+                            </div>
+                            {/* Play / Pause / Stop */}
+                            <div style={{display:"flex",gap:"5px"}}>
+                              <button onClick={()=>handlePlay(surah)}
+                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#059669",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:(playingSurah===surah.number&&audioStatus==="playing")?0.55:1}}>
+                                ▶ PLAY
+                              </button>
+                              <button onClick={handlePause}
+                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#d97706",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:(playingSurah===surah.number&&audioStatus==="playing")?1:0.4}}>
+                                ⏸ PAUSE
+                              </button>
+                              <button onClick={handleStop}
+                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#dc2626",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:playingSurah===surah.number?1:0.4}}>
+                                ⏹ STOP
+                              </button>
+                            </div>
+                            {/* Vitesse */}
+                            <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
+                              <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
+                              <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
+                                onChange={e=>handleSpeed(parseFloat(e.target.value))}
+                                style={{flex:1,accentColor:"#10b981"}}/>
+                            </div>
+                            {/* ABC / FR / Maîtrisée */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <button onClick={()=>setShowTr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr?"bg-blue-500/20 text-blue-300 border border-blue-500/30":"bg-white/5 text-slate-600"}`}>ABC</button>
+                              <button onClick={()=>setShowFr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr?"bg-purple-500/20 text-purple-300 border border-purple-500/30":"bg-white/5 text-slate-600"}`}>FR</button>
                             <button onClick={() => markMastered(surah.number)}
                               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ml-auto ${isMastered?"bg-emerald-500/20 text-emerald-300 border border-emerald-500/30":"bg-white/5 text-slate-600 border border-white/10"}`}>
                               {isMastered ? "✅ Maîtrisée" : "Marquer maîtrisée"}
                             </button>
+                            </div>
                           </div>
                           {/* Légende tajweed */}
                           <div className="px-4 pb-3 flex flex-wrap gap-1">
