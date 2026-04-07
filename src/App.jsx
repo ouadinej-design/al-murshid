@@ -1060,18 +1060,6 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// COMPOSANT — QuranReader
-// IMAM AUDIO — approche standard apps Coran
-// ── Récitateurs — sourate complète (mp3quran.net) ──────────────────
-// ── Récitateurs — mp3quran.net (sourate complète, même approche que les apps standard)
-const RECITERS = [
-  { id:"alafasy", name:"Alafasy",     url: n => `https://server8.mp3quran.net/afs/${n}.mp3` },
-  { id:"sudais",  name:"Al-Sudais",   url: n => `https://server11.mp3quran.net/sds/${n}.mp3` },
-  { id:"ghamdi",  name:"Al-Ghamdi",   url: n => `https://server7.mp3quran.net/s_gmd/${n}.mp3` },
-  { id:"husary",  name:"Al-Husary",   url: n => `https://server13.mp3quran.net/husr/${n}.mp3` },
-  { id:"dosari",  name:"Al-Dosari",   url: n => `https://server11.mp3quran.net/yasser/${n}.mp3` },
-];
-
 // ── Récitateurs mp3quran.net — 1 fichier MP3 par sourate ──────────
 const RECITERS = [
   { id:"alafasy", name:"Alafasy",   url: n=>`https://server8.mp3quran.net/afs/${n}.mp3` },
