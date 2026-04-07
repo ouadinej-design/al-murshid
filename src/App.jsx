@@ -1062,73 +1062,54 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — QuranReader
 // IMAM AUDIO — approche standard apps Coran
+// ── Récitateurs — sourate complète (mp3quran.net) ──────────────────
 const RECITERS = [
-  { id:"alafasy",  name:"Alafasy",     base:"https://server8.mp3quran.net/afs/" },
-  { id:"husary",   name:"Al-Husary",   base:"https://server7.mp3quran.net/s_hsd/" },
-  { id:"sudais",   name:"Al-Sudais",   base:"https://server11.mp3quran.net/sds/" },
-  { id:"ghamdi",   name:"Al-Ghamdi",   base:"https://server8.mp3quran.net/sa3d/" },
-  { id:"dosari",   name:"Al-Dosari",   base:"https://server12.mp3quran.net/yasser/" },
-  { id:"minshawi", name:"Al-Minshawi", base:"https://server10.mp3quran.net/minsh/" },
+  { id:"alafasy", name:"Alafasy",     url: n => `https://server8.mp3quran.net/afs/${n}.mp3` },
+  { id:"sudais",  name:"Al-Sudais",   url: n => `https://server11.mp3quran.net/sds/${n}.mp3` },
+  { id:"ghamdi",  name:"Al-Ghamdi",   url: n => `https://server7.mp3quran.net/s_gmd/${n}.mp3` },
+  { id:"husary",  name:"Al-Husary",   url: n => `https://server13.mp3quran.net/husr/${n}.mp3` },
+  { id:"dosari",  name:"Al-Dosari",   url: n => `https://server11.mp3quran.net/yasser/${n}.mp3` },
 ];
-const imamUrl = (rec, s, v) =>
-  `${rec.base}${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`;
 
-function ImamAudioButton({ surah, verses }) {
+function ImamAudioButton({ surah }) {
   const audioRef = useRef(null);
   const [reciterId, setReciterId] = useState("alafasy");
   const [showPicker, setShowPicker] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentV, setCurrentV] = useState(0);
-  const idxRef = useRef(0);
-  const recRef = useRef(null);
 
-  const RECITER_URLS = {
-    alafasy: (s,v) => `https://audio.qurancdn.com/Alafasy/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
-    husary:  (s,v) => `https://audio.qurancdn.com/Husary/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
-    sudais:  (s,v) => `https://audio.qurancdn.com/Sudais/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
-    ghamdi:  (s,v) => `https://audio.qurancdn.com/Ghamdi_ver2/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
-    dosari:  (s,v) => `https://audio.qurancdn.com/Dossary/mp3/${String(s).padStart(3,"0")}${String(v).padStart(3,"0")}.mp3`,
-  };
-
-  const reciterNames = {alafasy:"Alafasy", husary:"Al-Husary", sudais:"Al-Sudais", ghamdi:"Al-Ghamdi", dosari:"Al-Dosari"};
+  const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
+  const surahCode = String(surah?.number || 1).padStart(3, "0");
 
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    a.onended = () => {
-      const next = idxRef.current + 1;
-      if (!verses || next >= verses.length) { setIsPlaying(false); setCurrentV(0); return; }
-      idxRef.current = next;
-      const v = verses[next];
-      setCurrentV(v.number);
-      a.src = RECITER_URLS[recRef.current](surah.number, v.number);
-      a.load();
-      a.play().catch(() => a.onended());
-    };
-  }, [surah?.number, verses]);
+    a.onplay  = () => setIsPlaying(true);
+    a.onpause = () => setIsPlaying(false);
+    a.onended = () => setIsPlaying(false);
+  }, []);
 
-  useEffect(() => () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
-    setIsPlaying(false);
-  }, [surah?.number]);
-
-  const startPlay = (recId) => {
-    if (!verses?.length || !audioRef.current) return;
+  useEffect(() => {
     const a = audioRef.current;
-    recRef.current = recId;
-    idxRef.current = 0;
-    const v = verses[0];
-    setCurrentV(v.number);
-    setIsPlaying(true);
-    setShowPicker(false);
-    a.src = RECITER_URLS[recId](surah.number, v.number);
-    a.load();
-    a.play().catch(() => setIsPlaying(false));
+    if (!a) return;
+    a.pause();
+    a.src = reciter.url(surahCode);
+    setIsPlaying(false);
+  }, [surah?.number, reciterId]);
+
+  const handlePlay = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (!a.src || a.src === window.location.href) {
+      a.src = reciter.url(surahCode);
+    }
+    a.play().catch(() => {});
   };
 
-  const stopPlay = () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
-    setIsPlaying(false); setCurrentV(0);
+  const handleStop = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.pause();
+    a.currentTime = 0;
   };
 
   return (
@@ -1136,14 +1117,14 @@ function ImamAudioButton({ surah, verses }) {
       <audio ref={audioRef} preload="none" style={{display:"none"}}/>
 
       {isPlaying ? (
-        <button onClick={stopPlay}
+        <button onClick={handleStop}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold active:scale-95">
-          <Pause className="w-3.5 h-3.5"/> v.{currentV}
+          <Pause className="w-3.5 h-3.5"/> Stop
         </button>
       ) : (
-        <button onClick={() => startPlay(reciterId)}
+        <button onClick={handlePlay}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold active:scale-95">
-          <Volume2 className="w-3.5 h-3.5"/> {reciterNames[reciterId]}
+          <Volume2 className="w-3.5 h-3.5"/> {reciter.name}
         </button>
       )}
 
@@ -1152,16 +1133,14 @@ function ImamAudioButton({ surah, verses }) {
           className="px-2 py-1.5 bg-white/8 border border-white/15 text-slate-400 rounded-xl text-xs font-bold active:scale-95">
           ▾
         </button>
+        {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>}
         {showPicker && (
-          <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>
-        )}
-        {showPicker && (
-          <div style={{position:"absolute",top:"calc(100% + 4px)",right:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"14px",padding:"6px",minWidth:"170px",boxShadow:"0 8px 32px rgba(0,0,0,0.7)"}}>
-            <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"4px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
-            {Object.entries(reciterNames).map(([id, name]) => (
-              <button key={id} onClick={() => { setReciterId(id); startPlay(id); }}
-                style={{display:"block",width:"100%",textAlign:"left",padding:"9px 12px",borderRadius:"8px",border:"none",background:id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:id===reciterId?"#6ee7b7":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
-                {id===reciterId?"▶ ":"   "}{name}
+          <div style={{position:"absolute",top:"calc(100% + 4px)",right:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"14px",padding:"6px",minWidth:"175px",boxShadow:"0 8px 32px rgba(0,0,0,0.7)"}}>
+            <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"4px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur — sourate complète</p>
+            {RECITERS.map(r => (
+              <button key={r.id} onClick={() => { setReciterId(r.id); setShowPicker(false); }}
+                style={{display:"block",width:"100%",textAlign:"left",padding:"9px 12px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
+                {r.id===reciterId?"▶ ":"   "}{r.name}
               </button>
             ))}
           </div>
@@ -1170,6 +1149,7 @@ function ImamAudioButton({ surah, verses }) {
     </div>
   );
 }
+
 
 
 // ════════════════════════════════════════════════════════════════════
@@ -1287,7 +1267,7 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             <p className="text-slate-500 text-xs">{versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}</p>
           </div>
           {/* Bouton Imam audio */}
-          <ImamAudioButton surah={currentSurah} verses={verses}/>
+          <ImamAudioButton surah={currentSurah}/>
           <button onClick={() => toggle(currentSurah.number)}
             className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`} title="Marquer comme lue">
             <CheckCircle className="w-5 h-5"/>
