@@ -1066,92 +1066,113 @@ const RECITERS = [
   { id:"dosari",  name:"Al-Dosari", url: n => `https://server11.mp3quran.net/yasser/${n}.mp3` },
 ];
 
-function ImamAudioButton({ surah }) {
+// Lecteur audio global — 1 seul élément dans le DOM, jamais détruit
+// Approche identique au HTML de référence : getElementById + src= + play()
+const AUDIO_ID = "quran-global-lecteur";
+function ensureAudio() {
+  let a = document.getElementById(AUDIO_ID);
+  if (!a) {
+    a = document.createElement("audio");
+    a.id = AUDIO_ID;
+    a.preload = "none";
+    document.body.appendChild(a);
+  }
+  return a;
+}
+
+function ImamAudioButton({ surah, autoScroll, setAutoScroll, scrollRef, scrollSpeed, setScrollSpeed }) {
   const [reciterId, setReciterId] = useState("alafasy");
   const [showPicker, setShowPicker] = useState(false);
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState("idle"); // idle | playing | paused
   const [speed, setSpeed] = useState(1.0);
-
   const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
   const code = String(surah?.number || 1).padStart(3, "0");
-  const lecteurId = "imam-audio-lecteur";
 
-  const getLecteur = () => document.getElementById(lecteurId);
+  // Sync status avec l'élément audio réel
+  useEffect(() => {
+    const a = ensureAudio();
+    const onPlay  = () => setStatus("playing");
+    const onPause = () => setStatus(s => s === "playing" ? "paused" : s);
+    const onEnded = () => { setStatus("idle"); setAutoScroll(false); };
+    a.addEventListener("play",  onPlay);
+    a.addEventListener("pause", onPause);
+    a.addEventListener("ended", onEnded);
+    return () => {
+      a.removeEventListener("play",  onPlay);
+      a.removeEventListener("pause", onPause);
+      a.removeEventListener("ended", onEnded);
+    };
+  }, []);
+
+  // Reset si on change de sourate
+  useEffect(() => {
+    const a = ensureAudio();
+    a.pause(); a.currentTime = 0;
+    setStatus("idle"); setAutoScroll(false);
+  }, [surah?.number]);
+
+  const doPlay = (rec) => {
+    const a = ensureAudio();
+    a.src = rec.url(code);   // ← comme le HTML de référence
+    a.playbackRate = speed;
+    a.play().catch(() => {});
+    setAutoScroll(true);     // Lance l'auto-scroll en même temps
+  };
 
   const handlePlay = () => {
-    const lecteur = getLecteur();
-    if (!lecteur) return;
     if (status === "paused") {
-      lecteur.play();
-      setStatus("playing");
+      ensureAudio().play().catch(() => {});
+      setAutoScroll(true);
       return;
     }
-    // Exactement comme le HTML de référence : src= puis play()
-    lecteur.src = reciter.url(code);
-    lecteur.playbackRate = speed;
-    lecteur.play();
-    setStatus("playing");
-    lecteur.onended = () => setStatus("idle");
+    doPlay(reciter);
   };
 
   const handlePause = () => {
-    const lecteur = getLecteur();
-    if (!lecteur) return;
-    lecteur.pause();
+    ensureAudio().pause();
+    setAutoScroll(false);
     setStatus("paused");
   };
 
   const handleStop = () => {
-    const lecteur = getLecteur();
-    if (!lecteur) return;
-    lecteur.pause();
-    lecteur.currentTime = 0;
-    setStatus("idle");
+    const a = ensureAudio();
+    a.pause(); a.currentTime = 0;
+    setStatus("idle"); setAutoScroll(false);
   };
 
   const handleSpeed = (v) => {
     setSpeed(v);
-    const lecteur = getLecteur();
-    if (lecteur) lecteur.playbackRate = v;
+    ensureAudio().playbackRate = v;
+    setScrollSpeed(Math.round(v * 2)); // Auto-scroll suit la vitesse audio
   };
 
-  const handleReciter = (id) => {
-    setReciterId(id);
-    setShowPicker(false);
-    const lecteur = getLecteur();
-    if (!lecteur) return;
-    const wasPlaying = status === "playing";
-    const t = lecteur.currentTime;
-    const rec = RECITERS.find(r => r.id === id) || RECITERS[0];
-    lecteur.src = rec.url(code);
-    lecteur.playbackRate = speed;
-    if (wasPlaying) {
-      lecteur.play();
-      lecteur.currentTime = t;
-    }
+  const changeReciter = (id) => {
+    setReciterId(id); setShowPicker(false);
+    if (status !== "idle") doPlay(RECITERS.find(r => r.id === id) || RECITERS[0]);
   };
 
-  const btnBase = { border:"none", borderRadius:"10px", padding:"9px 4px", color:"white", fontWeight:"bold", fontSize:"0.82rem", cursor:"pointer", flex:1 };
+  const btnStyle = (bg, active) => ({
+    flex:1, padding:"9px 4px", borderRadius:"10px", border:"none",
+    background: active ? bg : bg + "88",
+    color:"white", fontWeight:"bold", fontSize:"0.82rem", cursor:"pointer",
+  });
 
   return (
     <div style={{width:"100%", display:"flex", flexDirection:"column", gap:"6px"}}>
-      <audio id={lecteurId} preload="none" style={{display:"none"}}/>
 
-      {/* Ligne récitateur */}
+      {/* Récitateur */}
       <div style={{position:"relative", display:"inline-block"}}>
         <button onClick={() => setShowPicker(p => !p)}
           style={{background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:"10px", padding:"6px 12px", color:"white", fontSize:"0.8rem", fontWeight:"bold", cursor:"pointer"}}>
           🎙️ {reciter.name} ▾
         </button>
+        {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>}
         {showPicker && (
-          <div style={{position:"fixed", top:0, left:0, right:0, bottom:0, zIndex:40}} onClick={() => setShowPicker(false)}/>
-        )}
-        {showPicker && (
-          <div style={{position:"absolute", top:"calc(100% + 4px)", left:0, zIndex:50, background:"#0f172a", border:"1px solid rgba(255,255,255,0.2)", borderRadius:"12px", padding:"6px", minWidth:"180px", boxShadow:"0 8px 32px rgba(0,0,0,0.8)"}}>
-            <p style={{color:"#64748b", fontSize:"0.65rem", fontWeight:"bold", padding:"3px 10px 6px", borderBottom:"1px solid rgba(255,255,255,0.08)", marginBottom:"4px"}}>Récitateur</p>
+          <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"180px",boxShadow:"0 8px 32px rgba(0,0,0,0.8)"}}>
+            <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
             {RECITERS.map(r => (
-              <button key={r.id} onClick={() => handleReciter(r.id)}
-                style={{display:"block", width:"100%", textAlign:"left", padding:"9px 10px", borderRadius:"8px", border:"none", background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent", color:r.id===reciterId?"#6ee7b7":"white", fontSize:"0.85rem", fontWeight:"bold", cursor:"pointer"}}>
+              <button key={r.id} onClick={() => changeReciter(r.id)}
+                style={{display:"block",width:"100%",textAlign:"left",padding:"9px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
                 {r.id===reciterId ? "▶ " : "   "}{r.name}
               </button>
             ))}
@@ -1159,16 +1180,16 @@ function ImamAudioButton({ surah }) {
         )}
       </div>
 
-      {/* Boutons Play / Pause / Stop */}
+      {/* Play / Pause / Stop */}
       <div style={{display:"flex", gap:"6px"}}>
-        <button onClick={handlePlay}  style={{...btnBase, background: status==="playing" ? "#064e3b" : "#16a34a"}}>▶ PLAY</button>
-        <button onClick={handlePause} style={{...btnBase, background: status!=="playing" ? "#78350f" : "#d97706"}}>⏸ PAUSE</button>
-        <button onClick={handleStop}  style={{...btnBase, background: "#dc2626"}}>⏹ STOP</button>
+        <button onClick={handlePlay}  style={btnStyle("#16a34a", status !== "playing")}>▶ PLAY</button>
+        <button onClick={handlePause} style={btnStyle("#d97706", status === "playing")}>⏸ PAUSE</button>
+        <button onClick={handleStop}  style={btnStyle("#dc2626", status !== "idle")}>⏹ STOP</button>
       </div>
 
-      {/* Vitesse */}
-      <div style={{background:"rgba(255,255,255,0.05)", borderRadius:"10px", padding:"7px 10px", display:"flex", alignItems:"center", gap:"8px"}}>
-        <span style={{color:"#94a3b8", fontSize:"0.7rem", whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
+      {/* Vitesse lecture + scroll */}
+      <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
+        <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
         <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
           onChange={e => handleSpeed(parseFloat(e.target.value))}
           style={{flex:1, accentColor:"#10b981"}}/>
@@ -1176,6 +1197,7 @@ function ImamAudioButton({ surah }) {
     </div>
   );
 }
+
 
 
 
@@ -1290,7 +1312,7 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="px-4 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0 space-y-3">
+        <div className="px-4 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0 space-y-2">
           {/* Ligne titre */}
           <div className="flex items-center gap-2">
             <button onClick={() => { setCurrentSurah(null); setAutoScroll(false); }} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><ChevronLeft className="w-5 h-5"/></button>
@@ -1298,31 +1320,15 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
               <p className="font-bold text-white text-sm">{currentSurah.name}</p>
               <p className="text-slate-500 text-xs">{versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}</p>
             </div>
-            <button onClick={() => toggle(currentSurah.number)}
-              className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`} title="Marquer comme lue">
-              <CheckCircle className="w-5 h-5"/>
-            </button>
-          </div>
-          {/* Lecteur Imam */}
-          <ImamAudioButton surah={currentSurah}/>
-        </div>
-        <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/80 border-b border-white/5 shrink-0">
-          <button onClick={() => setAutoScroll(a => !a)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${autoScroll ? "bg-blue-500/25 text-blue-300 border border-blue-500/40" : "bg-white/5 text-slate-500 hover:text-white"}`}>
-            {autoScroll ? <Pause className="w-3 h-3"/> : <Play className="w-3 h-3"/>} Auto-scroll
-          </button>
-          {autoScroll && (
-            <div className="flex items-center gap-2 flex-1">
-              <span className="text-xs text-slate-600">Vitesse</span>
-              <input type="range" min={1} max={6} value={scrollSpeed} onChange={e => setScrollSpeed(Number(e.target.value))} className="flex-1 accent-blue-500 h-1"/>
+            <div className="flex gap-1">
+              <button onClick={() => currentSurah.number > 1 && setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2])} disabled={currentSurah.number === 1} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30"><ChevronLeft className="w-4 h-4"/></button>
+              <span className="text-xs text-slate-600 self-center px-1">{currentSurah.number}/114</span>
+              <button onClick={() => currentSurah.number < 114 && setCurrentSurah(QURAN_SURAHS[currentSurah.number])} disabled={currentSurah.number === 114} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30"><ChevronRight className="w-4 h-4"/></button>
+              <button onClick={() => toggle(currentSurah.number)} className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`}><CheckCircle className="w-5 h-5"/></button>
             </div>
-          )}
-          {!autoScroll && <p className="text-slate-700 text-xs ml-auto italic">Appuie sur un verset pour 🔖</p>}
-          <div className="flex gap-1 ml-auto">
-            <button onClick={() => currentSurah.number > 1 && setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2])} disabled={currentSurah.number === 1} className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-slate-500 hover:text-white disabled:opacity-30"><ChevronLeft className="w-4 h-4"/></button>
-            <span className="text-xs text-slate-600 self-center px-1">{currentSurah.number}/114</span>
-            <button onClick={() => currentSurah.number < 114 && setCurrentSurah(QURAN_SURAHS[currentSurah.number])} disabled={currentSurah.number === 114} className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-slate-500 hover:text-white disabled:opacity-30"><ChevronRight className="w-4 h-4"/></button>
           </div>
+          {/* Lecteur Imam — lecture + auto-scroll combinés */}
+          <ImamAudioButton surah={currentSurah} autoScroll={autoScroll} setAutoScroll={setAutoScroll} scrollRef={scrollRef} scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}/>
         </div>
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
           <div className="text-center mb-8">
