@@ -1059,11 +1059,11 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
   );
 }
 const RECITERS = [
-  { id:"alafasy", name:"Alafasy",   url: n => `https://server8.mp3quran.net/afs/${n}.mp3` },
-  { id:"sudais",  name:"Al-Sudais", url: n => `https://server11.mp3quran.net/sds/${n}.mp3` },
-  { id:"ghamdi",  name:"Al-Ghamdi", url: n => `https://server7.mp3quran.net/s_gmd/${n}.mp3` },
-  { id:"husary",  name:"Al-Husary", url: n => `https://server13.mp3quran.net/husr/${n}.mp3` },
-  { id:"dosari",  name:"Al-Dosari", url: n => `https://server11.mp3quran.net/yasser/${n}.mp3` },
+  { id:"alafasy", name:"Alafasy",   url: n => `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${n}.mp3` },
+  { id:"husary",  name:"Al-Husary", url: n => `https://download.quranicaudio.com/quran/husary_64kbps/${n}.mp3` },
+  { id:"sudais",  name:"Al-Sudais", url: n => `https://download.quranicaudio.com/quran/abu_bakr_al-shatri/${n}.mp3` },
+  { id:"ajamy",   name:"Al-Ajamy",  url: n => `https://download.quranicaudio.com/quran/ahmed_ibn_ali_al-ajamy/${n}.mp3` },
+  { id:"ghamdi",  name:"Al-Ghamdi", url: n => `https://download.quranicaudio.com/quran/saad_al-ghamdi/${n}.mp3` },
 ];
 
 // Lecteur audio global — 1 seul élément dans le DOM, jamais détruit
@@ -1113,16 +1113,24 @@ function ImamAudioButton({ surah, autoScroll, setAutoScroll, scrollRef, scrollSp
 
   const doPlay = (rec) => {
     const a = ensureAudio();
-    a.src = rec.url(code);   // ← comme le HTML de référence
+    const url = rec.url(code);
+    a.src = url;
     a.playbackRate = speed;
-    a.play().catch(() => {});
-    setAutoScroll(true);     // Lance l'auto-scroll en même temps
+    a.play().then(() => {
+      setStatus("playing");
+      setAutoScroll(true);
+    }).catch(err => {
+      setStatus("idle");
+      alert("Erreur audio: " + err.message + "\nURL: " + url);
+    });
   };
 
   const handlePlay = () => {
     if (status === "paused") {
-      ensureAudio().play().catch(() => {});
-      setAutoScroll(true);
+      ensureAudio().play().then(() => {
+        setStatus("playing");
+        setAutoScroll(true);
+      }).catch(err => alert("Pause resume error: " + err.message));
       return;
     }
     doPlay(reciter);
