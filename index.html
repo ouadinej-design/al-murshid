@@ -1,58 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a"/>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Al-Murshid</title>
-    <meta name="theme-color" content="#0f172a" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Al-Murshid" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="manifest" href="/manifest.json" />
-
-    <!-- Police Amiri Quran (Mushaf Madinah) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet" />
-
-    <!-- Couleurs Tajweed standards -->
-    <style>
-      /* ── Règles de tajweed colorées ── */
-
-      /* Madd (prolongations) — bleu */
-      [data-t*="madda"] { color: #3B82F6; }
-      [data-t="madda_normal"]       { color: #60A5FA; }
-      [data-t="madda_permissible"]  { color: #3B82F6; }
-      [data-t="madda_necessary"]    { color: #1D4ED8; }
-      [data-t="madda_obligatory"]   { color: #1E40AF; }
-
-      /* Ghunna / Nasalisation — vert */
-      [data-t="ghunna"]             { color: #22C55E; }
-      [data-t="idgham_w_ghunna"]    { color: #16A34A; }
-      [data-t="ikhafa"]             { color: #15803D; }
-      [data-t="ikhafa_shafawi"]     { color: #166534; }
-
-      /* Idgham sans ghunna — bleu-gris */
-      [data-t="idgham_wo_ghunna"]   { color: #94A3B8; }
-      [data-t="idgham_shafawi"]     { color: #64748B; }
-
-      /* Iqlab — violet */
-      [data-t="iqlab"]              { color: #A855F7; }
-
-      /* Qalqalah — orange */
-      [data-t="qalqalah"]           { color: #F97316; }
-
-      /* Lam shamsiyya / hamza wasl — gris */
-      [data-t="laam_shamsiyya"]     { color: #94A3B8; }
-      [data-t="ham_wasl"]           { color: #64748B; }
-      [data-t="slnt"]               { color: #475569; }
-
-      /* Texte normal dans tajweed */
-      .quran-tajweed                { color: #FFFFFF; }
-      .quran-tajweed span           { /* hérite la couleur data-t */ }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Lecteur audio global — comme les apps Coran standard -->
+    <!-- Doit être dans le HTML pour fonctionner sur Android sans restriction -->
+    <audio id="quran-global-lecteur" preload="none"></audio>
+    <link rel="manifest" href="/manifest.json">
   </head>
   <body>
     <div id="root"></div>
