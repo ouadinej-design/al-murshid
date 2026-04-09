@@ -1196,6 +1196,12 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
           onChange={e => handleSpeed(parseFloat(e.target.value))}
           style={{flex:1, accentColor:"#10b981"}}/>
       </div>
+      {/* TEST DIAGNOSTIC — lecteur natif du navigateur */}
+      <div style={{background:"rgba(255,100,0,0.15)",border:"1px solid rgba(255,100,0,0.4)",borderRadius:"10px",padding:"8px",marginTop:"4px"}}>
+        <p style={{color:"#f97316",fontSize:"0.65rem",fontWeight:"bold",margin:"0 0 4px"}}>🔧 TEST — Si tu entends de la musique ici, le son fonctionne</p>
+        <audio controls preload="none" style={{width:"100%",height:"32px"}}
+          src="https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3"/>
+      </div>
     </div>
   );
 }
