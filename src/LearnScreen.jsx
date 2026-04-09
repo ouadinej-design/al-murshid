@@ -1714,7 +1714,30 @@ function ProfesseurTab() {
   const [sessionScores, setSessionScores] = useState([]);
   const [hasMic, setHasMic] = useState(null);
   const recognitionRef = useRef(null);
-  const audio = useAudio();
+  const profCtxRef = useRef(null);
+  const profSrcRef = useRef(null);
+
+  // Joue un verset avec la voix d'Alafasy via AudioContext + proxy
+  const playAlafasyVerse = async (surahNum, verseNum) => {
+    const proxyUrl = window.location.origin + "/api/audio?slug=ar.alafasy&v=" + gvLS(surahNum, verseNum);
+    try {
+      if (!profCtxRef.current || profCtxRef.current.state === "closed") {
+        profCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const ctx = profCtxRef.current;
+      if (ctx.state === "suspended") await ctx.resume();
+      if (profSrcRef.current) { try { profSrcRef.current.stop(); } catch(e) {} }
+      const resp = await fetch(proxyUrl, { cache: "no-store" });
+      if (!resp.ok) return;
+      const buf = await resp.arrayBuffer();
+      const audioBuf = await ctx.decodeAudioData(buf);
+      const src = ctx.createBufferSource();
+      src.buffer = audioBuf;
+      src.connect(ctx.destination);
+      profSrcRef.current = src;
+      src.start(0);
+    } catch(e) { /* silencieux */ }
+  };
 
   const verse = selectedSurah.verses[verseIdx];
   const letter = ALPHABET[letterIdx];
@@ -1775,14 +1798,14 @@ function ProfesseurTab() {
       const wrong = res.filter(r => r.status === "wrong").map(r => r.word);
       if (wrong.length) {
         profSpeak(`Bien ! Retravaille ces mots : ${wrong.slice(0,3).join("، ")}`);
-        setTimeout(() => speakArabic(wrong.slice(0,2).join(" "), 0.45), 2500);
+        setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 2500);
       } else profSpeak("Très bien ! Continue comme ça !");
     } else if (sc >= 60) {
       profSpeak("Écoute d'abord bien le verset, puis répète lentement.");
-      setTimeout(() => audio.playVerse(selectedSurah.number, verse.n), 1500);
+      setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 1500);
     } else {
       profSpeak("Recommençons. Je vais lire le verset, répète après moi.");
-      setTimeout(() => audio.playVerse(selectedSurah.number, verse.n), 1500);
+      setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 1500);
     }
   }, [verse, selectedSurah, profSpeak, audio]);
 
@@ -1961,7 +1984,7 @@ function ProfesseurTab() {
           <p className="text-white font-bold text-sm">{isWordMode ? "Mot par mot" : "Verset complet"} · {selectedSurah.name}</p>
           <p className="text-slate-500 text-xs">Verset {verseIdx+1}/{selectedSurah.verses.length}</p>
         </div>
-        <button onClick={() => { audio.playVerse(selectedSurah.number, verse.n); speakArabic(verse.ar, 0.5); }}
+        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); speakArabic(verse.ar, 0.5); }}
           className="p-2 bg-emerald-500/15 text-emerald-400 rounded-xl active:scale-95">
           <Volume2 className="w-4 h-4"/>
         </button>
@@ -2047,7 +2070,7 @@ function ProfesseurTab() {
 
       {/* Boutons principaux */}
       <div className="flex gap-2">
-        <button onClick={() => { audio.playVerse(selectedSurah.number, verse.n); speakArabic(verse.ar, 0.45); }}
+        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); speakArabic(verse.ar, 0.45); }}
           className="flex-1 py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
           <Volume2 className="w-4 h-4"/> Écouter
         </button>
