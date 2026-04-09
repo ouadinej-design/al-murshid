@@ -1058,13 +1058,19 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
     </div>
   );
 }
+// cdn.islamic.network — seul CDN avec CORS ouvert (Access-Control-Allow-Origin: *)
+// Format : numéro de verset global (1-6236)
+const SURAH_OFF = [0,7,293,493,669,789,954,1160,1235,1364,1473,1596,1707,1750,1802,1901,2029,2140,2250,2348,2483,2595,2673,2791,2855,2932,3159,3252,3340,3409,3469,3503,3533,3606,3660,3705,3788,3970,4058,4133,4218,4272,4325,4414,4473,4510,4545,4583,4612,4630,4675,4735,4784,4846,4901,4979,5075,5104,5126,5150,5163,5177,5188,5199,5217,5229,5241,5271,5323,5375,5419,5447,5475,5495,5551,5591,5622,5672,5712,5758,5800,5829,5848,5884,5909,5931,5948,5967,5993,6023,6043,6058,6079,6090,6098,6106,6125,6130,6138,6146,6157,6168,6176,6179,6188,6193,6197,6204,6207,6213,6216,6221,6225,6230,6236];
+const gv = (s,v) => SURAH_OFF[s-1] + v;
+
 const RECITERS = [
-  { id:"alafasy", name:"Alafasy",   url: n => `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${n}.mp3` },
-  { id:"husary",  name:"Al-Husary", url: n => `https://download.quranicaudio.com/quran/husary_64kbps/${n}.mp3` },
-  { id:"sudais",  name:"Al-Sudais", url: n => `https://download.quranicaudio.com/quran/abu_bakr_al-shatri/${n}.mp3` },
-  { id:"ajamy",   name:"Al-Ajamy",  url: n => `https://download.quranicaudio.com/quran/ahmed_ibn_ali_al-ajamy/${n}.mp3` },
-  { id:"ghamdi",  name:"Al-Ghamdi", url: n => `https://download.quranicaudio.com/quran/saad_al-ghamdi/${n}.mp3` },
+  { id:"alafasy", name:"Alafasy",  slug:"ar.alafasy" },
+  { id:"husary",  name:"Al-Husary",slug:"ar.husary" },
+  { id:"sudais",  name:"Al-Sudais",slug:"ar.abdurrahmaansudais" },
+  { id:"ghamdi",  name:"Al-Ghamdi",slug:"ar.saoodshuraym" },
+  { id:"minshawi",name:"Al-Minshawi",slug:"ar.minshawi" },
 ];
+const recUrl = (slug,s,v) => `https://cdn.islamic.network/quran/audio/128/${slug}/${gv(s,v)}.mp3`;
 
 // Lecteur audio global — 1 seul élément dans le DOM, jamais détruit
 // Approche identique au HTML de référence : getElementById + src= + play()
@@ -1080,78 +1086,66 @@ function ensureAudio() {
   return a;
 }
 
-function ImamAudioButton({ surah, autoScroll, setAutoScroll, scrollRef, scrollSpeed, setScrollSpeed }) {
+function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, scrollSpeed, setScrollSpeed }) {
   const [reciterId, setReciterId] = useState("alafasy");
   const [showPicker, setShowPicker] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | playing | paused
   const [speed, setSpeed] = useState(1.0);
   const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
-  const code = String(surah?.number || 1).padStart(3, "0");
+  // Verse-by-verse playback avec cdn.islamic.network (CORS ouvert)
+  const playIdxRef = useRef(0);
+  const stopRef2 = useRef(false);
 
-  // Sync status avec l'élément audio réel
-  useEffect(() => {
+  const stopAll = () => {
+    stopRef2.current = true;
     const a = ensureAudio();
-    const onPlay  = () => setStatus("playing");
-    const onPause = () => setStatus(s => s === "playing" ? "paused" : s);
-    const onEnded = () => { setStatus("idle"); setAutoScroll(false); };
-    a.addEventListener("play",  onPlay);
-    a.addEventListener("pause", onPause);
-    a.addEventListener("ended", onEnded);
-    return () => {
-      a.removeEventListener("play",  onPlay);
-      a.removeEventListener("pause", onPause);
-      a.removeEventListener("ended", onEnded);
-    };
-  }, []);
-
-  // Reset si on change de sourate
-  useEffect(() => {
-    const a = ensureAudio();
+    a.onended = null; a.onerror = null;
     a.pause(); a.currentTime = 0;
     setStatus("idle"); setAutoScroll(false);
-  }, [surah?.number]);
+  };
 
-  const doPlay = (rec) => {
+  const playChainImam = (rec, surahNum, verseList, idx) => {
+    if (stopRef2.current || idx >= verseList.length) {
+      setStatus("idle"); setAutoScroll(false); return;
+    }
+    const v = verseList[idx];
+    const url = recUrl(rec.slug, surahNum, v.number);
     const a = ensureAudio();
-    const url = rec.url(code);
     a.src = url;
     a.playbackRate = speed;
+    a.onended = () => playChainImam(rec, surahNum, verseList, idx + 1);
+    a.onerror = () => {
+      // Essaie le verset suivant si erreur
+      playChainImam(rec, surahNum, verseList, idx + 1);
+    };
     a.play().then(() => {
       setStatus("playing");
       setAutoScroll(true);
     }).catch(err => {
       setStatus("idle");
-      alert("Erreur audio: " + err.message + "\nURL: " + url);
+      alert("Erreur audio\n" + err.message + "\n" + url);
     });
   };
 
   const handlePlay = () => {
-    if (status === "paused") {
-      ensureAudio().play().then(() => {
-        setStatus("playing");
-        setAutoScroll(true);
-      }).catch(err => alert("Pause resume error: " + err.message));
-      return;
-    }
-    doPlay(reciter);
+    if (!verses?.length) return;
+    stopRef2.current = false;
+    playChainImam(reciter, surah.number, verses, 0);
   };
 
   const handlePause = () => {
     ensureAudio().pause();
+    stopRef2.current = true;
     setAutoScroll(false);
     setStatus("paused");
   };
 
-  const handleStop = () => {
-    const a = ensureAudio();
-    a.pause(); a.currentTime = 0;
-    setStatus("idle"); setAutoScroll(false);
-  };
+  const handleStop = () => { stopAll(); };
 
   const handleSpeed = (v) => {
     setSpeed(v);
     ensureAudio().playbackRate = v;
-    setScrollSpeed(Math.round(v * 2)); // Auto-scroll suit la vitesse audio
+    setScrollSpeed(Math.round(v * 2));
   };
 
   const changeReciter = (id) => {
@@ -1336,7 +1330,7 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             </div>
           </div>
           {/* Lecteur Imam — lecture + auto-scroll combinés */}
-          <ImamAudioButton surah={currentSurah} autoScroll={autoScroll} setAutoScroll={setAutoScroll} scrollRef={scrollRef} scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}/>
+          <ImamAudioButton surah={currentSurah} verses={verses} autoScroll={autoScroll} setAutoScroll={setAutoScroll} scrollRef={scrollRef} scrollSpeed={scrollSpeed} setScrollSpeed={setScrollSpeed}/>
         </div>
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
           <div className="text-center mb-8">
