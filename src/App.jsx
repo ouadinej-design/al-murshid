@@ -232,7 +232,8 @@ function useSurahProgress() {
     setChecked(prev => { const next = { ...prev, [id]: !prev[id] }; storageSet("surah_checked_v2", next); return next; });
   }, []);
   const counts = useMemo(() => ({ surahChecked: Object.values(checked).filter(Boolean).length }), [checked]);
-  return { checked, toggle, counts };
+  const resetChecked = useCallback(() => { setChecked({}); storageSet("surah_checked_v2", {}); }, []);
+  return { checked, toggle, counts, resetChecked };
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1441,7 +1442,13 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
       <div className="flex items-center gap-3">
         <input type="text" value={filter} onChange={e => setFilter(e.target.value)} placeholder="Rechercher une sourate..."
           className="flex-1 bg-white/5 border border-white/15 rounded-2xl px-4 py-3 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-emerald-500/40 transition-all"/>
-        <div className="text-right shrink-0"><p className="text-emerald-400 font-bold text-sm">{counts.surahChecked}/114</p><p className="text-slate-600 text-xs">lues</p></div>
+        <div className="text-right shrink-0">
+          <p className="text-emerald-400 font-bold text-sm">{counts.surahChecked}/114 lues</p>
+          {counts.surahChecked > 0 && (
+            <button onClick={() => { if(window.confirm("Réinitialiser les sourates lues ?")) resetChecked(); }}
+              className="text-slate-600 text-xs hover:text-red-400 transition-all mt-0.5 block">🗑️ Réinitialiser</button>
+          )}
+        </div>
       </div>
       <div className="p-3 bg-blue-500/8 border border-blue-500/20 rounded-2xl flex items-center gap-3">
         <div className="flex-1 min-w-0">
@@ -1742,7 +1749,7 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzProgram: juzProp }) {
+function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzProgram: juzProp, resetChecked }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
   const [recited, setRecited] = useState(() => storage("adhkar_recited", {}) || {});
   const { totalFridays, isReadThisWeek } = fridayKahfProp || useFridayKahf();
@@ -1762,6 +1769,7 @@ function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzP
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
             className="fixed right-0 top-0 h-full w-full max-w-sm bg-slate-900 z-50 shadow-2xl border-l border-white/10 overflow-y-auto">
             <div className="p-5 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900/95 backdrop-blur-md">
+              <button onClick={() => { if(window.confirm("Réinitialiser toutes les statistiques ?")) { resetChecked(); } }} className="text-xs text-slate-600 hover:text-red-400 transition-all px-2 py-1 rounded-lg">🗑️ Reset</button>
               <h2 className="font-bold text-white flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-400"/> Statistiques</h2>
               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
             </div>
@@ -1886,7 +1894,7 @@ export default function App() {
   const [navConsumed, setNavConsumed] = useState(false);
   const juzProgram = useJuzProgram();
   const fridayKahf = useFridayKahf();
-  const { checked, toggle, counts } = useSurahProgress();
+  const { checked, toggle, counts, resetChecked } = useSurahProgress();
 
   // Inject tajweed CSS globally once
   useEffect(() => {
@@ -1968,7 +1976,7 @@ export default function App() {
                 checked={checked}
                 toggle={toggle}
                 counts={counts}
-              />
+               resetChecked={resetChecked}/>
             </motion.div>
           )}
           {page === "program" && (
@@ -1997,7 +2005,7 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
-      <StatsDrawer isOpen={statsOpen} onClose={() => setStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram}/>
+      <StatsDrawer isOpen={statsOpen} onClose={() => setStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} resetChecked={resetChecked}/>
     </div>
   );
 }
