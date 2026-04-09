@@ -1807,7 +1807,7 @@ function ProfesseurTab() {
       profSpeak("Recommençons. Je vais lire le verset, répète après moi.");
       setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 1500);
     }
-  }, [verse, selectedSurah, profSpeak, audio]);
+  }, [verse, selectedSurah, profSpeak, playAlafasyVerse]);
 
   // ── Résultat Lettre ────────────────────────────────────
   const handleLetterResult = useCallback((heard) => {
