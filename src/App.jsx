@@ -1089,85 +1089,95 @@ function ensureAudio() {
 function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, scrollSpeed, setScrollSpeed }) {
   const [reciterId, setReciterId] = useState("alafasy");
   const [showPicker, setShowPicker] = useState(false);
-  const [status, setStatus] = useState("idle"); // idle | playing | paused
+  const [status, setStatus] = useState("idle"); // idle | loading | playing | paused
   const [speed, setSpeed] = useState(1.0);
   const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
-  // Verse-by-verse playback via proxy /api/audio
-  // Fetch+blob pour contourner le service worker qui bloque les médias
-  const stopRef2 = useRef(false);
-  const blobUrlRef = useRef(null);
+
+  const ctxRef   = useRef(null);  // AudioContext
+  const srcRef   = useRef(null);  // AudioBufferSourceNode en cours
+  const stopRef  = useRef(false);
+
+  // Reset quand on change de sourate
+  useEffect(() => { stopAll(); }, [surah?.number]);
+
+  const getCtx = () => {
+    if (!ctxRef.current || ctxRef.current.state === "closed") {
+      ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return ctxRef.current;
+  };
 
   const stopAll = () => {
-    stopRef2.current = true;
-    if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
-    const a = ensureAudio();
-    a.onended = null; a.onerror = null;
-    a.pause(); a.src = "";
+    stopRef.current = true;
+    if (srcRef.current) { try { srcRef.current.stop(); } catch(e) {} srcRef.current = null; }
     setStatus("idle"); setAutoScroll(false);
   };
 
-  const playChainImam = async (rec, surahNum, verseList, idx) => {
-    if (stopRef2.current || idx >= verseList.length) {
+  const playChain = async (rec, surahNum, verseList, idx) => {
+    if (stopRef.current || idx >= verseList.length) {
       setStatus("idle"); setAutoScroll(false); return;
     }
     const v = verseList[idx];
-    const url = recUrl(rec.slug, surahNum, v.number);
+    const proxyUrl = window.location.origin + "/api/audio?slug=" + rec.slug + "&v=" + gv(surahNum, v.number);
+    setStatus("loading");
     try {
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const blob = await r.blob();
-      if (stopRef2.current) { return; }
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-      const blobUrl = URL.createObjectURL(blob);
-      blobUrlRef.current = blobUrl;
-      const a = ensureAudio();
-      a.onended = () => playChainImam(rec, surahNum, verseList, idx + 1);
-      a.onerror = () => playChainImam(rec, surahNum, verseList, idx + 1);
-      a.src = blobUrl;
-      a.playbackRate = speed;
-      await a.play();
-      setStatus("playing");
-      setAutoScroll(true);
+      const ctx = getCtx();
+      if (ctx.state === "suspended") await ctx.resume();
+
+      const resp = await fetch(proxyUrl, { cache: "no-store" });
+      if (!resp.ok) throw new Error("Proxy HTTP " + resp.status);
+
+      const ct = resp.headers.get("content-type") || "";
+      if (!ct.includes("audio")) throw new Error("Type invalide: " + ct + " (SW actif?)");
+
+      const buf = await resp.arrayBuffer();
+      if (stopRef.current) return;
+
+      const audioBuf = await ctx.decodeAudioData(buf);
+      if (stopRef.current) return;
+
+      const src = ctx.createBufferSource();
+      src.buffer = audioBuf;
+      src.playbackRate.value = speed;
+      src.connect(ctx.destination);
+      src.onended = () => { if (!stopRef.current) playChain(rec, surahNum, verseList, idx + 1); };
+
+      if (srcRef.current) { try { srcRef.current.stop(); } catch(e) {} }
+      srcRef.current = src;
+      src.start(0);
+
+      setStatus("playing"); setAutoScroll(true);
     } catch(e) {
-      if (!stopRef2.current) {
-        setStatus("idle");
-        alert("Erreur audio: " + e.message);
-      }
+      if (!stopRef.current) { setStatus("idle"); alert("Erreur: " + e.message); }
     }
   };
 
   const handlePlay = () => {
     if (!verses?.length) return;
-    if (status === "paused") {
-      ensureAudio().play().then(() => { setStatus("playing"); setAutoScroll(true); }).catch(()=>{});
-      return;
-    }
-    stopRef2.current = false;
-    // Débloquer l'audio via geste utilisateur PUIS fetch blob
-    const a = ensureAudio();
-    a.src = "";
-    a.play().catch(()=>{});
-    playChainImam(reciter, surah.number, verses, 0);
+    // Débloquer AudioContext dans le geste utilisateur (synchrone)
+    try { getCtx().resume(); } catch(e) {}
+    stopRef.current = false;
+    playChain(reciter, surah.number, verses, 0);
   };
 
   const handlePause = () => {
-    stopRef2.current = true;
-    ensureAudio().pause();
-    setAutoScroll(false);
-    setStatus("paused");
+    stopRef.current = true;
+    if (srcRef.current) { try { srcRef.current.stop(); } catch(e) {} srcRef.current = null; }
+    if (ctxRef.current) ctxRef.current.suspend();
+    setStatus("paused"); setAutoScroll(false);
   };
 
-  const handleStop = () => { stopAll(); };
+  const handleStop = () => stopAll();
 
   const handleSpeed = (v) => {
     setSpeed(v);
-    ensureAudio().playbackRate = v;
+    if (srcRef.current) srcRef.current.playbackRate.value = v;
     setScrollSpeed(Math.round(v * 2));
   };
 
   const changeReciter = (id) => {
     setReciterId(id); setShowPicker(false);
-    if (status !== "idle") doPlay(RECITERS.find(r => r.id === id) || RECITERS[0]);
+    stopAll();
   };
 
   const btnStyle = (bg, active) => ({
@@ -1176,9 +1186,10 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
     color:"white", fontWeight:"bold", fontSize:"0.82rem", cursor:"pointer",
   });
 
+  const statusLabel = status === "loading" ? "⏳ Chargement…" : status === "playing" ? "▶ En lecture" : status === "paused" ? "⏸ En pause" : "";
+
   return (
     <div style={{width:"100%", display:"flex", flexDirection:"column", gap:"6px"}}>
-
       {/* Récitateur */}
       <div style={{position:"relative", display:"inline-block"}}>
         <button onClick={() => setShowPicker(p => !p)}
@@ -1199,6 +1210,9 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
         )}
       </div>
 
+      {/* Statut */}
+      {statusLabel && <p style={{color:"#64748b",fontSize:"0.7rem",margin:0,fontStyle:"italic"}}>{statusLabel}</p>}
+
       {/* Play / Pause / Stop */}
       <div style={{display:"flex", gap:"6px"}}>
         <button onClick={handlePlay}  style={btnStyle("#16a34a", status !== "playing")}>▶ PLAY</button>
@@ -1206,14 +1220,13 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
         <button onClick={handleStop}  style={btnStyle("#dc2626", status !== "idle")}>⏹ STOP</button>
       </div>
 
-      {/* Vitesse lecture + scroll */}
+      {/* Vitesse */}
       <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
         <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
         <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
           onChange={e => handleSpeed(parseFloat(e.target.value))}
           style={{flex:1, accentColor:"#10b981"}}/>
       </div>
-
     </div>
   );
 }
