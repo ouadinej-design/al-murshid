@@ -537,11 +537,13 @@ function useAudio() {
 }
 
 function speakLetter(text) { speakArabicTTS(text, 0.5); }
-function speakFeedback(text, lang = "fr-FR") {
-  if (!TTS_READY) return;
+function speakFeedback(text, lang = "fr-FR", onEnd) {
+  if (!TTS_READY) { setTimeout(() => onEnd && onEnd(), 300); return; }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang; u.rate = 0.9;
+  u.onend = () => { setTimeout(() => onEnd && onEnd(), 600); };
+  u.onerror = () => { setTimeout(() => onEnd && onEnd(), 600); };
   window.speechSynthesis.speak(u);
 }
 
@@ -1749,8 +1751,8 @@ function ProfesseurTab() {
   }, []);
 
   // ── Le professeur parle ────────────────────────────────
-  const profSpeak = useCallback((text, lang = "fr-FR") => {
-    speakFeedback(text, lang);
+  const profSpeak = useCallback((text, lang = "fr-FR", onEnd) => {
+    speakFeedback(text, lang, onEnd);
     setVoiceMsg(text);
     setTimeout(() => setVoiceMsg(""), 4000);
   }, []);
@@ -1797,15 +1799,12 @@ function ProfesseurTab() {
     } else if (sc >= 80) {
       const wrong = res.filter(r => r.status === "wrong").map(r => r.word);
       if (wrong.length) {
-        profSpeak(`Bien ! Retravaille ces mots : ${wrong.slice(0,3).join("، ")}`);
-        setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 2500);
+        profSpeak(`Bien ! Retravaille ces mots : ${wrong.slice(0,3).join("، ")}`, "fr-FR", () => playAlafasyVerse(selectedSurah.number, verse.n));
       } else profSpeak("Très bien ! Continue comme ça !");
     } else if (sc >= 60) {
-      profSpeak("Écoute d'abord bien le verset, puis répète lentement.");
-      setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 1500);
+      profSpeak("Écoute d'abord bien le verset, puis répète lentement.", "fr-FR", () => playAlafasyVerse(selectedSurah.number, verse.n));
     } else {
-      profSpeak("Recommençons. Je vais lire le verset, répète après moi.");
-      setTimeout(() => playAlafasyVerse(selectedSurah.number, verse.n), 1500);
+      profSpeak("Recommençons. Je vais lire le verset, répète après moi.", "fr-FR", () => playAlafasyVerse(selectedSurah.number, verse.n));
     }
   }, [verse, selectedSurah, profSpeak, playAlafasyVerse]);
 
