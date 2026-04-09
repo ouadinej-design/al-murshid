@@ -1984,7 +1984,7 @@ function ProfesseurTab() {
           <p className="text-white font-bold text-sm">{isWordMode ? "Mot par mot" : "Verset complet"} · {selectedSurah.name}</p>
           <p className="text-slate-500 text-xs">Verset {verseIdx+1}/{selectedSurah.verses.length}</p>
         </div>
-        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); speakArabic(verse.ar, 0.5); }}
+        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); }}
           className="p-2 bg-emerald-500/15 text-emerald-400 rounded-xl active:scale-95">
           <Volume2 className="w-4 h-4"/>
         </button>
@@ -2070,7 +2070,7 @@ function ProfesseurTab() {
 
       {/* Boutons principaux */}
       <div className="flex gap-2">
-        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); speakArabic(verse.ar, 0.45); }}
+        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); }}
           className="flex-1 py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
           <Volume2 className="w-4 h-4"/> Écouter
         </button>
