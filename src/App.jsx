@@ -1092,50 +1092,67 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
   const [status, setStatus] = useState("idle"); // idle | playing | paused
   const [speed, setSpeed] = useState(1.0);
   const reciter = RECITERS.find(r => r.id === reciterId) || RECITERS[0];
-  // Verse-by-verse playback avec cdn.islamic.network (CORS ouvert)
-  const playIdxRef = useRef(0);
+  // Verse-by-verse playback via proxy /api/audio
+  // Fetch+blob pour contourner le service worker qui bloque les médias
   const stopRef2 = useRef(false);
+  const blobUrlRef = useRef(null);
 
   const stopAll = () => {
     stopRef2.current = true;
+    if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
     const a = ensureAudio();
     a.onended = null; a.onerror = null;
-    a.pause(); a.currentTime = 0;
+    a.pause(); a.src = "";
     setStatus("idle"); setAutoScroll(false);
   };
 
-  const playChainImam = (rec, surahNum, verseList, idx) => {
+  const playChainImam = async (rec, surahNum, verseList, idx) => {
     if (stopRef2.current || idx >= verseList.length) {
       setStatus("idle"); setAutoScroll(false); return;
     }
     const v = verseList[idx];
     const url = recUrl(rec.slug, surahNum, v.number);
-    const a = ensureAudio();
-    a.src = url;
-    a.playbackRate = speed;
-    a.onended = () => playChainImam(rec, surahNum, verseList, idx + 1);
-    a.onerror = () => {
-      // Essaie le verset suivant si erreur
-      playChainImam(rec, surahNum, verseList, idx + 1);
-    };
-    a.play().then(() => {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const blob = await r.blob();
+      if (stopRef2.current) { return; }
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlRef.current = blobUrl;
+      const a = ensureAudio();
+      a.onended = () => playChainImam(rec, surahNum, verseList, idx + 1);
+      a.onerror = () => playChainImam(rec, surahNum, verseList, idx + 1);
+      a.src = blobUrl;
+      a.playbackRate = speed;
+      await a.play();
       setStatus("playing");
       setAutoScroll(true);
-    }).catch(err => {
-      setStatus("idle");
-      alert("Erreur audio\n" + err.message + "\n" + url);
-    });
+    } catch(e) {
+      if (!stopRef2.current) {
+        setStatus("idle");
+        alert("Erreur audio: " + e.message);
+      }
+    }
   };
 
   const handlePlay = () => {
     if (!verses?.length) return;
+    if (status === "paused") {
+      ensureAudio().play().then(() => { setStatus("playing"); setAutoScroll(true); }).catch(()=>{});
+      return;
+    }
     stopRef2.current = false;
+    // Débloquer l'audio via geste utilisateur PUIS fetch blob
+    const a = ensureAudio();
+    a.src = "";
+    a.play().catch(()=>{});
     playChainImam(reciter, surah.number, verses, 0);
   };
 
   const handlePause = () => {
-    ensureAudio().pause();
     stopRef2.current = true;
+    ensureAudio().pause();
     setAutoScroll(false);
     setStatus("paused");
   };
