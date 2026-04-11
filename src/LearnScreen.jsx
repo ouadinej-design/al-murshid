@@ -580,6 +580,7 @@ function SuratesTab() {
 
   const masteredCount = mastered.length;
   const reciter = LS_RECITERS.find(r => r.id === reciterId) || LS_RECITERS[0];
+  const doReset = () => { if (!window.confirm("Réinitialiser toute la progression ?")) return; setMastered([]); lsSet("mastered_surahs", []); stopAudio(); setOpen(null); };
 
   const getCtx = () => {
     if (!ctxRef.current || ctxRef.current.state === "closed") {
@@ -594,36 +595,39 @@ function SuratesTab() {
     setAudioStatus("idle"); setPlayingSurah(null);
   };
 
-  const playVerseChain = async (rec, surahObj, verseIdx) => {
+  const playVerseChain = (rec, surahObj, verseIdx) => {
     if (stopRef.current || verseIdx >= surahObj.verses.length) {
       setAudioStatus("idle"); setPlayingSurah(null); return;
     }
     const v = surahObj.verses[verseIdx];
     const proxyUrl = window.location.origin + "/api/audio?slug=" + rec.slug + "&v=" + gvLS(surahObj.number, v.n);
     setAudioStatus("loading");
-    try {
-      const ctx = getCtx();
-      if (ctx.state === "suspended") await ctx.resume();
-      const resp = await fetch(proxyUrl, { cache: "no-store" });
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
-      const ct = resp.headers.get("content-type") || "";
-      if (!ct.includes("audio")) throw new Error("Type invalide: " + ct);
-      const buf = await resp.arrayBuffer();
+
+    // XMLHttpRequest bypasse le service worker (contrairement à fetch)
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", proxyUrl, true);
+    xhr.responseType = "arraybuffer";
+    xhr.onload = () => {
       if (stopRef.current) return;
-      const audioBuf = await ctx.decodeAudioData(buf);
-      if (stopRef.current) return;
-      const src = ctx.createBufferSource();
-      src.buffer = audioBuf;
-      src.playbackRate.value = speed;
-      src.connect(ctx.destination);
-      src.onended = () => { if (!stopRef.current) playVerseChain(rec, surahObj, verseIdx + 1); };
-      if (srcRef.current) { try { srcRef.current.stop(); } catch(e) {} }
-      srcRef.current = src;
-      src.start(0);
-      setAudioStatus("playing"); setPlayingSurah(surahObj.number);
-    } catch(e) {
-      if (!stopRef.current) { setAudioStatus("idle"); setPlayingSurah(null); alert("Erreur: " + e.message); }
-    }
+      if (xhr.status !== 200) { setAudioStatus("idle"); setPlayingSurah(null); alert("HTTP " + xhr.status); return; }
+      try {
+        const ctx = getCtx();
+        ctx.decodeAudioData(xhr.response, (audioBuf) => {
+          if (stopRef.current) return;
+          const src = ctx.createBufferSource();
+          src.buffer = audioBuf;
+          src.playbackRate.value = speed;
+          src.connect(ctx.destination);
+          src.onended = () => { if (!stopRef.current) playVerseChain(rec, surahObj, verseIdx + 1); };
+          if (srcRef.current) { try { srcRef.current.stop(); } catch(e2) {} }
+          srcRef.current = src;
+          src.start(0);
+          setAudioStatus("playing"); setPlayingSurah(surahObj.number);
+        }, (e) => { if (!stopRef.current) { setAudioStatus("idle"); alert("Decode: " + e.message); } });
+      } catch(e) { if (!stopRef.current) { setAudioStatus("idle"); alert("Ctx: " + e.message); } }
+    };
+    xhr.onerror = () => { if (!stopRef.current) { setAudioStatus("idle"); setPlayingSurah(null); alert("Réseau: vérifi ta connexion"); } };
+    xhr.send();
   };
 
   const handlePlay = (surah) => {
@@ -665,6 +669,7 @@ function SuratesTab() {
             animate={{width:`${Math.round((masteredCount/ALL_SURAHS.length)*100)}%`}} transition={{duration:0.5}}/>
         </div>
         <p className="text-slate-600 text-xs mt-1.5">Marque une sourate ✅ pour déverrouiller le niveau suivant</p>
+        <div style={{textAlign:"right",marginTop:"6px"}}><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
       </div>
 
       {/* Niveaux */}
@@ -829,12 +834,13 @@ function SuratesTab() {
 
 function AlphabetTab() {
   const [sel, setSel] = useState(null);
+  const doReset = () => { setSel(null); };
   const rows = [];
   for (let i = 0; i < ALPHABET.length; i += 4) rows.push(ALPHABET.slice(i, i+4));
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-2xl">
-        <p className="text-blue-300 font-bold text-sm mb-1">الحروف الهجائية — 28 lettres</p>
+      <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+        <p className="text-blue-300 font-bold text-sm">الحروف الهجائية — 28 lettres</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button>
         <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes. <span className="text-emerald-400">Vert = solaire</span> · <span className="text-blue-400">Bleu = lunaire</span></p>
       </div>
       {rows.map((row, ri) => {
@@ -926,6 +932,7 @@ const TAJWEED_INFO = [
 
 function TajweedTab() {
   const [sel, setSel] = useState(null);
+  const doReset = () => setSel(null);
   const TAJWEED_EXAMPLES = {
     qalaqah:"قُلْ هُوَ اللَّهُ أَحَدٌ", madda_normal:"الرَّحْمَٰنِ الرَّحِيمِ",
     madda_permissible:"مَالِكِ يَوْمِ الدِّينِ", madda_necessary:"آلْآنَ",
@@ -935,7 +942,7 @@ function TajweedTab() {
   return (
     <div className="space-y-3">
       <div className="p-4 bg-emerald-900/20 border border-emerald-500/15 rounded-2xl">
-        <p className="text-emerald-300 font-bold text-sm mb-1">🎨 Les règles du Tajweed</p>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-emerald-300 font-bold text-sm">🎨 Les règles du Tajweed</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
         <p className="text-slate-500 text-xs">Appuie sur chaque règle → description + exemple prononcé par le professeur.</p>
       </div>
       {TAJWEED_INFO.map(t => (
@@ -985,7 +992,7 @@ function VoyellesTab() {
   return (
     <div className="space-y-3">
       <div className="p-4 bg-purple-900/20 border border-purple-500/15 rounded-2xl">
-        <p className="text-purple-300 font-bold text-sm mb-1">التشكيل — Les voyelles</p>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-300 font-bold text-sm">التشكيل — Les voyelles</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
         <p className="text-slate-500 text-xs">Appuie sur chaque voyelle → le professeur explique et prononce l'exemple.</p>
       </div>
       {HARAKAT.map((h,i) => (
@@ -1032,6 +1039,7 @@ function VoyellesTab() {
 function LessonsTab() {
   const [progress] = useState(() => ls("lessons_progress", {}));
   const [current, setCurrent] = useState(null);
+  const doReset = () => { setCurrent(null); lsSet("lessons_progress", {}); window.location.reload(); };
   const [phase, setPhase] = useState("theory"); // "theory" | "exercise" | "done"
   const [theoryIdx, setTheoryIdx] = useState(0);
   const [exerciseIdx, setExerciseIdx] = useState(0);
@@ -1384,6 +1392,7 @@ function QuizTab() {
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [lastCorrect, setLastCorrect] = useState(false);
+  const doReset = () => { setMode(null); setQuestions([]); setQIdx(0); setSelected(null); setAnswered(false); setScore(0); setStreak(0); };
 
   const genLetterForms = () =>
     [...ALPHABET].sort(()=>Math.random()-0.5).map(l => {
@@ -1476,7 +1485,7 @@ function QuizTab() {
   if (!mode) return (
     <div className="space-y-3">
       <div className="p-4 bg-yellow-900/20 border border-yellow-500/20 rounded-2xl">
-        <p className="text-yellow-300 font-bold text-sm mb-1">🎯 6 types de quiz</p>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-yellow-300 font-bold text-sm">🎯 6 types de quiz</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
         <p className="text-slate-500 text-xs">La voix du professeur lit la bonne réponse après chaque question.</p>
       </div>
       <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Alphabet</p>
@@ -1718,27 +1727,32 @@ function ProfesseurTab() {
   const recognitionRef = useRef(null);
   const profCtxRef = useRef(null);
   const profSrcRef = useRef(null);
+  const doReset = () => { setMode(null); setStep("idle"); setTranscript(""); setResults(null); setScore(null); setLetterResult(null); setSessionScores([]); recognitionRef.current?.stop(); if (profSrcRef.current) { try { profSrcRef.current.stop(); } catch(e) {} } };
 
-  // Joue un verset avec la voix d'Alafasy via AudioContext + proxy
-  const playAlafasyVerse = async (surahNum, verseNum) => {
+  // Joue un verset avec la voix d'Alafasy via XMLHttpRequest (bypass SW)
+  const playAlafasyVerse = (surahNum, verseNum) => {
     const proxyUrl = window.location.origin + "/api/audio?slug=ar.alafasy&v=" + gvLS(surahNum, verseNum);
-    try {
-      if (!profCtxRef.current || profCtxRef.current.state === "closed") {
-        profCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      const ctx = profCtxRef.current;
-      if (ctx.state === "suspended") await ctx.resume();
-      if (profSrcRef.current) { try { profSrcRef.current.stop(); } catch(e) {} }
-      const resp = await fetch(proxyUrl, { cache: "no-store" });
-      if (!resp.ok) return;
-      const buf = await resp.arrayBuffer();
-      const audioBuf = await ctx.decodeAudioData(buf);
-      const src = ctx.createBufferSource();
-      src.buffer = audioBuf;
-      src.connect(ctx.destination);
-      profSrcRef.current = src;
-      src.start(0);
-    } catch(e) { /* silencieux */ }
+    if (!profCtxRef.current || profCtxRef.current.state === "closed") {
+      profCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = profCtxRef.current;
+    if (ctx.state === "suspended") ctx.resume();
+    if (profSrcRef.current) { try { profSrcRef.current.stop(); } catch(e) {} }
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", proxyUrl, true);
+    xhr.responseType = "arraybuffer";
+    xhr.onload = () => {
+      if (xhr.status !== 200) return;
+      ctx.decodeAudioData(xhr.response, (audioBuf) => {
+        const src = ctx.createBufferSource();
+        src.buffer = audioBuf;
+        src.connect(ctx.destination);
+        profSrcRef.current = src;
+        src.start(0);
+      }, () => {});
+    };
+    xhr.onerror = () => {};
+    xhr.send();
   };
 
   const verse = selectedSurah.verses[verseIdx];
@@ -1840,7 +1854,7 @@ function ProfesseurTab() {
         </div>
 
         <div className="p-4 bg-purple-900/20 border border-purple-500/20 rounded-2xl">
-          <p className="text-purple-300 font-bold text-sm mb-1">🎙️ Professeur de Tajweed — Comment ça marche</p>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-300 font-bold text-sm mb-0">🎙️ Professeur de Tajweed — Comment ça marche</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
           <p className="text-slate-400 text-xs leading-relaxed">1. Écoute le verset ou la lettre · 2. Appuie sur 🎙️ Répéter · 3. Le professeur analyse ta prononciation et te reprend vocalement</p>
         </div>
 
