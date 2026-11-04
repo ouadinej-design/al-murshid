@@ -1,7 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0f172a; color: #f1f5f9; }
+:root { --ar-scale: 1; }
+html, body, #root { height: 100%; }
+body {
+  background: #FFFBF5;
+  color: #1A1A1A;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #10b981; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #00A19A; border-radius: 2px; }
+
+/* Taille du texte arabe réglable (Réglages) : s'applique à tout texte arabe de l'app */
+:is([lang="ar"], [dir="rtl"], .font-serif) { zoom: var(--ar-scale); }
+:is([lang="ar"], [dir="rtl"], .font-serif) :is([lang="ar"], [dir="rtl"], .font-serif) { zoom: 1; }
+
+/* Focus visible pour la navigation au clavier */
+:focus-visible { outline: 2px solid #0F4C9B; outline-offset: 2px; border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

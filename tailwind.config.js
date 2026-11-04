@@ -17,6 +17,7 @@ export default {
       fontFamily: {
         display: ['"Bricolage Grotesque"', "system-ui", "sans-serif"],
         arabic:  ['"Amiri Quran"', '"Scheherazade New"', "serif"],
+        serif:   ['"Amiri Quran"', '"Scheherazade New"', "serif"], // tout le texte arabe en police coranique
       },
     },
   },

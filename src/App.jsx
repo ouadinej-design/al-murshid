@@ -8,6 +8,11 @@ import {
   Plus, Trash2, Target, TrendingUp, Calendar, Zap, Volume2
 } from "lucide-react";
 import LearnScreen from "./LearnScreen";
+import HomeScreen from "./HomeScreen";
+import SettingsSheet from "./components/SettingsSheet";
+import TasbihCounter from "./components/TasbihCounter";
+import ADHKAR_EXTRA from "./data/adhkarExtra";
+import { localDayKey, logActivity, useProgress, applyArabicScale } from "./lib/progress";
 
 // ════════════════════════════════════════════════════════════════════
 // DONNÉES — 30 JUZ avec durées de lecture moyennes (minutes)
@@ -79,8 +84,8 @@ const QURAN_SURAHS = Array.from({ length: 114 }, (_, i) => ({
   number: i + 1,
   name: ["Al-Fātiḥa","Al-Baqara","Āl 'Imrān","An-Nisā","Al-Mā'ida","Al-An'ām","Al-A'rāf","Al-Anfāl","At-Tawba","Yūnus","Hūd","Yūsuf","Ar-Ra'd","Ibrāhīm","Al-Ḥijr","An-Naḥl","Al-Isrā","Al-Kahf","Maryam","Ṭā-Hā","Al-Anbiyā","Al-Ḥajj","Al-Mu'minūn","An-Nūr","Al-Furqān","Ash-Shu'arā","An-Naml","Al-Qaṣaṣ","Al-'Ankabūt","Ar-Rūm","Luqmān","As-Sajda","Al-Aḥzāb","Saba","Fāṭir","Yā-Sīn","Aṣ-Ṣāffāt","Ṣād","Az-Zumar","Ghāfir","Fuṣṣilat","Ash-Shūrā","Az-Zukhruf","Ad-Dukhān","Al-Jāthiya","Al-Aḥqāf","Muḥammad","Al-Fatḥ","Al-Ḥujurāt","Qāf","Adh-Dhāriyāt","Aṭ-Ṭūr","An-Najm","Al-Qamar","Ar-Raḥmān","Al-Wāqi'a","Al-Ḥadīd","Al-Mujādila","Al-Ḥashr","Al-Mumtaḥina","Aṣ-Ṣaff","Al-Jumu'a","Al-Munāfiqūn","At-Taghābun","Aṭ-Ṭalāq","At-Taḥrīm","Al-Mulk","Al-Qalam","Al-Ḥāqqa","Al-Ma'ārij","Nūḥ","Al-Jinn","Al-Muzzammil","Al-Muddaththir","Al-Qiyāma","Al-Insān","Al-Mursalāt","An-Naba","An-Nāzi'āt","'Abasa","At-Takwīr","Al-Infiṭār","Al-Muṭaffifīn","Al-Inshiqāq","Al-Burūj","Aṭ-Ṭāriq","Al-A'lā","Al-Ghāshiya","Al-Fajr","Al-Balad","Ash-Shams","Al-Layl","Aḍ-Ḍuḥā","Ash-Sharḥ","At-Tīn","Al-'Alaq","Al-Qadr","Al-Bayyina","Az-Zalzala","Al-'Ādiyāt","Al-Qāri'a","At-Takāthur","Al-'Aṣr","Al-Humaza","Al-Fīl","Quraysh","Al-Mā'ūn","Al-Kawthar","Al-Kāfirūn","An-Naṣr","Al-Masad","Al-Ikhlāṣ","Al-Falaq","An-Nās"][i],
   arabic: ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"][i],
-  verses: [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,59,37,37,31,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,44,29,37,31,36,44,43,31,7,29,30,20,21,12,5,11,8,3,5,4,6,3,11,4,5,5,4,5,6,3,5,4][i],
-  juz: [1,1,2,3,4,5,6,7,8,9,10,10,12,12,13,14,15,15,16,16,17,17,18,18,18,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30][i],
+  verses: [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6][i],
+  juz: [1,1,3,4,6,7,8,9,10,11,11,12,13,13,14,14,15,15,16,16,17,17,18,18,18,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,25,25,25,25,26,26,26,26,26,26,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30][i],
 }));
 
 // ════════════════════════════════════════════════════════════════════
@@ -128,7 +133,7 @@ function generateDailyPlan(startISO, endISO) {
     const sv = verseFromGlobal(sPos), ev = verseFromGlobal(ePos);
     return {
       day: d + 1,
-      date: date.toISOString().slice(0, 10),
+      date: localDayKey(date),
       startSurah: sv.surah, startVerse: sv.verse,
       endSurah: ev.surah, endVerse: ev.verse,
       verseCount: ePos - sPos + 1,
@@ -184,6 +189,7 @@ function useJuzProgram() {
   }));
   const [dailyCompleted, setDailyCompleted] = useState(() => storage("daily_plan_v1", {}));
   const markDayDone = useCallback((dateStr) => {
+    if (!storage("daily_plan_v1", {})[dateStr]) logActivity("reading");
     setDailyCompleted(prev => {
       const next = { ...prev, [dateStr]: !prev[dateStr] };
       storageSet("daily_plan_v1", next);
@@ -234,6 +240,7 @@ function useJuzProgram() {
 function useSurahProgress() {
   const [checked, setChecked] = useState(() => storage("surah_checked_v2", {}));
   const toggle = useCallback((id) => {
+    if (!storage("surah_checked_v2", {})[id]) logActivity("reading");
     setChecked(prev => { const next = { ...prev, [id]: !prev[id] }; storageSet("surah_checked_v2", next); return next; });
   }, []);
   const counts = useMemo(() => ({ surahChecked: Object.values(checked).filter(Boolean).length }), [checked]);
@@ -441,7 +448,7 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
   }, [allVerseKeys, saveProgress]);
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100dvh - 60px)" }}>
+    <div className="flex flex-col" style={{ height: "100%" }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-creme border-b border-slate-200 shrink-0">
         <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre">
@@ -594,7 +601,7 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
     } catch { return null; }
   });
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = localDayKey();
 
   const dailyPlan = useMemo(() =>
     isValid ? generateDailyPlan(program.startDate, program.endDate) : [],
@@ -838,7 +845,27 @@ function BookmarksPage() {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Adhkar
 // ════════════════════════════════════════════════════════════════════
-const TAB_LABELS = { matin: "🌅 Matin", soir: "🌙 Soir", priere: "🕌 Prière" };
+const TAB_LABELS = {
+  matin: "🌅 Matin", soir: "🌇 Soir", priere: "🕌 Prière",
+  sommeil: "🌙 Sommeil", repas: "🍽️ Repas", voyage: "🚗 Sorties", detresse: "💚 Détresse",
+};
+const ALL_ADHKAR = [...ADHKAR_MALIKITES, ...ADHKAR_EXTRA];
+
+// Compteurs d'adhkar du JOUR (remis à zéro automatiquement à minuit, heure locale)
+const RECITED_KEY = "adhkar_recited_v2";
+function loadRecitedToday() {
+  const saved = storage(RECITED_KEY, null);
+  return saved && saved.day === localDayKey() ? saved.counts || {} : {};
+}
+function saveRecitedToday(counts) { storageSet(RECITED_KEY, { day: localDayKey(), counts }); }
+function adhkarOfTab(tab) {
+  return ALL_ADHKAR.filter(d => {
+    const cat = d.category.toLowerCase();
+    if (tab === "matin") return cat === "matin" || cat === "matin_soir";
+    if (tab === "soir")  return cat === "soir"  || cat === "matin_soir";
+    return cat === tab;
+  });
+}
 
 function useArabicSpeech() {
   const [speaking, setSpeaking] = useState(null);
@@ -874,7 +901,7 @@ function useArabicSpeech() {
   return { speaking, speak, stop, voicesLoaded: voices.length > 0 };
 }
 
-function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, setRecited, speaking, speak }) {
+function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, setRecited, speaking, speak, onOpenTasbih }) {
   const [expanded, setExpanded] = useState(false);
   const isPlaying = speaking === dhikr.id;
   const count = recited[dhikr.id] || 0;
@@ -911,7 +938,7 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
             <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">النص العربي</p>
             <span className={`text-xs ${isPlaying ? "text-bleu font-semibold" : "text-slate-500"}`}>{isPlaying ? "⏸ Arrêter" : "🔊 Écouter"}</span>
           </div>
-          <p className="text-right font-serif text-encre leading-[2.4] select-text" dir="rtl" lang="ar" style={{ fontSize: "clamp(1.1rem, 4vw, 1.5rem)", wordBreak: "keep-all" }}>{dhikr.arabic}</p>
+          <p className="text-right text-encre leading-[2.4] select-text whitespace-pre-line" dir="rtl" lang="ar" style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.15rem, 4.2vw, 1.55rem)", wordBreak: "keep-all" }}>{dhikr.arabic}</p>
           {isPlaying && (
             <div className="flex items-center gap-1 justify-center mt-3">
               {[...Array(4)].map((_, i) => (<motion.div key={i} className="w-1 rounded-full bg-bleu" animate={{ height: ["6px","16px","6px"] }} transition={{ duration: 0.6, delay: i*0.15, repeat: Infinity }}/>))}
@@ -950,6 +977,11 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
           {count > 0 && (
             <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))} className="p-2 text-slate-500 hover:text-encre hover:bg-slate-100 rounded-xl transition-all" title="Remettre à zéro"><RotateCcw className="w-3.5 h-3.5"/></button>
           )}
+          {dhikr.repetition > 1 && !done && (
+            <button onClick={() => onOpenTasbih(dhikr)} className="px-3 py-3 rounded-2xl text-xs font-bold bg-white border border-vert/30 text-vert hover:bg-vert/5 transition-all" title="Compteur plein écran">
+              📿 Tasbih
+            </button>
+          )}
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
             onClick={() => !done && setRecited(p => ({ ...p, [dhikr.id]: (p[dhikr.id] || 0) + 1 }))}
             className={`flex-1 py-3 rounded-2xl font-bold text-sm transition-all ${done ? "bg-vert/10 text-vert border border-vert/25 cursor-default" : "bg-vert text-white shadow-lg hover:bg-vert/90"}`}>
@@ -961,17 +993,27 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
   );
 }
 
-function AdhkarPage({ fridayKahf: fridayKahfProp }) {
+function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
   const [favorites, setFavorites] = useState(() => storage("adhkar_favs", {}));
   const [copied,    setCopied]    = useState({});
-  const [recited,   setRecited]   = useState(() => storage("adhkar_recited", {}));
-  const [activeTab, setActiveTab] = useState("matin");
+  const [recited,   setRecited]   = useState(loadRecitedToday);
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [tasbih,    setTasbih]    = useState(null);
+  const recitedRef = useRef(recited);
+  // si l'app reste ouverte après minuit, on repart de zéro
+  useEffect(() => {
+    const id = setInterval(() => {
+      const fresh = loadRecitedToday();
+      if (Object.keys(fresh).length === 0 && Object.keys(recitedRef.current).length > 0) { recitedRef.current = {}; setRecited({}); }
+    }, 60000);
+    return () => clearInterval(id);
+  }, []);
   const [confirmReset, setConfirmReset] = useState(false);
   const { speaking, speak, voicesLoaded } = useArabicSpeech();
   const { isReadThisWeek, markRead, totalFridays } = fridayKahfProp || useFridayKahf();
   const today = new Date();
   const isFriday = today.getDay() === 5;
-  const handleResetRecited = () => { storageSet("adhkar_recited", {}); setRecited({}); setConfirmReset(false); };
+  const handleResetRecited = () => { saveRecitedToday({}); recitedRef.current = {}; setRecited({}); setConfirmReset(false); };
   const handleCopy = useCallback((dhikr) => {
     navigator.clipboard.writeText(`${dhikr.arabic}\n\n${dhikr.transliteration}\n\n${dhikr.french}\n\nSource : ${dhikr.source}`);
     setCopied(p => ({ ...p, [dhikr.id]: true }));
@@ -981,17 +1023,20 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
     setFavorites(prev => { const next = { ...prev, [id]: !prev[id] }; storageSet("adhkar_favs", next); return next; });
   }, []);
   const handleSetRecited = useCallback((updater) => {
-    setRecited(prev => { const next = typeof updater === "function" ? updater(prev) : updater; storageSet("adhkar_recited", next); return next; });
+    const prev = recitedRef.current;
+    const next = typeof updater === "function" ? updater(prev) : updater;
+    // +1 activité pour chaque dhikr qui vient d'être complété
+    ALL_ADHKAR.forEach(d => {
+      if ((prev[d.id] || 0) < d.repetition && (next[d.id] || 0) >= d.repetition) logActivity("adhkar");
+    });
+    recitedRef.current = next;
+    saveRecitedToday(next);
+    setRecited(next);
   }, []);
-  const filtered = ADHKAR_MALIKITES.filter(d => {
-    const cat = d.category.toLowerCase();
-    if (activeTab === "matin") return cat === "matin" || cat === "matin_soir";
-    if (activeTab === "soir")  return cat === "soir"  || cat === "matin_soir";
-    return cat === activeTab;
-  });
+  const filtered = adhkarOfTab(activeTab);
   const totalDone = filtered.filter(d => (recited[d.id] || 0) >= d.repetition).length;
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 bg-white text-encre min-h-[100dvh]">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 bg-white text-encre min-h-full">
       <div className="flex items-center justify-between">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vert/10 text-vert text-xs font-bold border border-vert/25 uppercase tracking-wider">📿 Madhhab Malikite — Muwatta Mālik</div>
@@ -1014,7 +1059,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
       </div>
       <div className="flex bg-slate-100 rounded-2xl p-1 border border-slate-200 gap-1 overflow-x-auto">
         {Object.entries(TAB_LABELS).map(([key, label]) => {
-          const tabDhikr = ADHKAR_MALIKITES.filter(d => d.category.toLowerCase() === key);
+          const tabDhikr = adhkarOfTab(key);
           const tabDone  = tabDhikr.filter(d => (recited[d.id] || 0) >= d.repetition).length;
           return (
             <button key={key} onClick={() => setActiveTab(key)}
@@ -1059,9 +1104,17 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4 pb-6">
           {filtered.length === 0 && <p className="text-center text-slate-500 py-10">Aucun dhikr dans cet onglet.</p>}
           {filtered.map(dhikr => (
-            <DhikrCard key={dhikr.id} dhikr={dhikr} favorites={favorites} toggleFav={toggleFav} copied={copied} handleCopy={handleCopy} recited={recited} setRecited={handleSetRecited} speaking={speaking} speak={speak}/>
+            <DhikrCard key={dhikr.id} dhikr={dhikr} favorites={favorites} toggleFav={toggleFav} copied={copied} handleCopy={handleCopy} recited={recited} setRecited={handleSetRecited} speaking={speaking} speak={speak} onOpenTasbih={setTasbih}/>
           ))}
         </motion.div>
+      </AnimatePresence>
+      <AnimatePresence>
+        {tasbih && (
+          <TasbihCounter dhikr={tasbih} count={recited[tasbih.id] || 0}
+            onIncrement={() => handleSetRecited(p => ({ ...p, [tasbih.id]: Math.min(tasbih.repetition, (p[tasbih.id] || 0) + 1) }))}
+            onReset={() => handleSetRecited(p => ({ ...p, [tasbih.id]: 0 }))}
+            onClose={() => setTasbih(null)} />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -1344,7 +1397,7 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
 
   if (currentSurah) {
     return (
-      <div className="flex flex-col" style={{ height: "calc(100dvh - 60px)" }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div className="flex flex-col" style={{ height: "100%" }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <AnimatePresence>
           {bookmarkToast && (
             <motion.div initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
@@ -1758,13 +1811,13 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzProgram: juzProp, resetChecked }) {
   const pct = Math.round((counts.surahChecked / 114) * 100);
-  const [recited, setRecited] = useState(() => storage("adhkar_recited", {}) || {});
+  const [recited, setRecited] = useState(loadRecitedToday);
   const { totalFridays, isReadThisWeek } = fridayKahfProp || useFridayKahf();
   const juzProgram = juzProp || useJuzProgram();
-  useEffect(() => { if (isOpen) setRecited(storage("adhkar_recited", {}) || {}); }, [isOpen]);
-  const adhkarDone = ADHKAR_MALIKITES.filter(d => (recited[d.id] || 0) >= d.repetition).length;
-  const adhkarTotal = ADHKAR_MALIKITES.length;
-  const matinSoir = ADHKAR_MALIKITES.filter(d => ["matin","soir","matin_soir"].includes(d.category.toLowerCase()));
+  useEffect(() => { if (isOpen) setRecited(loadRecitedToday()); }, [isOpen]);
+  const adhkarDone = ALL_ADHKAR.filter(d => (recited[d.id] || 0) >= d.repetition).length;
+  const adhkarTotal = ALL_ADHKAR.length;
+  const matinSoir = ALL_ADHKAR.filter(d => ["matin","soir","matin_soir"].includes(d.category.toLowerCase()));
   const matinSoirDone = matinSoir.filter(d => (recited[d.id] || 0) >= d.repetition).length;
   return (
     <AnimatePresence>
@@ -1852,12 +1905,13 @@ function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzP
 // ROOT APP — PAGES (avec Learn)
 // ════════════════════════════════════════════════════════════════════
 const PAGES = [
-  { key: "quran",     label: "📖 Coran",       shortLabel: "Coran"     },
-  { key: "program",   label: "📅 Programme",   shortLabel: "Khatm"     },
-  { key: "bookmarks", label: "🔖 Marque-pages", shortLabel: "Repères"  },
-  { key: "adhkar",    label: "📿 Adhkar",       shortLabel: "Adhkar"   },
-  { key: "learn",     label: "🎓 Apprendre",    shortLabel: "Apprendre"},
+  { key: "home",    icon: "🏠", shortLabel: "Accueil"   },
+  { key: "quran",   icon: "📖", shortLabel: "Coran"     },
+  { key: "program", icon: "📅", shortLabel: "Khatm"     },
+  { key: "adhkar",  icon: "📿", shortLabel: "Adhkar"    },
+  { key: "learn",   icon: "🎓", shortLabel: "Apprendre" },
 ];
+const PAGE_ACCENT = { home: "#E30613", quran: "#00A19A", program: "#0F4C9B", bookmarks: "#F58220", adhkar: "#00A19A", learn: "#0F4C9B" };
 
 const JUZ_EXACT = [
   { juz:1,  startSurah:1,  startVerse:1,   endSurah:2,  endVerse:141 },
@@ -1895,13 +1949,56 @@ const JUZ_EXACT = [
 function getJuzStart(juzNum) { return JUZ_EXACT.find(j => j.juz === juzNum); }
 
 export default function App() {
-  const [page, setPage] = useState("quran");
+  const [page, setPage] = useState("home");
+  const [pageOpts, setPageOpts] = useState({});
   const [statsOpen, setStatsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [navTarget, setNavTarget] = useState(null);
   const [navConsumed, setNavConsumed] = useState(false);
   const juzProgram = useJuzProgram();
   const fridayKahf = useFridayKahf();
   const { checked, toggle, counts, resetChecked } = useSurahProgress();
+  const { settings } = useProgress();
+
+  // taille du texte arabe (Réglages)
+  useEffect(() => { applyArabicScale(settings.arabicScale); }, [settings.arabicScale]);
+
+  const navigate = useCallback((key, opts = {}) => { setPageOpts(opts); setPage(key); }, []);
+
+  // ── Données résumées pour l'accueil (recalculées à chaque retour sur l'accueil)
+  const homeData = useMemo(() => {
+    if (page !== "home") return null;
+    const recited = loadRecitedToday();
+    const slot = (tab) => {
+      const list = adhkarOfTab(tab);
+      return { done: list.filter(d => (recited[d.id] || 0) >= d.repetition).length, total: list.length };
+    };
+    const anki = storage("anki_cards", {}) || {};
+    const now = Date.now();
+    const cards = Object.values(anki);
+    const learned = cards.filter(c => c?.reps > 0).length;
+    const dueReviews = cards.filter(c => c?.reps > 0 && c.nextReview <= now).length;
+    let todayReading = null;
+    const p = juzProgram.program;
+    if (p.active && p.startDate && p.endDate) {
+      const today = localDayKey();
+      const d = generateDailyPlan(p.startDate, p.endDate).find(x => x.date === today);
+      if (d) {
+        const s1 = QURAN_SURAHS[d.startSurah - 1].name, s2 = QURAN_SURAHS[d.endSurah - 1].name;
+        todayReading = {
+          day: d.day, verseCount: d.verseCount, done: !!juzProgram.dailyCompleted[today],
+          label: d.startSurah === d.endSurah ? `${s1} ${d.startVerse} → ${d.endVerse}` : `${s1} ${d.startVerse} → ${s2} ${d.endVerse}`,
+        };
+      }
+    }
+    const bookmarksCount = (storage("bookmarks_quran_v3", []) || []).length + (storage("bookmarks_khatm_v3", []) || []).length;
+    return {
+      adhkar: { matin: slot("matin"), soir: slot("soir") },
+      // « à revoir » = mots arrivés à échéance, sinon les nouveaux mots de la prochaine session
+      words: { learned, due: dueReviews || (learned < 500 ? Math.min(8, 500 - learned) : 0) },
+      todayReading, bookmarksCount,
+    };
+  }, [page, juzProgram.program, juzProgram.dailyCompleted]);
 
   // Inject tajweed CSS globally once
   useEffect(() => {
@@ -1932,56 +2029,28 @@ export default function App() {
     if (!juzInfo) return;
     setNavTarget({ surahNum: juzInfo.startSurah, verseNum: juzInfo.startVerse, bounds: { startSurah: juzInfo.startSurah, startVerse: juzInfo.startVerse, endSurah: juzInfo.endSurah, endVerse: juzInfo.endVerse } });
     setNavConsumed(false);
-    setPage("quran");
+    navigate("quran");
   }, []);
 
   const handleNavigateToRange = useCallback((startSurah, startVerse, endSurah, endVerse) => {
     setNavTarget({ surahNum: startSurah, verseNum: startVerse, bounds: { startSurah, startVerse, endSurah, endVerse } });
     setNavConsumed(false);
-    setPage("quran");
+    navigate("quran");
   }, []);
 
+  const accent = PAGE_ACCENT[page] || "#0F4C9B";
   return (
-    <div className="bg-creme min-h-screen text-encre font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
-
-      {/* Barre de navigation en haut */}
-      <nav className="shrink-0 flex items-center bg-white border-b border-slate-200 px-1 py-1.5">
-        {PAGES.map(({ key, shortLabel }) => {
-          const active = page === key;
-          const activeCls = {
-            quran:     "bg-vert/10 border-vert/30 text-vert",
-            program:   "bg-bleu/10 border-bleu/30 text-bleu",
-            bookmarks: "bg-orange/10 border-orange/30 text-orange",
-            adhkar:    "bg-vert/10 border-vert/30 text-vert",
-            learn:     "bg-bleu/10 border-bleu/30 text-bleu",
-          }[key];
-          return (
-            <motion.button key={key} whileTap={{ scale: 0.90 }} onClick={() => setPage(key)}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-all border ${active ? activeCls : "border-transparent hover:bg-slate-100"}`}>
-              <span className="text-base leading-none">
-                {key === "quran"     && "📖"}
-                {key === "program"   && "📅"}
-                {key === "bookmarks" && "🔖"}
-                {key === "adhkar"    && "📿"}
-                {key === "learn"     && "🎓"}
-              </span>
-              <span className={`text-[8px] font-bold leading-none ${active ? "" : "text-slate-500"}`}>{shortLabel}</span>
-            </motion.button>
-          );
-        })}
-        <motion.button whileTap={{ scale: 0.90 }} onClick={() => setStatsOpen(true)}
-          className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 px-2 border border-transparent hover:bg-slate-100 transition-all">
-          <Activity className="w-4 h-4 text-slate-500"/>
-          <span className="text-[8px] font-bold text-slate-500 leading-none">Stats</span>
-        </motion.button>
-      </nav>
+    <div className="bg-creme text-encre font-sans antialiased flex flex-col" style={{ height: "100dvh", overflow: "hidden" }}>
       <GradientBar />
 
       <main className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
-          {page === "quran" && (
-            <motion.div key="quran" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
+          <motion.div key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+            className={`h-full overflow-y-auto ${page === "adhkar" ? "bg-white" : ""}`}>
+            {page === "home" && homeData && (
+              <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} {...homeData}/>
+            )}
+            {page === "quran" && (
               <QuranReader
                 initialSurahNum={navTarget?.surahNum}
                 initialVerseNum={navTarget?.verseNum}
@@ -1990,36 +2059,33 @@ export default function App() {
                 checked={checked}
                 toggle={toggle}
                 counts={counts}
-               resetChecked={resetChecked}/>
-            </motion.div>
-          )}
-          {page === "program" && (
-            <motion.div key="program" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
-              <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>
-            </motion.div>
-          )}
-          {page === "bookmarks" && (
-            <motion.div key="bookmarks" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
-              <BookmarksPage/>
-            </motion.div>
-          )}
-          {page === "adhkar" && (
-            <motion.div key="adhkar" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto bg-white" style={{ maxHeight: "100dvh" }}>
-              <AdhkarPage fridayKahf={fridayKahf}/>
-            </motion.div>
-          )}
-          {page === "learn" && (
-            <motion.div key="learn" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
-              <LearnScreen/>
-            </motion.div>
-          )}
+                resetChecked={resetChecked}/>
+            )}
+            {page === "program" && <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>}
+            {page === "bookmarks" && <BookmarksPage/>}
+            {page === "adhkar" && <AdhkarPage fridayKahf={fridayKahf} initialTab={pageOpts.tab || "matin"}/>}
+            {page === "learn" && <LearnScreen initialTab={pageOpts.tab}/>}
+          </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Barre de navigation en bas (à portée du pouce) */}
+      <nav className="shrink-0 flex items-stretch bg-white border-t border-slate-200 px-1 pt-1" style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }} aria-label="Navigation principale">
+        {PAGES.map(({ key, icon, shortLabel }) => {
+          const active = page === key || (key === "home" && page === "bookmarks");
+          return (
+            <motion.button key={key} whileTap={{ scale: 0.9 }} onClick={() => navigate(key)} aria-current={active ? "page" : undefined}
+              className="relative flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5">
+              {active && <motion.span layoutId="navpill" className="absolute inset-x-3 top-0 h-[3px] rounded-full" style={{ background: accent }}/>}
+              <span className={`text-xl leading-none transition-all ${active ? "scale-110" : "opacity-60 grayscale"}`} aria-hidden="true">{icon}</span>
+              <span className="text-[10px] font-bold leading-none" style={{ color: active ? accent : "#94A3B8" }}>{shortLabel}</span>
+            </motion.button>
+          );
+        })}
+      </nav>
+
       <StatsDrawer isOpen={statsOpen} onClose={() => setStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} resetChecked={resetChecked}/>
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)}/>
     </div>
   );
 }

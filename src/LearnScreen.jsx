@@ -397,6 +397,8 @@ const LESSONS = [
 // DONNÉES — Vocabulaire coranique (100 mots les plus fréquents)
 // ═══════════════════════════════════════════════════════
 import VOCAB from "./vocabData";
+import { normalizeAr, calcScore, bestTranscript } from "./lib/arabic";
+import { logActivity, startOfLocalDay } from "./lib/progress";
 
 // RÉPÉTITION ESPACÉE — Algorithme SM-2 simplifié
 // ═══════════════════════════════════════════════════════
@@ -419,14 +421,27 @@ function updateCard(card, quality) {
     else interval = Math.round(interval * ease);
     reps++;
   }
-  return { interval, ease, reps, nextReview: now + interval * 86400000, lastQuality: quality };
+  // « Oublié » : revient dans 10 min. Sinon : dû au début de la journée locale J+interval
+  // (un mot révisé le soir revient le matin prévu, pas à la même heure).
+  const nextReview = interval === 0
+    ? now + 10 * 60000
+    : startOfLocalDay(new Date(now + interval * 86400000));
+  return { interval, ease, reps, nextReview, lastQuality: quality };
 }
+
+const NEW_PER_SESSION = 8;
 
 function getDueCards(cards) {
   const now = Date.now();
-  return VOCAB.filter(w => !cards[w.id] || cards[w.id].nextReview <= now)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 15);
+  // 1. les mots déjà vus et arrivés à échéance (les plus en retard d'abord)
+  const due = VOCAB.filter(w => cards[w.id]?.reps > 0 && cards[w.id].nextReview <= now)
+    .sort((a, b) => cards[a.id].nextReview - cards[b.id].nextReview);
+  // 2. complétés par des mots nouveaux, dans l'ordre de fréquence du Coran
+  const room = Math.max(0, 15 - due.length);
+  const fresh = VOCAB.filter(w => !(cards[w.id]?.reps > 0) && (!cards[w.id] || cards[w.id].nextReview <= now))
+    .sort((a, b) => (b.freq || 0) - (a.freq || 0))
+    .slice(0, Math.min(room, NEW_PER_SESSION));
+  return [...due.slice(0, 15), ...fresh];
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1077,6 +1092,7 @@ function LessonsTab() {
     } else {
       const p = { ...ls("lessons_progress", {}), [current.id]: { done:true, score, total:current.exercise.length, date:Date.now() }};
       lsSet("lessons_progress", p);
+      logActivity("lessons");
       setPhase("done");
     }
   };
@@ -1236,6 +1252,7 @@ function RevisionTab() {
     const updated = { ...cards, [card.id]: updateCard(cards[card.id] || {interval:0,ease:2.5,reps:0,nextReview:0}, quality) };
     setCards(updated);
     lsSet("anki_cards", updated);
+    logActivity("words");
     setSessionDone(s => s+1);
     if (idx < due.length - 1) { setIdx(i => i+1); setFlipped(false); }
     else setDue([]);
@@ -1471,6 +1488,7 @@ function QuizTab() {
     const q = questions[qIdx];
     const correct = opt === q.correct;
     setSelected(opt); setAnswered(true); setLastCorrect(correct);
+    logActivity("quiz");
     if (correct) { setScore(s=>s+1); setStreak(s=>s+1); } else setStreak(0);
     // Voix du prof : prononce la bonne réponse
     if (q.type==="letter_forms"||q.type==="letter_sound"||q.type==="letter") {
@@ -1659,34 +1677,7 @@ function QuizTab() {
 // ═══════════════════════════════════════════════════════
 const PROF_SURAHS = LEARN_SURAHS.slice(0, 6);
 
-function normalizeAr(text) {
-  return text
-    .replace(/[\u064B-\u065F\u0670]/g, "")
-    .replace(/[أإآا]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function compareWords(expected, spoken) {
-  const expWords = normalizeAr(expected).split(" ");
-  const spkWords = normalizeAr(spoken).split(" ");
-  return expWords.map((w, i) => {
-    const s = spkWords[i] || "";
-    if (!s) return { word: w, status: "missing" };
-    if (s === w) return { word: w, status: "correct" };
-    let diff = 0;
-    for (let j = 0; j < Math.max(w.length, s.length); j++) { if (w[j] !== s[j]) diff++; }
-    return { word: w, status: diff <= 1 ? "close" : "wrong", spoken: s };
-  });
-}
-
-function calcScore(results) {
-  if (!results.length) return 0;
-  const pts = results.reduce((a, r) => a + (r.status === "correct" ? 1 : r.status === "close" ? 0.5 : 0), 0);
-  return Math.round((pts / results.length) * 100);
-}
+// normalizeAr / compareWords / calcScore → voir src/lib/arabic.js
 
 function ensureVoices() {
   return new Promise(resolve => {
@@ -1782,9 +1773,10 @@ function ProfesseurTab() {
     rec.maxAlternatives = 5;
     rec.onstart  = () => setStep("listening");
     rec.onresult = (e) => {
-      const heard = Array.from(e.results[0]).map(r => r.transcript).join(" ").trim();
-      setTranscript(heard);
-      onResult(heard);
+      // les alternatives sont comparées séparément (et non plus collées bout à bout)
+      const alts = Array.from(e.results[0]).map(r => r.transcript.trim()).filter(Boolean);
+      setTranscript(alts[0] || "");
+      onResult(alts[0] || "", alts);
     };
     rec.onerror = (e) => {
       setStep("idle");
@@ -1799,9 +1791,12 @@ function ProfesseurTab() {
   const stopRec = () => { recognitionRef.current?.stop(); setStep("idle"); };
 
   // ── Résultat Verset / Mot ──────────────────────────────
-  const handleVerseResult = useCallback((heard, wordMode) => {
-    const res = compareWords(verse.ar, heard);
-    const sc = calcScore(res);
+  const handleVerseResult = useCallback((heard, wordMode, alts) => {
+    const best = bestTranscript(verse.ar, alts && alts.length ? alts : [heard]);
+    const res = best.results;
+    const sc = best.score;
+    setTranscript(best.heard);
+    if (sc >= 60) logActivity("recite");
     setResults(wordMode ? res : null);
     setScore(sc);
     setStep("result");
@@ -1823,7 +1818,8 @@ function ProfesseurTab() {
   }, [verse, selectedSurah, profSpeak, playAlafasyVerse]);
 
   // ── Résultat Lettre ────────────────────────────────────
-  const handleLetterResult = useCallback((heard) => {
+  const handleLetterResult = useCallback((heard, alts) => {
+    if (alts && alts.length > 1) heard = alts.join(" ");
     setStep("result");
     const norm = normalizeAr(heard);
     const found = norm.includes(letter.ar) || heard.includes(letter.ar)
@@ -2088,7 +2084,7 @@ function ProfesseurTab() {
           <Volume2 className="w-4 h-4"/> Écouter
         </button>
         <motion.button whileTap={{scale:0.95}}
-          onClick={() => step==="listening" ? stopRec() : startRec(h => handleVerseResult(h, isWordMode))}
+          onClick={() => step==="listening" ? stopRec() : startRec((h, alts) => handleVerseResult(h, isWordMode, alts))}
           className={`flex-1 py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg ${
             step==="listening" ? "bg-red-500 text-white" : "bg-gradient-to-r from-purple-600 to-violet-600 text-white"}`}>
           {step==="listening" ? "⏹ Stop" : "🎙️ Répéter"}
@@ -2130,8 +2126,8 @@ const TABS = [
   {key:"voyelles", label:"◌ Voyelles"},
 ];
 
-export default function LearnScreen() {
-  const [tab, setTab] = useState("surahs");
+export default function LearnScreen({ initialTab }) {
+  const [tab, setTab] = useState(initialTab || "surahs");
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const lessonsProgress = ls("lessons_progress", {});
   const anki = ls("anki_cards", getInitialCardState());
