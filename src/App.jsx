@@ -225,7 +225,8 @@ function useJuzProgram() {
   const daysTotal    = Math.max(1, Math.ceil((endMs - startMs) / 86400000));
   const daysLeft     = Math.max(1, Math.ceil((endMs - now) / 86400000));
   const dailyGoalJuz = Math.max(1, Math.ceil(remaining / daysLeft));
-  const expectedJuz  = Math.min(30, Math.ceil((daysPassed / daysTotal) * 30));
+  // Juz qui devraient être terminés à la FIN de la veille (le jour 1, on n'est pas « en retard »)
+  const expectedJuz  = Math.min(30, Math.floor(((daysPassed - 1) / daysTotal) * 30));
   const onTrack      = completedCount >= expectedJuz;
   const progressPct  = Math.round((completedCount / 30) * 100);
   const behindBy = Math.max(0, expectedJuz - completedCount);

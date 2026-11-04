@@ -1,16 +1,39 @@
-# React + Vite
+# Al-Murshid — compagnon coranique (orientation malikite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application web mobile (PWA) en React + Vite + Tailwind, déployée sur Vercel.
 
-Currently, two official plugins are available:
+## Fonctionnalités
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Accueil** : objectif du jour (réglable), série de jours, niveau et XP, session éclair de 5 min, lecture du jour du programme Khatm
+- **Coran** : 114 sourates, tajwid en couleur, récitateurs (via le proxy `api/audio.js`), hors-ligne pour une partie des sourates
+- **Khatm** : programme de lecture (30 jours à 1 an) découpé verset par verset
+- **Adhkar** : matin, soir, prière, sommeil, repas, sorties, détresse ; compteur tasbih plein écran avec vibration ; remise à zéro chaque jour à minuit
+- **Apprendre** : 500 mots les plus fréquents du Coran en révision espacée, quiz, leçons, alphabet, voyelles, tajwid, professeur avec reconnaissance vocale
+- **Réglages** : taille du texte arabe, objectif quotidien
 
-## React Compiler
+Toute la progression est enregistrée sur le téléphone (localStorage), en heure locale.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Développement
 
-## Expanding the ESLint configuration
+```bash
+npm install
+npm run dev      # serveur local
+npm run test     # tests (coach vocal, dates, série, niveaux)
+npm run build    # version de production
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Organisation du code
+
+| Fichier | Rôle |
+|---|---|
+| `src/App.jsx` | Coquille de l'app, navigation, Coran, Khatm, repères, adhkar, statistiques |
+| `src/HomeScreen.jsx` | Écran d'accueil |
+| `src/LearnScreen.jsx` | Onglets d'apprentissage |
+| `src/lib/progress.js` | Objectif du jour, série, XP, réglages (heure locale) |
+| `src/lib/arabic.js` | Normalisation de l'arabe et correction de la récitation |
+| `src/components/TasbihCounter.jsx` | Compteur tasbih plein écran |
+| `src/components/SettingsSheet.jsx` | Réglages |
+| `src/data/adhkarExtra.js` | Adhkar sommeil, repas, sorties, détresse (avec sources) |
+| `src/appData.js`, `src/vocabData.js` | Adhkar malikites, versets, 500 mots |
+
+Charte : rouge `#E30613`, orange `#F58220`, jaune `#FFD100`, vert `#00A19A`, bleu `#0F4C9B`. Polices : Bricolage Grotesque (titres), Inter (texte), Amiri Quran (arabe).
