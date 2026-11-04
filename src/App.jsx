@@ -86,6 +86,11 @@ const QURAN_SURAHS = Array.from({ length: 114 }, (_, i) => ({
 // ════════════════════════════════════════════════════════════════════
 // STORAGE HELPERS
 // ════════════════════════════════════════════════════════════════════
+// Liseré dégradé de la charte (rouge → orange → jaune → vert → bleu)
+function GradientBar() {
+  return <div className="h-1 shrink-0" style={{ background: "linear-gradient(90deg,#E30613 0%,#F58220 25%,#FFD100 50%,#00A19A 75%,#0F4C9B 100%)" }} aria-hidden="true"/>;
+}
+
 function storage(key, defaultVal) {
   try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : defaultVal; }
   catch { return defaultVal; }
@@ -876,76 +881,78 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
   const done = count >= dhikr.repetition;
   return (
     <motion.div layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      className={`rounded-3xl border transition-all overflow-hidden ${done ? "bg-emerald-900/20 border-emerald-500/30" : "bg-white/5 border-white/10 hover:border-emerald-500/20"}`}>
+      className={`rounded-3xl border transition-all overflow-hidden shadow-sm ${
+        done ? "bg-vert/5 border-vert/30" : "bg-white border-slate-200 hover:border-vert/30"
+      }`}>
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white text-sm leading-snug mb-2">{dhikr.title}</p>
+            <p className="font-bold text-encre text-sm leading-snug mb-2">{dhikr.title}</p>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-1 bg-emerald-500/15 text-emerald-400 rounded-lg text-xs font-bold border border-emerald-500/20">{dhikr.repetition}×</span>
-              {done && <span className="px-2 py-1 bg-emerald-500/25 text-emerald-300 rounded-lg text-xs font-bold">✓ Terminé</span>}
+              <span className="px-2.5 py-1 bg-vert/10 text-vert rounded-lg text-xs font-bold border border-vert/20">{dhikr.repetition}×</span>
+              {done && <span className="px-2 py-1 bg-vert text-white rounded-lg text-xs font-bold">✓ Terminé</span>}
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
             <button onClick={() => speak(dhikr)} title={isPlaying ? "Arrêter" : "Écouter en arabe"}
-              className={`p-2 rounded-xl transition-all border ${isPlaying ? "bg-blue-500/25 border-blue-500/40 text-blue-300 animate-pulse" : "bg-white/5 border-white/10 text-slate-500 hover:text-blue-400 hover:border-blue-500/30"}`}>
+              className={`p-2 rounded-xl transition-all border ${isPlaying ? "bg-bleu text-white border-bleu animate-pulse" : "bg-slate-50 border-slate-200 text-slate-500 hover:text-bleu hover:border-bleu/30"}`}>
               {isPlaying ? <span className="text-base leading-none">⏸</span> : <span className="text-base leading-none">🔊</span>}
             </button>
-            <button onClick={() => handleCopy(dhikr)} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-500 hover:text-white border border-transparent">
-              {copied[dhikr.id] ? <CheckCircle className="w-4 h-4 text-emerald-400"/> : <Copy className="w-4 h-4"/>}
+            <button onClick={() => handleCopy(dhikr)} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre border border-transparent">
+              {copied[dhikr.id] ? <CheckCircle className="w-4 h-4 text-vert"/> : <Copy className="w-4 h-4"/>}
             </button>
-            <button onClick={() => toggleFav(dhikr.id)} className={`p-2 rounded-xl transition-all border border-transparent ${favorites[dhikr.id] ? "text-rose-400" : "text-slate-500 hover:text-rose-400"}`}>
+            <button onClick={() => toggleFav(dhikr.id)} className={`p-2 rounded-xl transition-all border border-transparent ${favorites[dhikr.id] ? "text-rouge" : "text-slate-400 hover:text-rouge"}`}>
               {favorites[dhikr.id] ? "♥" : "♡"}
             </button>
           </div>
         </div>
-        <div className={`p-4 rounded-2xl mb-3 border transition-all cursor-pointer ${isPlaying ? "bg-blue-500/8 border-blue-500/25" : "bg-slate-800/60 border-white/10 hover:border-white/20"}`} onClick={() => speak(dhikr)}>
+        <div className={`p-4 rounded-2xl mb-3 border transition-all cursor-pointer ${isPlaying ? "bg-bleu/5 border-bleu/25" : "bg-creme border-slate-200 hover:border-bleu/20"}`} onClick={() => speak(dhikr)}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-slate-600 uppercase tracking-wider font-semibold">النص العربي</p>
-            <span className={`text-xs ${isPlaying ? "text-blue-400 font-semibold" : "text-slate-600"}`}>{isPlaying ? "⏸ Arrêter" : "🔊 Écouter"}</span>
+            <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">النص العربي</p>
+            <span className={`text-xs ${isPlaying ? "text-bleu font-semibold" : "text-slate-500"}`}>{isPlaying ? "⏸ Arrêter" : "🔊 Écouter"}</span>
           </div>
-          <p className="text-right font-serif text-white leading-[2.4] select-text" dir="rtl" lang="ar" style={{ fontSize: "clamp(1.1rem, 4vw, 1.5rem)", wordBreak: "keep-all" }}>{dhikr.arabic}</p>
+          <p className="text-right font-serif text-encre leading-[2.4] select-text" dir="rtl" lang="ar" style={{ fontSize: "clamp(1.1rem, 4vw, 1.5rem)", wordBreak: "keep-all" }}>{dhikr.arabic}</p>
           {isPlaying && (
             <div className="flex items-center gap-1 justify-center mt-3">
-              {[...Array(4)].map((_, i) => (<motion.div key={i} className="w-1 rounded-full bg-blue-400" animate={{ height: ["6px","16px","6px"] }} transition={{ duration: 0.6, delay: i*0.15, repeat: Infinity }}/>))}
-              <span className="text-blue-400 text-xs ml-2 font-semibold">Récitation en cours…</span>
+              {[...Array(4)].map((_, i) => (<motion.div key={i} className="w-1 rounded-full bg-bleu" animate={{ height: ["6px","16px","6px"] }} transition={{ duration: 0.6, delay: i*0.15, repeat: Infinity }}/>))}
+              <span className="text-bleu text-xs ml-2 font-semibold">Récitation en cours…</span>
             </div>
           )}
         </div>
-        <div className="bg-emerald-500/8 border border-emerald-500/15 rounded-2xl p-4 mb-3">
-          <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold mb-1.5">Traduction</p>
-          <p className="text-slate-300 text-sm leading-relaxed select-text">{dhikr.french}</p>
+        <div className="bg-vert/5 border border-vert/15 rounded-2xl p-4 mb-3">
+          <p className="text-xs text-vert uppercase tracking-wider font-semibold mb-1.5">Traduction</p>
+          <p className="text-slate-700 text-sm leading-relaxed select-text">{dhikr.french}</p>
         </div>
         {dhikr.benefice && (
-          <div className="bg-amber-500/8 border border-amber-500/20 rounded-2xl p-4 mb-3">
-            <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5">📜 Vertu & bénéfice</p>
-            <p className="text-amber-200/80 text-sm leading-relaxed italic select-text">{dhikr.benefice}</p>
+          <div className="bg-jaune/10 border border-jaune/40 rounded-2xl p-4 mb-3">
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1.5">📜 Vertu & bénéfice</p>
+            <p className="text-amber-900/80 text-sm leading-relaxed italic select-text">{dhikr.benefice}</p>
           </div>
         )}
-        <div className={`p-4 rounded-2xl mb-3 border transition-all ${isPlaying ? "bg-blue-500/8 border-blue-500/20" : "bg-white/3 border-white/8"}`}>
-          <p className="text-xs text-slate-600 uppercase tracking-wider font-semibold mb-1.5">Translittération</p>
-          <p className="font-bold text-white text-base leading-relaxed break-words select-text">{dhikr.transliteration}</p>
+        <div className={`p-4 rounded-2xl mb-3 border transition-all ${isPlaying ? "bg-bleu/5 border-bleu/20" : "bg-slate-50 border-slate-200"}`}>
+          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1.5">Translittération</p>
+          <p className="font-bold text-encre text-base leading-relaxed break-words select-text">{dhikr.transliteration}</p>
         </div>
-        <button onClick={() => setExpanded(e => !e)} className="w-full text-left text-slate-700 hover:text-slate-500 text-xs italic transition-all flex items-center justify-between gap-2">
+        <button onClick={() => setExpanded(e => !e)} className="w-full text-left text-slate-500 hover:text-encre text-xs italic transition-all flex items-center justify-between gap-2">
           <span className={expanded ? "" : "truncate"}>{dhikr.source}</span>
-          <span className="shrink-0 text-slate-700">{expanded ? "▲" : "▼"}</span>
+          <span className="shrink-0 text-slate-400">{expanded ? "▲" : "▼"}</span>
         </button>
       </div>
       <div className="px-5 pb-5">
         {dhikr.repetition > 1 && (
-          <div className="h-1.5 bg-white/8 rounded-full overflow-hidden mb-3">
-            <motion.div className={`h-full rounded-full transition-all ${done ? "bg-emerald-500" : "bg-gradient-to-r from-emerald-600 to-teal-400"}`}
+          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mb-3">
+            <motion.div className={`h-full rounded-full transition-all ${done ? "bg-vert" : "bg-gradient-to-r from-vert to-emerald-400"}`}
               animate={{ width: `${Math.min(100, (count / dhikr.repetition) * 100)}%` }}
             />
           </div>
         )}
         <div className="flex items-center gap-3">
           {count > 0 && (
-            <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))} className="p-2 text-slate-700 hover:text-slate-400 hover:bg-white/5 rounded-xl transition-all" title="Remettre à zéro"><RotateCcw className="w-3.5 h-3.5"/></button>
+            <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))} className="p-2 text-slate-400 hover:text-encre hover:bg-slate-100 rounded-xl transition-all" title="Remettre à zéro"><RotateCcw className="w-3.5 h-3.5"/></button>
           )}
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
             onClick={() => !done && setRecited(p => ({ ...p, [dhikr.id]: (p[dhikr.id] || 0) + 1 }))}
-            className={`flex-1 py-3 rounded-2xl font-bold text-sm transition-all ${done ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 cursor-default" : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:shadow-emerald-500/20"}`}>
+            className={`flex-1 py-3 rounded-2xl font-bold text-sm transition-all ${done ? "bg-vert/10 text-vert border border-vert/25 cursor-default" : "bg-vert text-white shadow-lg hover:bg-vert/90"}`}>
             {done ? `✓ Complété (${dhikr.repetition}/${dhikr.repetition})` : dhikr.repetition === 1 ? "Récité ✓" : `Réciter — ${count} / ${dhikr.repetition}`}
           </motion.button>
         </div>
@@ -984,73 +991,73 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
   });
   const totalDone = filtered.filter(d => (recited[d.id] || 0) >= d.repetition).length;
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 bg-white text-encre min-h-[100dvh]">
       <div className="flex items-center justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/25 uppercase tracking-wider">📿 Madhhab Malikite — Muwatta Mālik</div>
-          <h2 className="text-2xl font-black text-white mt-2">الأذكار اليومية</h2>
-          <p className="text-slate-600 text-xs mt-0.5">{voicesLoaded ? "🔊 Voix arabe prête" : "🔊 Appuie sur le texte arabe pour écouter"}</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vert/10 text-vert text-xs font-bold border border-vert/25 uppercase tracking-wider">📿 Madhhab Malikite — Muwatta Mālik</div>
+          <h2 className="text-2xl font-display font-black text-encre mt-2">الأذكار اليومية</h2>
+          <p className="text-slate-500 text-xs mt-0.5">{voicesLoaded ? "🔊 Voix arabe prête" : "🔊 Appuie sur le texte arabe pour écouter"}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 rounded-xl transition-all"><RotateCcw className="w-3 h-3"/> Réinitialiser</button>
+            <button onClick={() => setConfirmReset(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-rouge hover:bg-rouge/5 border border-slate-200 hover:border-rouge/30 rounded-xl transition-all"><RotateCcw className="w-3 h-3"/> Réinitialiser</button>
           ) : (
             <div className="flex flex-col gap-1.5 items-end">
               <p className="text-xs text-slate-500 text-right">Effacer tous les compteurs ?</p>
               <div className="flex gap-2">
-                <button onClick={handleResetRecited} className="px-3 py-1.5 text-xs font-bold text-white bg-red-500/25 border border-red-500/40 rounded-xl hover:bg-red-500/40 transition-all">Confirmer</button>
-                <button onClick={() => setConfirmReset(false)} className="px-3 py-1.5 text-xs text-slate-400 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all">Annuler</button>
+                <button onClick={handleResetRecited} className="px-3 py-1.5 text-xs font-bold text-white bg-rouge rounded-xl hover:bg-rouge/90 transition-all">Confirmer</button>
+                <button onClick={() => setConfirmReset(false)} className="px-3 py-1.5 text-xs text-slate-500 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 transition-all">Annuler</button>
               </div>
             </div>
           )}
         </div>
       </div>
-      <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10 gap-1 overflow-x-auto">
+      <div className="flex bg-slate-100 rounded-2xl p-1 border border-slate-200 gap-1 overflow-x-auto">
         {Object.entries(TAB_LABELS).map(([key, label]) => {
           const tabDhikr = ADHKAR_MALIKITES.filter(d => d.category.toLowerCase() === key);
           const tabDone  = tabDhikr.filter(d => (recited[d.id] || 0) >= d.repetition).length;
           return (
             <button key={key} onClick={() => setActiveTab(key)}
-              className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}>
+              className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? "bg-vert text-white shadow-sm" : "text-slate-500 hover:text-encre"}`}>
               {label}
-              {tabDhikr.length > 0 && <span className={`ml-1.5 text-[10px] ${activeTab === key ? "text-white/70" : "text-slate-700"}`}>{tabDone}/{tabDhikr.length}</span>}
+              {tabDhikr.length > 0 && <span className={`ml-1.5 text-[10px] ${activeTab === key ? "text-white/70" : "text-slate-400"}`}>{tabDone}/{tabDhikr.length}</span>}
             </button>
           );
         })}
       </div>
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-500/8 border border-blue-500/15 rounded-2xl">
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-bleu/5 border border-bleu/15 rounded-2xl">
         <span className="text-lg">🔊</span>
-        <p className="text-blue-300/70 text-xs">Appuie sur <strong className="text-blue-300">🔊</strong> ou le texte arabe pour entendre la récitation. Vitesse lente pour faciliter le suivi.</p>
+        <p className="text-bleu/80 text-xs">Appuie sur <strong className="text-bleu">🔊</strong> ou le texte arabe pour entendre la récitation. Vitesse lente pour faciliter le suivi.</p>
       </div>
       {isFriday && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className={`flex items-start gap-3 p-4 rounded-2xl border ${isReadThisWeek ? "bg-emerald-900/30 border-emerald-500/30" : "bg-amber-500/10 border-amber-500/30"}`}>
+          className={`flex items-start gap-3 p-4 rounded-2xl border ${isReadThisWeek ? "bg-vert/5 border-vert/30" : "bg-jaune/10 border-jaune/40"}`}>
           <span className="text-2xl shrink-0">🕌</span>
           <div className="flex-1">
-            <p className={`font-bold text-sm mb-0.5 ${isReadThisWeek ? "text-emerald-300" : "text-amber-300"}`}>
+            <p className={`font-bold text-sm mb-0.5 ${isReadThisWeek ? "text-vert" : "text-amber-700"}`}>
               {isReadThisWeek ? "✅ Al-Kahf lu ce vendredi !" : "Aujourd'hui c'est vendredi — Lis la Sourate Al-Kahf !"}
             </p>
             <p className="text-slate-500 text-xs leading-relaxed">« Celui qui lit Al-Kahf le vendredi, une lumière l'illuminera jusqu'au vendredi suivant. » — Ṣaḥīḥ al-Jāmi'</p>
-            {totalFridays > 0 && <p className="text-slate-600 text-xs mt-1">📊 Tu as lu Al-Kahf {totalFridays} vendredi{totalFridays > 1 ? "s" : ""}</p>}
+            {totalFridays > 0 && <p className="text-slate-400 text-xs mt-1">📊 Tu as lu Al-Kahf {totalFridays} vendredi{totalFridays > 1 ? "s" : ""}</p>}
           </div>
           {!isReadThisWeek && (
-            <button onClick={markRead} className="shrink-0 px-3 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-500/30 transition-all">Marquer lu</button>
+            <button onClick={markRead} className="shrink-0 px-3 py-1.5 bg-jaune/20 text-amber-800 border border-jaune/40 rounded-xl text-xs font-bold hover:bg-jaune/30 transition-all">Marquer lu</button>
           )}
         </motion.div>
       )}
       {filtered.length > 1 && (
         <div className="flex items-center gap-3 px-1">
-          <div className="flex-1 h-1 bg-white/8 rounded-full overflow-hidden">
-            <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+          <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-gradient-to-r from-vert to-emerald-400 rounded-full"
               animate={{ width: `${(totalDone / filtered.length) * 100}%` }} transition={{ duration: 0.5 }}
             />
           </div>
-          <span className="text-xs text-slate-600 shrink-0">{totalDone}/{filtered.length} adhkār</span>
+          <span className="text-xs text-slate-500 shrink-0">{totalDone}/{filtered.length} adhkār</span>
         </div>
       )}
       <AnimatePresence mode="wait">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4 pb-6">
-          {filtered.length === 0 && <p className="text-center text-slate-600 py-10">Aucun dhikr dans cet onglet.</p>}
+          {filtered.length === 0 && <p className="text-center text-slate-400 py-10">Aucun dhikr dans cet onglet.</p>}
           {filtered.map(dhikr => (
             <DhikrCard key={dhikr.id} dhikr={dhikr} favorites={favorites} toggleFav={toggleFav} copied={copied} handleCopy={handleCopy} recited={recited} setRecited={handleSetRecited} speaking={speaking} speak={speak}/>
           ))}
@@ -1938,12 +1945,19 @@ export default function App() {
     <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
 
       {/* Barre de navigation en haut */}
-      <nav className="shrink-0 flex items-center bg-slate-950/95 backdrop-blur-xl border-b border-white/8 px-1 py-1.5">
+      <nav className="shrink-0 flex items-center bg-white border-b border-slate-200 px-1 py-1.5">
         {PAGES.map(({ key, shortLabel }) => {
           const active = page === key;
+          const activeCls = {
+            quran:     "bg-vert/10 border-vert/30 text-vert",
+            program:   "bg-bleu/10 border-bleu/30 text-bleu",
+            bookmarks: "bg-orange/10 border-orange/30 text-orange",
+            adhkar:    "bg-vert/10 border-vert/30 text-vert",
+            learn:     "bg-bleu/10 border-bleu/30 text-bleu",
+          }[key];
           return (
             <motion.button key={key} whileTap={{ scale: 0.90 }} onClick={() => setPage(key)}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-all ${active ? "bg-gradient-to-b from-emerald-600/25 to-teal-600/15 border border-emerald-500/30" : "border border-transparent hover:bg-white/5"}`}>
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 transition-all border ${active ? activeCls : "border-transparent hover:bg-slate-100"}`}>
               <span className="text-base leading-none">
                 {key === "quran"     && "📖"}
                 {key === "program"   && "📅"}
@@ -1951,17 +1965,17 @@ export default function App() {
                 {key === "adhkar"    && "📿"}
                 {key === "learn"     && "🎓"}
               </span>
-              <span className={`text-[8px] font-bold leading-none ${active ? "text-emerald-300" : "text-slate-600"}`}>{shortLabel}</span>
+              <span className={`text-[8px] font-bold leading-none ${active ? "" : "text-slate-400"}`}>{shortLabel}</span>
             </motion.button>
           );
         })}
-        {/* Stats */}
         <motion.button whileTap={{ scale: 0.90 }} onClick={() => setStatsOpen(true)}
-          className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 px-2 border border-transparent hover:bg-white/5 transition-all">
-          <Activity className="w-4 h-4 text-slate-500"/>
-          <span className="text-[8px] font-bold text-slate-600 leading-none">Stats</span>
+          className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 px-2 border border-transparent hover:bg-slate-100 transition-all">
+          <Activity className="w-4 h-4 text-slate-400"/>
+          <span className="text-[8px] font-bold text-slate-400 leading-none">Stats</span>
         </motion.button>
       </nav>
+      <GradientBar />
 
       <main className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
@@ -1993,7 +2007,7 @@ export default function App() {
           )}
           {page === "adhkar" && (
             <motion.div key="adhkar" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="overflow-y-auto" style={{ maxHeight: "100dvh" }}>
+              className="overflow-y-auto bg-white" style={{ maxHeight: "100dvh" }}>
               <AdhkarPage fridayKahf={fridayKahf}/>
             </motion.div>
           )}
