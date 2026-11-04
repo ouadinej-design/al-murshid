@@ -259,7 +259,7 @@ function EncouragementModal({ juz, onClose }) {
   const isMilestone = [10, 15, 20, 25, 30].includes(juz.number);
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-lg"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/42 backdrop-blur-lg"
       onClick={onClose}
     >
       <motion.div
@@ -274,9 +274,9 @@ function EncouragementModal({ juz, onClose }) {
       >
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className={`absolute inset-0 ${
-            isKhatm ? "bg-gradient-to-br from-yellow-950 via-amber-900/90 to-orange-950"
-            : isMilestone ? "bg-gradient-to-br from-purple-950 via-indigo-900/90 to-slate-900"
-            : "bg-gradient-to-br from-emerald-950 via-teal-900/90 to-slate-900"
+            isKhatm ? "bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50"
+            : isMilestone ? "bg-gradient-to-br from-purple-50 via-indigo-50 to-slate-50"
+            : "bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-50"
           }`} />
           {confettiParticles.map(p => (
             <motion.div key={p.id} className="absolute rounded-full"
@@ -295,36 +295,36 @@ function EncouragementModal({ juz, onClose }) {
         <div className="relative z-10 p-7">
           <div className="flex justify-between items-center mb-5">
             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-              isKhatm ? "bg-yellow-500/20 border-yellow-500/40 text-yellow-300" : "bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
+              isKhatm ? "bg-yellow-500/20 border-yellow-500/40 text-yellow-700" : "bg-emerald-500/20 border-emerald-500/30 text-emerald-700"
             }`}>Juz {juz.number} / 30</span>
             <motion.span animate={{ rotate: [0,15,-15,10,0], scale: [1,1.3,1.1,1.2,1] }}
               transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }} className="text-4xl">
               {enc.emoji || (isKhatm ? "🏆" : "✨")}
             </motion.span>
           </div>
-          <div className={`p-4 rounded-2xl mb-4 border text-center ${isKhatm ? "bg-yellow-900/30 border-yellow-600/20" : "bg-white/5 border-white/10"}`}>
+          <div className={`p-4 rounded-2xl mb-4 border text-center ${isKhatm ? "bg-yellow-50 border-yellow-600/20" : "bg-slate-50 border-slate-200"}`}>
             <p className="text-xs uppercase tracking-widest text-slate-500 mb-2 font-semibold">Verset du Coran</p>
-            <p className="text-xl font-serif leading-loose mb-2 text-white" dir="rtl" lang="ar">{enc.verse}</p>
-            <p className="text-xs text-slate-400 italic">{enc.verseFr}</p>
+            <p className="text-xl font-serif leading-loose mb-2 text-encre" dir="rtl" lang="ar">{enc.verse}</p>
+            <p className="text-xs text-slate-500 italic">{enc.verseFr}</p>
           </div>
           <div className="text-center mb-4">
             <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className={`text-2xl font-serif mb-2 ${isKhatm ? "text-yellow-300" : isMilestone ? "text-purple-300" : "text-emerald-300"}`} dir="rtl">
+              className={`text-2xl font-serif mb-2 ${isKhatm ? "text-yellow-700" : isMilestone ? "text-purple-700" : "text-emerald-700"}`} dir="rtl">
               {enc.arabic}
             </motion.p>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-              className="text-white font-semibold leading-relaxed text-sm">{enc.fr}
+              className="text-encre font-semibold leading-relaxed text-sm">{enc.fr}
             </motion.p>
           </div>
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
             className={`p-4 rounded-2xl text-xs italic text-left border mb-5 ${
-              isKhatm ? "bg-amber-900/30 border-amber-700/25 text-amber-200" : "bg-emerald-900/25 border-emerald-700/20 text-emerald-200"
+              isKhatm ? "bg-amber-50 border-amber-700/25 text-amber-700" : "bg-emerald-50 border-emerald-700/20 text-emerald-700"
             }`}>
             <p className="font-semibold text-xs uppercase tracking-wider mb-1.5 not-italic opacity-60">Hadith & Tradition malikite</p>
             {enc.hadith}
           </motion.div>
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onClose}
-            className={`w-full py-3.5 rounded-2xl font-bold text-white shadow-lg transition-all ${
+            className={`w-full py-3.5 rounded-2xl font-bold text-encre shadow-lg transition-all ${
               isKhatm ? "bg-gradient-to-r from-yellow-500 to-amber-500 hover:shadow-yellow-500/30"
               : isMilestone ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:shadow-purple-500/30"
               : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-emerald-500/30"
@@ -357,19 +357,19 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
       const s = document.createElement("style");
       s.id = "tajweed-css";
       s.textContent = `
-        tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#AAAAAA}
-        tajweed[class*="madda_normal"]{color:#537FFF}
-        tajweed[class*="madda_permissible"]{color:#4BC8F0}
+        tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#8A94A6}
+        tajweed[class*="madda_normal"]{color:#2563EB}
+        tajweed[class*="madda_permissible"]{color:#0E7490}
         tajweed[class*="madda_necessary"]{color:#2B4FBB}
-        tajweed[class*="madda_obligatory"]{color:#3B6FDD}
-        tajweed[class*="qalaqah"]{color:#DD8000}
-        tajweed[class*="ikhafa"]{color:#D070A0}
-        tajweed[class*="idgham_ghunnah"]{color:#169200}
+        tajweed[class*="madda_obligatory"]{color:#1D4ED8}
+        tajweed[class*="qalaqah"]{color:#B45309}
+        tajweed[class*="ikhafa"]{color:#BE185D}
+        tajweed[class*="idgham_ghunnah"]{color:#15803D}
         tajweed[class*="idgham_wo_ghunnah"]{color:#2E8B57}
-        tajweed[class*="idgham_mutajanisayn"]{color:#33AA55}
-        tajweed[class*="idgham_mutaqaribayn"]{color:#44BB66}
-        tajweed[class*="iqlab"]{color:#E05000}
-        tajweed[class*="ghunnah"]{color:#22AA22}
+        tajweed[class*="idgham_mutajanisayn"]{color:#1F7A3F}
+        tajweed[class*="idgham_mutaqaribayn"]{color:#2F855A}
+        tajweed[class*="iqlab"]{color:#C2410C}
+        tajweed[class*="ghunnah"]{color:#15803D}
       `;
       document.head.appendChild(s);
     }
@@ -443,25 +443,25 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
   return (
     <div className="flex flex-col" style={{ height: "calc(100dvh - 60px)" }}>
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-slate-950/95 border-b border-white/8 shrink-0">
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white">
+      <div className="flex items-center gap-3 px-4 py-3 bg-creme border-b border-slate-200 shrink-0">
+        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre">
           <ChevronLeft className="w-5 h-5"/>
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-white font-bold text-sm truncate">Jour {day.day} — {new Date(day.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
+          <p className="text-encre font-bold text-sm truncate">Jour {day.day} — {new Date(day.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}</p>
           <p className="text-slate-500 text-xs">{total} versets · ~{Math.round(total / 10.3)} pages</p>
         </div>
         <button onClick={() => setShowTranslit(s => !s)}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 mr-1 ${showTranslit ? "bg-blue-500/25 text-blue-300 border border-blue-500/40" : "bg-white/8 text-slate-500 border border-white/10"}`}>
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 mr-1 ${showTranslit ? "bg-blue-500/25 text-blue-700 border border-blue-500/40" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
           ABC
         </button>
-        <span className="text-emerald-400 font-mono font-black text-lg shrink-0">{fmtTime(elapsed)}</span>
+        <span className="text-emerald-700 font-mono font-black text-lg shrink-0">{fmtTime(elapsed)}</span>
       </div>
 
       {/* Tajweed color legend */}
-      <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-900/60 border-b border-white/5 shrink-0 overflow-x-auto">
-        {[["#DD8000","Qalqala"],["#537FFF","Madd"],["#169200","Ghunna"],["#D070A0","Ikhfāʾ"],["#E05000","Iqlāb"],["#AAAAAA","Silence"]].map(([color,label]) => (
-          <span key={label} className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/8 whitespace-nowrap shrink-0">
+      <div className="flex items-center gap-1.5 px-4 py-2 bg-white border-b border-slate-200 shrink-0 overflow-x-auto">
+        {[["#B45309","Qalqala"],["#2563EB","Madd"],["#15803D","Ghunna"],["#BE185D","Ikhfāʾ"],["#C2410C","Iqlāb"],["#8A94A6","Silence"]].map(([color,label]) => (
+          <span key={label} className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200 whitespace-nowrap shrink-0">
             <span className="w-2 h-2 rounded-full" style={{background:color}}/>
             <span className="text-slate-500">{label}</span>
           </span>
@@ -469,13 +469,13 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
       </div>
 
       {/* Progress bar sticky */}
-      <div className="px-4 py-2.5 bg-slate-900/80 border-b border-white/5 shrink-0">
+      <div className="px-4 py-2.5 bg-white border-b border-slate-200 shrink-0">
         <div className="flex justify-between text-xs mb-1">
           <span className="text-slate-500">{readCount} / {total} versets</span>
-          <span className={`font-bold ${done ? "text-emerald-400" : "text-blue-400"}`}>{pct}%</span>
+          <span className={`font-bold ${done ? "text-emerald-700" : "text-blue-700"}`}>{pct}%</span>
           <span className="text-slate-500">{total - readCount} restants</span>
         </div>
-        <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <motion.div
             className={`h-full rounded-full ${done ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-blue-500 to-cyan-400"}`}
             animate={{ width: `${pct}%` }} transition={{ duration: 0.3 }}
@@ -499,12 +499,12 @@ function DayReader({ day, onClose, onMarkDone, onNavigateToRange }) {
         {/* Bottom action */}
         <div className="px-4 py-6 space-y-3">
           <button onClick={() => onNavigateToRange(day.startSurah, day.startVerse, day.endSurah, day.endVerse)}
-            className="w-full py-3 bg-white/5 border border-white/10 text-slate-300 font-semibold rounded-2xl text-sm hover:bg-white/10 transition-all">
+            className="w-full py-3 bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-2xl text-sm hover:bg-slate-100 transition-all">
             📖 Ouvrir dans le lecteur Coran
           </button>
           {!done && (
             <button onClick={() => { onMarkDone(day.date); try { localStorage.removeItem(SAVE_KEY); } catch {} onClose(); }}
-              className="w-full py-2.5 bg-white/3 border border-white/8 text-slate-600 rounded-2xl text-xs hover:bg-white/8 transition-all">
+              className="w-full py-2.5 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl text-xs hover:bg-slate-100 transition-all">
               Marquer comme lu quand même
             </button>
           )}
@@ -525,16 +525,16 @@ function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvan
     <div className="px-4 py-4">
       {/* Surah header */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-white font-bold text-sm">{surah.name}</p>
+        <p className="text-encre font-bold text-sm">{surah.name}</p>
         <p className="font-serif text-slate-500 text-lg" dir="rtl">{surah.arabic}</p>
       </div>
       {surahNum !== 9 && startV === 1 && (
-        <p className="text-center text-lg font-serif text-emerald-400/70 mb-4" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+        <p className="text-center text-lg font-serif text-emerald-700 mb-4" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
       )}
 
       {loading && (
-        <div className="flex items-center gap-2 p-3 text-slate-600 text-xs">
-          <motion.div className="w-3 h-3 border-2 border-slate-600 border-t-slate-400 rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}/>
+        <div className="flex items-center gap-2 p-3 text-slate-400 text-xs">
+          <motion.div className="w-3 h-3 border-2 border-slate-300 border-t-slate-400 rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}/>
           Chargement des versets…
         </div>
       )}
@@ -545,7 +545,7 @@ function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvan
           const checked = checkedVerses.includes(key);
           return (
             <div key={v.number} ref={el => { verseRefs.current[key] = el; }}
-              className={`flex gap-3 p-3 rounded-2xl border transition-all ${checked ? "bg-emerald-900/15 border-emerald-500/20 opacity-60" : "bg-white/3 border-white/8"}`}>
+              className={`flex gap-3 p-3 rounded-2xl border transition-all ${checked ? "bg-emerald-50 border-emerald-500/20 opacity-60" : "bg-slate-50 border-slate-200"}`}>
               {/* Check button */}
               <button onClick={() => checked ? toggleVerse(key) : markAndAdvance(key)}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-xl transition-all mt-1 active:scale-90 ${
@@ -556,17 +556,17 @@ function SurahBlock({ surahNum, surah, startV, endV, checkedVerses, markAndAdvan
               {/* Verse text */}
               <div className="flex-1">
                 {v.tajweed ? (
-                  <p className="text-right text-white leading-[2.6]" dir="rtl" lang="ar"
-                    style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)", color: "white" }}
+                  <p className="text-right text-encre leading-[2.6]" dir="rtl" lang="ar"
+                    style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)", color:"#1A1A1A" }}
                     dangerouslySetInnerHTML={{ __html: v.tajweed }}/>
                 ) : (
-                  <p className="text-right text-white leading-[2.6]" dir="rtl" lang="ar"
+                  <p className="text-right text-encre leading-[2.6]" dir="rtl" lang="ar"
                     style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: "clamp(1.1rem,3.5vw,1.5rem)" }}>
                     {v.arabic}
                   </p>
                 )}
                 {showTranslit && v.transliteration && (
-                  <p className="text-blue-300/70 text-xs italic leading-relaxed mt-1 text-right" dir="ltr">{v.transliteration}</p>
+                  <p className="text-blue-700 text-xs italic leading-relaxed mt-1 text-right" dir="ltr">{v.transliteration}</p>
                 )}
                 {v.french && (
                   <p className="text-slate-500 text-xs italic leading-relaxed mt-1">{v.french}</p>
@@ -632,8 +632,8 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="text-5xl">📅</div>
-          <h2 className="text-2xl font-black text-white">Programme de lecture</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">Choisis ta durée — le planning se génère automatiquement avec les versets exacts à lire chaque jour.</p>
+          <h2 className="text-2xl font-black text-encre">Programme de lecture</h2>
+          <p className="text-slate-500 text-sm leading-relaxed">Choisis ta durée — le planning se génère automatiquement avec les versets exacts à lire chaque jour.</p>
         </div>
         <div className="space-y-3">
           {[
@@ -672,15 +672,15 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
       {/* Stats */}
-      <div className="bg-white/5 border border-white/10 rounded-3xl p-4">
+      <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-white font-bold">{doneDaysCount} / {totalDays} jours</p>
+            <p className="text-encre font-bold">{doneDaysCount} / {totalDays} jours</p>
             <p className="text-slate-500 text-xs">{daysLeft} jours restants · Fin le {new Date(program.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</p>
           </div>
-          <span className="text-emerald-400 font-black text-2xl">{progressPct}%</span>
+          <span className="text-emerald-700 font-black text-2xl">{progressPct}%</span>
         </div>
-        <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
             animate={{ width: `${progressPct}%` }} transition={{ duration: 0.8 }}/>
         </div>
@@ -689,9 +689,9 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
       {/* Aujourd'hui */}
       {todayPlan && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className={`rounded-3xl p-5 border ${dailyCompleted[todayPlan.date] ? "bg-emerald-900/20 border-emerald-500/30" : "bg-blue-900/20 border-blue-500/30"}`}>
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-2">📖 Aujourd'hui — Jour {todayPlan.day}</p>
-          <p className="text-white font-black text-sm leading-snug mb-1">
+          className={`rounded-3xl p-5 border ${dailyCompleted[todayPlan.date] ? "bg-emerald-50 border-emerald-500/30" : "bg-blue-50 border-blue-500/30"}`}>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-700 mb-2">📖 Aujourd'hui — Jour {todayPlan.day}</p>
+          <p className="text-encre font-black text-sm leading-snug mb-1">
             {QURAN_SURAHS[todayPlan.startSurah - 1].name} v.{todayPlan.startVerse}
             <span className="text-slate-500 font-normal"> → </span>
             {QURAN_SURAHS[todayPlan.endSurah - 1].name} v.{todayPlan.endVerse}
@@ -703,14 +703,14 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
               ▶ Lire et cocher verset par verset
             </button>
           ) : (
-            <p className="text-center text-emerald-400 font-bold text-sm py-2">✅ Jour {todayPlan.day} accompli — Al-ḥamdu lillāh</p>
+            <p className="text-center text-emerald-700 font-bold text-sm py-2">✅ Jour {todayPlan.day} accompli — Al-ḥamdu lillāh</p>
           )}
         </motion.div>
       )}
 
       {/* Liste planning */}
       <div>
-        <p className="text-sm font-bold text-white mb-2">Planning complet</p>
+        <p className="text-sm font-bold text-encre mb-2">Planning complet</p>
         <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
           {dailyPlan.map(d => {
             const isToday = d.date === todayISO;
@@ -720,26 +720,26 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
             const dateStr = new Date(d.date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
             return (
               <div key={d.day} className={`flex items-center gap-3 p-3 rounded-2xl border ${
-                isToday ? "bg-blue-900/20 border-blue-500/30" : done ? "bg-emerald-900/10 border-emerald-500/15" : isPast ? "bg-orange-900/8 border-orange-500/12" : "bg-white/3 border-white/8"
+                isToday ? "bg-blue-50 border-blue-500/30" : done ? "bg-emerald-50 border-emerald-500/15" : isPast ? "bg-orange-50 border-orange-500/12" : "bg-slate-50 border-slate-200"
               }`}>
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
-                  done ? "bg-emerald-500 text-white" : isToday ? "bg-blue-500 text-white" : isPast ? "bg-orange-900/40 text-orange-400" : "bg-white/8 text-slate-500"
+                  done ? "bg-emerald-500 text-white" : isToday ? "bg-blue-500 text-white" : isPast ? "bg-orange-50 text-orange-700" : "bg-slate-100 text-slate-500"
                 }`}>
                   {done ? "✓" : d.day}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-semibold ${isToday ? "text-blue-300" : done ? "text-emerald-400" : isPast ? "text-orange-400/70" : "text-slate-500"}`}>
+                  <p className={`text-xs font-semibold ${isToday ? "text-blue-700" : done ? "text-emerald-700" : isPast ? "text-orange-700" : "text-slate-500"}`}>
                     {isToday ? "Aujourd'hui" : dateStr}
-                    {hasSaved && !done && <span className="ml-1.5 text-amber-400">● en cours</span>}
+                    {hasSaved && !done && <span className="ml-1.5 text-amber-700">● en cours</span>}
                   </p>
-                  <p className="text-white text-xs font-medium truncate">
-                    {QURAN_SURAHS[d.startSurah - 1].name} <span className="text-slate-600">{d.startVerse}</span>
-                    <span className="text-slate-600"> → </span>
-                    {QURAN_SURAHS[d.endSurah - 1].name} <span className="text-slate-600">{d.endVerse}</span>
+                  <p className="text-encre text-xs font-medium truncate">
+                    {QURAN_SURAHS[d.startSurah - 1].name} <span className="text-slate-400">{d.startVerse}</span>
+                    <span className="text-slate-400"> → </span>
+                    {QURAN_SURAHS[d.endSurah - 1].name} <span className="text-slate-400">{d.endVerse}</span>
                   </p>
                 </div>
                 {!done && (
-                  <button onClick={() => openDay(d)} className="p-2 bg-blue-500/12 text-blue-400 rounded-xl hover:bg-blue-500/25 transition-all shrink-0">
+                  <button onClick={() => openDay(d)} className="p-2 bg-blue-500/12 text-blue-700 rounded-xl hover:bg-blue-500/25 transition-all shrink-0">
                     <Play className="w-3.5 h-3.5"/>
                   </button>
                 )}
@@ -750,7 +750,7 @@ function JuzProgram({ onNavigateToRange, juzProgram: juz }) {
       </div>
 
       <div className="pb-6 text-center">
-        <button onClick={reset} className="flex items-center gap-2 text-slate-700 hover:text-red-400 transition-colors text-xs mx-auto">
+        <button onClick={reset} className="flex items-center gap-2 text-slate-700 hover:text-red-700 transition-colors text-xs mx-auto">
           <RotateCcw className="w-3.5 h-3.5"/> Changer de programme
         </button>
       </div>
@@ -767,27 +767,27 @@ function BookmarksPage() {
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-white">🔖 Marque-pages</h2>
-          <p className="text-slate-600 text-xs mt-0.5">Coran et Khatm sont séparés et indépendants</p>
+          <h2 className="text-2xl font-black text-encre">🔖 Marque-pages</h2>
+          <p className="text-slate-400 text-xs mt-0.5">Coran et Khatm sont séparés et indépendants</p>
         </div>
         {current.bookmarks.length > 0 && !confirmReset && (
-          <button onClick={() => setConfirmReset(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 rounded-xl transition-all">
+          <button onClick={() => setConfirmReset(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-red-700 hover:bg-red-500/10 border border-slate-200 hover:border-red-500/20 rounded-xl transition-all">
             <RotateCcw className="w-3.5 h-3.5"/> Tout effacer
           </button>
         )}
         {confirmReset && (
           <div className="flex gap-2">
-            <button onClick={() => { current.resetAll(); setConfirmReset(false); }} className="px-3 py-1.5 text-xs font-bold text-white bg-red-500/25 border border-red-500/40 rounded-xl hover:bg-red-500/40 transition-all">Confirmer</button>
-            <button onClick={() => setConfirmReset(false)} className="px-3 py-1.5 text-xs text-slate-400 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all">Annuler</button>
+            <button onClick={() => { current.resetAll(); setConfirmReset(false); }} className="px-3 py-1.5 text-xs font-bold text-encre bg-red-500/25 border border-red-500/40 rounded-xl hover:bg-red-500/40 transition-all">Confirmer</button>
+            <button onClick={() => setConfirmReset(false)} className="px-3 py-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-all">Annuler</button>
           </div>
         )}
       </div>
-      <div className="flex bg-white/5 rounded-2xl p-1 border border-white/10">
+      <div className="flex bg-slate-50 rounded-2xl p-1 border border-slate-200">
         {[{ key: "quran", label: "📖 Coran", count: quranBM.bookmarks.length },{ key: "khatm", label: "📅 Khatm", count: khatmBM.bookmarks.length }].map(tab => (
           <button key={tab.key} onClick={() => { setActiveTab(tab.key); setConfirmReset(false); }}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${activeTab === tab.key ? "bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}>
+            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${activeTab === tab.key ? "bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-lg" : "text-slate-500 hover:text-encre"}`}>
             {tab.label}
-            {tab.count > 0 && <span className={`text-xs font-black px-1.5 py-0.5 rounded-full ${activeTab === tab.key ? "bg-white/25 text-white" : "bg-white/10 text-slate-500"}`}>{tab.count}</span>}
+            {tab.count > 0 && <span className={`text-xs font-black px-1.5 py-0.5 rounded-full ${activeTab === tab.key ? "bg-slate-200 text-encre" : "bg-slate-100 text-slate-500"}`}>{tab.count}</span>}
           </button>
         ))}
       </div>
@@ -795,9 +795,9 @@ function BookmarksPage() {
         <span className="text-lg shrink-0">💡</span>
         <div>
           {activeTab === "quran" ? (
-            <div style={{display:"contents"}}><p className="text-amber-300 font-semibold text-xs">Marque-pages Coran</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📖 Coran</strong>, appuie sur n'importe quel verset pour l'enregistrer ici instantanément.</p></div>
+            <div style={{display:"contents"}}><p className="text-amber-700 font-semibold text-xs">Marque-pages Coran</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-encre">📖 Coran</strong>, appuie sur n'importe quel verset pour l'enregistrer ici instantanément.</p></div>
           ) : (
-            <div style={{display:"contents"}}><p className="text-amber-300 font-semibold text-xs">Marque-pages Khatm</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-white">📅 Programme</strong>, utilise le bouton "Sauvegarder ma position" pour marquer où tu en es dans ton Khatm.</p></div>
+            <div style={{display:"contents"}}><p className="text-amber-700 font-semibold text-xs">Marque-pages Khatm</p><p className="text-slate-500 text-xs mt-0.5">Dans <strong className="text-encre">📅 Programme</strong>, utilise le bouton "Sauvegarder ma position" pour marquer où tu en es dans ton Khatm.</p></div>
           )}
         </div>
       </div>
@@ -811,18 +811,18 @@ function BookmarksPage() {
               <AnimatePresence>
                 {current.bookmarks.map(bm => (
                   <motion.div key={bm.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
-                    className="flex items-center gap-3 p-4 bg-white/5 border border-amber-500/15 rounded-2xl group hover:border-amber-500/30 transition-all">
+                    className="flex items-center gap-3 p-4 bg-slate-50 border border-amber-500/15 rounded-2xl group hover:border-amber-500/30 transition-all">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/12 border border-amber-500/20 flex flex-col items-center justify-center shrink-0">
-                      {activeTab === "quran" ? (<div style={{display:"contents"}}><span className="text-amber-400 font-black text-base leading-none">{bm.surah}</span><span className="text-amber-600/80 text-[10px] font-semibold">v.{bm.verse}</span></div>) : (<span className="text-amber-400 text-xl">📅</span>)}
+                      {activeTab === "quran" ? (<div style={{display:"contents"}}><span className="text-amber-700 font-black text-base leading-none">{bm.surah}</span><span className="text-amber-600/80 text-[10px] font-semibold">v.{bm.verse}</span></div>) : (<span className="text-amber-700 text-xl">📅</span>)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-white text-sm">{bm.surahName}</p>
+                      <p className="font-bold text-encre text-sm">{bm.surahName}</p>
                       {bm.note && <p className="text-xs text-amber-600/60 italic truncate">"{bm.note}"</p>}
-                      <p className="text-xs text-slate-600 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3 shrink-0"/>{bm.datetime}</p>
+                      <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3 shrink-0"/>{bm.datetime}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
                       {activeTab === "quran" && <p className="font-serif text-slate-500 text-base" dir="rtl">{bm.surahArabic}</p>}
-                      <button onClick={() => current.remove(bm.id)} className="p-1.5 text-slate-700 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-3.5 h-3.5"/></button>
+                      <button onClick={() => current.remove(bm.id)} className="p-1.5 text-slate-700 hover:text-red-700 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-3.5 h-3.5"/></button>
                     </div>
                   </motion.div>
                 ))}
@@ -901,7 +901,7 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
             <button onClick={() => handleCopy(dhikr)} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre border border-transparent">
               {copied[dhikr.id] ? <CheckCircle className="w-4 h-4 text-vert"/> : <Copy className="w-4 h-4"/>}
             </button>
-            <button onClick={() => toggleFav(dhikr.id)} className={`p-2 rounded-xl transition-all border border-transparent ${favorites[dhikr.id] ? "text-rouge" : "text-slate-400 hover:text-rouge"}`}>
+            <button onClick={() => toggleFav(dhikr.id)} className={`p-2 rounded-xl transition-all border border-transparent ${favorites[dhikr.id] ? "text-rouge" : "text-slate-500 hover:text-rouge"}`}>
               {favorites[dhikr.id] ? "♥" : "♡"}
             </button>
           </div>
@@ -935,7 +935,7 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
         </div>
         <button onClick={() => setExpanded(e => !e)} className="w-full text-left text-slate-500 hover:text-encre text-xs italic transition-all flex items-center justify-between gap-2">
           <span className={expanded ? "" : "truncate"}>{dhikr.source}</span>
-          <span className="shrink-0 text-slate-400">{expanded ? "▲" : "▼"}</span>
+          <span className="shrink-0 text-slate-500">{expanded ? "▲" : "▼"}</span>
         </button>
       </div>
       <div className="px-5 pb-5">
@@ -948,7 +948,7 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
         )}
         <div className="flex items-center gap-3">
           {count > 0 && (
-            <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))} className="p-2 text-slate-400 hover:text-encre hover:bg-slate-100 rounded-xl transition-all" title="Remettre à zéro"><RotateCcw className="w-3.5 h-3.5"/></button>
+            <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))} className="p-2 text-slate-500 hover:text-encre hover:bg-slate-100 rounded-xl transition-all" title="Remettre à zéro"><RotateCcw className="w-3.5 h-3.5"/></button>
           )}
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
             onClick={() => !done && setRecited(p => ({ ...p, [dhikr.id]: (p[dhikr.id] || 0) + 1 }))}
@@ -1020,7 +1020,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
             <button key={key} onClick={() => setActiveTab(key)}
               className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeTab === key ? "bg-vert text-white shadow-sm" : "text-slate-500 hover:text-encre"}`}>
               {label}
-              {tabDhikr.length > 0 && <span className={`ml-1.5 text-[10px] ${activeTab === key ? "text-white/70" : "text-slate-400"}`}>{tabDone}/{tabDhikr.length}</span>}
+              {tabDhikr.length > 0 && <span className={`ml-1.5 text-[10px] ${activeTab === key ? "text-white/70" : "text-slate-500"}`}>{tabDone}/{tabDhikr.length}</span>}
             </button>
           );
         })}
@@ -1038,7 +1038,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
               {isReadThisWeek ? "✅ Al-Kahf lu ce vendredi !" : "Aujourd'hui c'est vendredi — Lis la Sourate Al-Kahf !"}
             </p>
             <p className="text-slate-500 text-xs leading-relaxed">« Celui qui lit Al-Kahf le vendredi, une lumière l'illuminera jusqu'au vendredi suivant. » — Ṣaḥīḥ al-Jāmi'</p>
-            {totalFridays > 0 && <p className="text-slate-400 text-xs mt-1">📊 Tu as lu Al-Kahf {totalFridays} vendredi{totalFridays > 1 ? "s" : ""}</p>}
+            {totalFridays > 0 && <p className="text-slate-500 text-xs mt-1">📊 Tu as lu Al-Kahf {totalFridays} vendredi{totalFridays > 1 ? "s" : ""}</p>}
           </div>
           {!isReadThisWeek && (
             <button onClick={markRead} className="shrink-0 px-3 py-1.5 bg-jaune/20 text-amber-800 border border-jaune/40 rounded-xl text-xs font-bold hover:bg-jaune/30 transition-all">Marquer lu</button>
@@ -1057,7 +1057,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp }) {
       )}
       <AnimatePresence mode="wait">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4 pb-6">
-          {filtered.length === 0 && <p className="text-center text-slate-400 py-10">Aucun dhikr dans cet onglet.</p>}
+          {filtered.length === 0 && <p className="text-center text-slate-500 py-10">Aucun dhikr dans cet onglet.</p>}
           {filtered.map(dhikr => (
             <DhikrCard key={dhikr.id} dhikr={dhikr} favorites={favorites} toggleFav={toggleFav} copied={copied} handleCopy={handleCopy} recited={recited} setRecited={handleSetRecited} speaking={speaking} speak={speak}/>
           ))}
@@ -1191,7 +1191,7 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
   const btnStyle = (bg, active) => ({
     flex:1, padding:"9px 4px", borderRadius:"10px", border:"none",
     background: active ? bg : bg + "88",
-    color:"white", fontWeight:"bold", fontSize:"0.82rem", cursor:"pointer",
+    color:"#1A1A1A", fontWeight:"bold", fontSize:"0.82rem", cursor:"pointer",
   });
 
   const statusLabel = status === "loading" ? "⏳ Chargement…" : status === "playing" ? "▶ En lecture" : status === "paused" ? "⏸ En pause" : "";
@@ -1201,13 +1201,13 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
       {/* Récitateur */}
       <div style={{position:"relative", display:"inline-block"}}>
         <button onClick={() => setShowPicker(p => !p)}
-          style={{background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:"10px", padding:"6px 12px", color:"white", fontSize:"0.8rem", fontWeight:"bold", cursor:"pointer"}}>
+          style={{background:"rgba(15,23,42,0.12)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:"10px", padding:"6px 12px", color:"#1A1A1A", fontSize:"0.8rem", fontWeight:"bold", cursor:"pointer"}}>
           🎙️ {reciter.name} ▾
         </button>
         {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={() => setShowPicker(false)}/>}
         {showPicker && (
-          <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"180px",boxShadow:"0 8px 32px rgba(0,0,0,0.8)"}}>
-            <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 6px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
+          <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#ffffff",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"12px",padding:"6px",minWidth:"180px",boxShadow:"0 8px 32px rgba(15,23,42,0.15)"}}>
+            <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 6px",borderBottom:"1px solid rgba(15,23,42,0.08)",marginBottom:"4px"}}>Récitateur</p>
             {RECITERS.map(r => (
               <button key={r.id} onClick={() => changeReciter(r.id)}
                 style={{display:"block",width:"100%",textAlign:"left",padding:"9px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
@@ -1229,8 +1229,8 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
       </div>
 
       {/* Vitesse */}
-      <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
-        <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
+      <div style={{background:"rgba(15,23,42,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
+        <span style={{color:"#64748b",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"#1A1A1A"}}>{speed.toFixed(1)}x</strong></span>
         <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
           onChange={e => handleSpeed(parseFloat(e.target.value))}
           style={{flex:1, accentColor:"#10b981"}}/>
@@ -1353,19 +1353,19 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="px-4 py-3 bg-slate-950/90 backdrop-blur-xl border-b border-white/8 shrink-0 space-y-2">
+        <div className="px-4 py-3 bg-creme backdrop-blur-xl border-b border-slate-200 shrink-0 space-y-2">
           {/* Ligne titre */}
           <div className="flex items-center gap-2">
-            <button onClick={() => { setCurrentSurah(null); setAutoScroll(false); }} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><ChevronLeft className="w-5 h-5"/></button>
+            <button onClick={() => { setCurrentSurah(null); setAutoScroll(false); }} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre"><ChevronLeft className="w-5 h-5"/></button>
             <div className="flex-1 text-center">
-              <p className="font-bold text-white text-sm">{currentSurah.name}</p>
+              <p className="font-bold text-encre text-sm">{currentSurah.name}</p>
               <p className="text-slate-500 text-xs">{versesLoading ? "⏳ Chargement…" : verses.length > 0 ? `${verses.length} versets · Juz ${currentSurah.juz}` : `${currentSurah.verses} versets · Juz ${currentSurah.juz}`}</p>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => currentSurah.number > 1 && setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2])} disabled={currentSurah.number === 1} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30"><ChevronLeft className="w-4 h-4"/></button>
-              <span className="text-xs text-slate-600 self-center px-1">{currentSurah.number}/114</span>
-              <button onClick={() => currentSurah.number < 114 && setCurrentSurah(QURAN_SURAHS[currentSurah.number])} disabled={currentSurah.number === 114} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30"><ChevronRight className="w-4 h-4"/></button>
-              <button onClick={() => toggle(currentSurah.number)} className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-400 bg-emerald-500/15" : "text-slate-400 hover:text-emerald-400 hover:bg-white/10"}`}><CheckCircle className="w-5 h-5"/></button>
+              <button onClick={() => currentSurah.number > 1 && setCurrentSurah(QURAN_SURAHS[currentSurah.number - 2])} disabled={currentSurah.number === 1} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-encre disabled:opacity-30"><ChevronLeft className="w-4 h-4"/></button>
+              <span className="text-xs text-slate-400 self-center px-1">{currentSurah.number}/114</span>
+              <button onClick={() => currentSurah.number < 114 && setCurrentSurah(QURAN_SURAHS[currentSurah.number])} disabled={currentSurah.number === 114} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-encre disabled:opacity-30"><ChevronRight className="w-4 h-4"/></button>
+              <button onClick={() => toggle(currentSurah.number)} className={`p-2 rounded-xl transition-all ${checked[currentSurah.number] ? "text-emerald-700 bg-emerald-500/15" : "text-slate-500 hover:text-emerald-700 hover:bg-slate-100"}`}><CheckCircle className="w-5 h-5"/></button>
             </div>
           </div>
           {/* Lecteur Imam — lecture + auto-scroll combinés */}
@@ -1373,35 +1373,35 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
         </div>
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
           <div className="text-center mb-8">
-            <p className="text-5xl font-serif text-white mb-2" dir="rtl" lang="ar">{currentSurah.arabic}</p>
+            <p className="text-5xl font-serif text-encre mb-2" dir="rtl" lang="ar">{currentSurah.arabic}</p>
             <p className="text-slate-500 text-sm">{currentSurah.name} · {currentSurah.verses} versets</p>
-            {currentSurah.number !== 9 && <p className="text-2xl font-serif text-emerald-400 mt-4" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>}
+            {currentSurah.number !== 9 && <p className="text-2xl font-serif text-emerald-700 mt-4" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>}
           </div>
           {versesLoading && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
                 <div className="flex gap-1">{[...Array(3)].map((_,i) => (<motion.div key={i} className="w-2 h-2 bg-blue-400 rounded-full" animate={{ y: [0,-6,0] }} transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}/>))}</div>
-                <div><p className="text-blue-300 text-sm font-semibold">Chargement en cours…</p><p className="text-slate-600 text-xs">Récupération des versets (arabe · phonétique · français)</p></div>
+                <div><p className="text-blue-700 text-sm font-semibold">Chargement en cours…</p><p className="text-slate-400 text-xs">Récupération des versets (arabe · phonétique · français)</p></div>
               </div>
-              {Array.from({ length: 4 }, (_, i) => (<div key={i} className="p-4 rounded-2xl bg-white/3 animate-pulse space-y-3"><div className="h-8 bg-white/8 rounded-xl"/><div className="h-3 bg-blue-500/10 rounded-lg w-3/4"/><div className="h-3 bg-white/5 rounded-lg w-2/3"/></div>))}
+              {Array.from({ length: 4 }, (_, i) => (<div key={i} className="p-4 rounded-2xl bg-slate-50 animate-pulse space-y-3"><div className="h-8 bg-slate-100 rounded-xl"/><div className="h-3 bg-blue-500/10 rounded-lg w-3/4"/><div className="h-3 bg-slate-50 rounded-lg w-2/3"/></div>))}
             </div>
           )}
           {versesError === "not_embedded" && (
             <div className="text-center py-10 space-y-4 px-4">
               <p className="text-4xl">⬇️</p>
-              <p className="text-white font-bold text-sm">Sourate non téléchargée</p>
+              <p className="text-encre font-bold text-sm">Sourate non téléchargée</p>
               <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">Cette sourate doit être téléchargée avant d'être lue. Reviens à la liste et appuie sur ⬇ à côté de son nom.</p>
-              <button onClick={() => setCurrentSurah(null)} className="px-5 py-2.5 bg-blue-500/15 text-blue-300 border border-blue-500/25 rounded-2xl text-sm font-bold hover:bg-blue-500/25 transition-all">← Retour à la liste</button>
+              <button onClick={() => setCurrentSurah(null)} className="px-5 py-2.5 bg-blue-500/15 text-blue-700 border border-blue-500/25 rounded-2xl text-sm font-bold hover:bg-blue-500/25 transition-all">← Retour à la liste</button>
             </div>
           )}
           {versesError === "api_error" && (
             <div className="text-center py-8 space-y-3 px-4">
               <p className="text-4xl">⚠️</p>
-              <p className="text-orange-400 text-sm font-semibold">Erreur de chargement</p>
+              <p className="text-orange-700 text-sm font-semibold">Erreur de chargement</p>
               <p className="text-slate-500 text-xs">Vérifie ta connexion et réessaie.</p>
               <button onClick={() => { if (!currentSurah) return; const n = currentSurah.number; _versesMemCache.delete(n); setCurrentSurah(null); setTimeout(() => setCurrentSurah(QURAN_SURAHS[n - 1]), 100); }}
-                className="px-5 py-2.5 bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 rounded-2xl text-sm font-bold hover:bg-emerald-500/25 transition-all">🔄 Réessayer</button>
-              <button onClick={() => setCurrentSurah(null)} className="block mx-auto px-4 py-2 bg-white/8 text-slate-400 rounded-xl text-xs hover:bg-white/15 transition-all">← Retour à la liste</button>
+                className="px-5 py-2.5 bg-emerald-500/15 text-emerald-700 border border-emerald-500/25 rounded-2xl text-sm font-bold hover:bg-emerald-500/25 transition-all">🔄 Réessayer</button>
+              <button onClick={() => setCurrentSurah(null)} className="block mx-auto px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs hover:bg-slate-200 transition-all">← Retour à la liste</button>
             </div>
           )}
           {!versesLoading && !versesError && verses.length > 0 && (
@@ -1411,30 +1411,30 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.015, 0.5) }}
                   onClick={() => handleVerseBookmark(v.number)}
                   className={`group relative p-4 rounded-2xl cursor-pointer select-none hover:bg-amber-500/6 active:bg-amber-500/15 border transition-all duration-150 ${targetVerse === v.number ? "border-emerald-500/50 bg-emerald-500/8" : "border-transparent hover:border-amber-500/15"}`}>
-                  <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-40 transition-all"><Bookmark className="w-4 h-4 text-amber-400"/></div>
+                  <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-40 transition-all"><Bookmark className="w-4 h-4 text-amber-700"/></div>
                   <div className="flex items-start gap-3 mb-2">
-                    <span className="w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center shrink-0 mt-1 select-none">{v.number}</span>
+                    <span className="w-7 h-7 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0 mt-1 select-none">{v.number}</span>
                     {v.tajweed ? (
-                      <p className="text-right text-white leading-[2.5] flex-1 select-text" dir="rtl" lang="ar"
-                        style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.7rem)", fontFamily: "'Amiri Quran','Scheherazade New',serif", color: "white" }}
+                      <p className="text-right text-encre leading-[2.5] flex-1 select-text" dir="rtl" lang="ar"
+                        style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.7rem)", fontFamily: "'Amiri Quran','Scheherazade New',serif", color:"#1A1A1A" }}
                         dangerouslySetInnerHTML={{ __html: v.tajweed }}/>
                     ) : (
-                      <p className="text-right font-serif text-white leading-[2.4] flex-1 select-text" dir="rtl" lang="ar" style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.6rem)" }}>{v.arabic}</p>
+                      <p className="text-right font-serif text-encre leading-[2.4] flex-1 select-text" dir="rtl" lang="ar" style={{ fontSize: "clamp(1.2rem, 4.5vw, 1.6rem)" }}>{v.arabic}</p>
                     )}
                   </div>
-                  {v.transliteration && <p className="ml-10 text-xs text-slate-400 italic leading-relaxed mb-1.5 select-text" dir="ltr">{v.transliteration}</p>}
-                  {v.french && <p className="ml-10 text-sm text-slate-400 italic leading-relaxed bg-white/3 rounded-xl px-3 py-2 select-text">{v.french}</p>}
+                  {v.transliteration && <p className="ml-10 text-xs text-slate-500 italic leading-relaxed mb-1.5 select-text" dir="ltr">{v.transliteration}</p>}
+                  {v.french && <p className="ml-10 text-sm text-slate-500 italic leading-relaxed bg-slate-50 rounded-xl px-3 py-2 select-text">{v.french}</p>}
                 </motion.div>
               ))}
             </div>
           )}
-          <div className="mt-8 pt-8 border-t border-white/10 text-center space-y-4">
-            <p className="text-slate-400 text-sm">Fin de {currentSurah.name}</p>
+          <div className="mt-8 pt-8 border-t border-slate-200 text-center space-y-4">
+            <p className="text-slate-500 text-sm">Fin de {currentSurah.name}</p>
             {!checked[currentSurah.number] && (
               <button onClick={() => toggle(currentSurah.number)} className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl shadow-lg text-sm hover:shadow-emerald-500/25 transition-all">✅ Marquer comme lue</button>
             )}
             {currentSurah.number < 114 && (
-              <button onClick={() => setCurrentSurah(QURAN_SURAHS[currentSurah.number])} className="block mx-auto text-slate-500 hover:text-white text-sm transition-all">Sourate suivante : {QURAN_SURAHS[currentSurah.number].name} →</button>
+              <button onClick={() => setCurrentSurah(QURAN_SURAHS[currentSurah.number])} className="block mx-auto text-slate-500 hover:text-encre text-sm transition-all">Sourate suivante : {QURAN_SURAHS[currentSurah.number].name} →</button>
             )}
           </div>
           <div className="h-10"/>
@@ -1448,23 +1448,23 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
       <div className="flex items-center gap-3">
         <input type="text" value={filter} onChange={e => setFilter(e.target.value)} placeholder="Rechercher une sourate..."
-          className="flex-1 bg-white/5 border border-white/15 rounded-2xl px-4 py-3 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-emerald-500/40 transition-all"/>
+          className="flex-1 bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-encre placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-500/40 transition-all"/>
         <div className="text-right shrink-0">
-          <p className="text-emerald-400 font-bold text-sm">{counts.surahChecked}/114 lues</p>
+          <p className="text-emerald-700 font-bold text-sm">{counts.surahChecked}/114 lues</p>
           {counts.surahChecked > 0 && (
             <button onClick={() => { if(window.confirm("Réinitialiser les sourates lues ?")) resetChecked(); }}
-              className="text-slate-600 text-xs hover:text-red-400 transition-all mt-0.5 block">🗑️ Réinitialiser</button>
+              className="text-slate-400 text-xs hover:text-red-700 transition-all mt-0.5 block">🗑️ Réinitialiser</button>
           )}
         </div>
       </div>
       <div className="p-3 bg-blue-500/8 border border-blue-500/20 rounded-2xl flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-blue-300 text-xs font-semibold">📥 {downloadedCount}/114 sourates disponibles hors-ligne</p>
-          <p className="text-slate-600 text-xs mt-0.5">Appuie sur ⬇ pour télécharger une sourate avant de la lire</p>
+          <p className="text-blue-700 text-xs font-semibold">📥 {downloadedCount}/114 sourates disponibles hors-ligne</p>
+          <p className="text-slate-400 text-xs mt-0.5">Appuie sur ⬇ pour télécharger une sourate avant de la lire</p>
         </div>
         <div className="w-16 shrink-0">
-          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-blue-400 rounded-full transition-all duration-500" style={{ width: `${(downloadedCount / 114) * 100}%` }}/></div>
-          <p className="text-blue-400 text-xs text-center mt-1 font-bold">{Math.round((downloadedCount/114)*100)}%</p>
+          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-blue-400 rounded-full transition-all duration-500" style={{ width: `${(downloadedCount / 114) * 100}%` }}/></div>
+          <p className="text-blue-700 text-xs text-center mt-1 font-bold">{Math.round((downloadedCount/114)*100)}%</p>
         </div>
       </div>
       <div className="space-y-2">
@@ -1476,26 +1476,26 @@ function QuranReader({ initialSurahNum, initialVerseNum, onNavConsumed, juzBound
           const isEmbedded = !!EMBEDDED_VERSES[s.number];
           return (
             <motion.div key={s.number} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.01, 0.3) }}
-              className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${checked[s.number] ? "bg-emerald-500/10 border-emerald-500/25" : isDone ? "bg-white/4 border-blue-500/15" : "bg-white/4 border-white/8"}`}>
-              <div onClick={() => toggle(s.number)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer transition-all ${checked[s.number] ? "bg-emerald-500 text-white" : "bg-white/8 text-slate-400 hover:bg-white/15"}`}>
+              className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${checked[s.number] ? "bg-emerald-500/10 border-emerald-500/25" : isDone ? "bg-slate-50 border-blue-500/15" : "bg-slate-50 border-slate-200"}`}>
+              <div onClick={() => toggle(s.number)} className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer transition-all ${checked[s.number] ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
                 {checked[s.number] ? <CheckCircle className="w-5 h-5"/> : s.number}
               </div>
               <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setCurrentSurah(s)}>
-                <p className="font-semibold text-white text-sm">{s.name}</p>
-                <p className="text-xs text-slate-600">{s.verses} versets · Juz {s.juz}</p>
+                <p className="font-semibold text-encre text-sm">{s.name}</p>
+                <p className="text-xs text-slate-400">{s.verses} versets · Juz {s.juz}</p>
               </div>
-              <p className="text-xl font-serif text-slate-400 shrink-0 hidden sm:block" dir="rtl">{s.arabic}</p>
+              <p className="text-xl font-serif text-slate-500 shrink-0 hidden sm:block" dir="rtl">{s.arabic}</p>
               {isDone ? (
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" title={isEmbedded ? "Intégrée" : "Téléchargée"}><span className="text-sm">{isEmbedded ? "✨" : "✅"}</span></div>
               ) : isLoading ? (
                 <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0"><motion.div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}/></div>
               ) : (
                 <button onClick={(e) => downloadSurah(s, e)} title="Télécharger pour lire hors-ligne"
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${isError ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" : "bg-white/8 text-slate-500 hover:bg-blue-500/20 hover:text-blue-400"}`}>
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${isError ? "bg-red-500/20 text-red-700 hover:bg-red-500/30" : "bg-slate-100 text-slate-500 hover:bg-blue-500/20 hover:text-blue-700"}`}>
                   <span className="text-sm">{isError ? "↺" : "⬇"}</span>
                 </button>
               )}
-              <button onClick={() => setCurrentSurah(s)} className="p-2 text-slate-600 hover:text-white hover:bg-white/10 rounded-xl transition-all shrink-0"><ChevronRight className="w-4 h-4"/></button>
+              <button onClick={() => setCurrentSurah(s)} className="p-2 text-slate-400 hover:text-encre hover:bg-slate-100 rounded-xl transition-all shrink-0"><ChevronRight className="w-4 h-4"/></button>
             </motion.div>
           );
         })}
@@ -1519,13 +1519,13 @@ const _fetchWithTimeout = (url, ms = 10000) => {
 };
 
 const TAJWEED_COLOR_MAP = {
-  ham_wasl:"#AAAAAA", slnt:"#AAAAAA", laam_shamsiyya:"#AAAAAA",
-  madda_normal:"#537FFF", madda_permissible:"#4BC8F0",
-  madda_necessary:"#2B4FBB", madda_obligatory:"#3B6FDD",
-  qalaqah:"#DD8000", ikhafa_shafawi:"#D070A0", ikhafa:"#D070A0",
-  idgham_ghunnah:"#22AA22", idgham_wo_ghunnah:"#2E8B57",
-  idgham_mutajanisayn:"#33AA55", idgham_mutaqaribayn:"#44BB66",
-  iqlab:"#E05000", ghunnah:"#22AA22", idghaam_shafawi:"#44BB66",
+  ham_wasl:"#8A94A6", slnt:"#8A94A6", laam_shamsiyya:"#8A94A6",
+  madda_normal:"#2563EB", madda_permissible:"#0E7490",
+  madda_necessary:"#2B4FBB", madda_obligatory:"#1D4ED8",
+  qalaqah:"#B45309", ikhafa_shafawi:"#BE185D", ikhafa:"#BE185D",
+  idgham_ghunnah:"#15803D", idgham_wo_ghunnah:"#2E8B57",
+  idgham_mutajanisayn:"#1F7A3F", idgham_mutaqaribayn:"#2F855A",
+  iqlab:"#C2410C", ghunnah:"#15803D", idghaam_shafawi:"#2F855A",
 };
 
 // ── Tajweed offline : détecte les règles directement dans le texte arabe ──
@@ -1553,52 +1553,52 @@ function applyOfflineTajweed(arabic) {
 
     // 1. Qalqala : lettre ق ط ب ج د + sukun
     if (QALQALA.has(ch) && next1 === SUKUN) {
-      out += `<span style="color:#DD8000">${ch}${SUKUN}</span>`;
+      out += `<span style="color:#B45309">${ch}${SUKUN}</span>`;
       i += 2; continue;
     }
 
     // 2. Ghunna : ن ou م avec shadda
     if ((ch === "ن" || ch === "م") && next1 === SHADDA) {
-      out += `<span style="color:#22AA22">${ch}${SHADDA}</span>`;
+      out += `<span style="color:#15803D">${ch}${SHADDA}</span>`;
       i += 2; continue;
     }
 
     // 3. Madd : ا après fatha, و après damma, ي après kasra
     //    Détecte le triplet voyelle+lettre_madd
     if (ch === FATHA && next1 === "ا") {
-      out += `${FATHA}<span style="color:#537FFF">ا</span>`;
+      out += `${FATHA}<span style="color:#2563EB">ا</span>`;
       i += 2; continue;
     }
     if (ch === DAMMA && next1 === "و") {
-      out += `${DAMMA}<span style="color:#537FFF">و</span>`;
+      out += `${DAMMA}<span style="color:#2563EB">و</span>`;
       i += 2; continue;
     }
     if (ch === KASRA && next1 === "ي") {
-      out += `${KASRA}<span style="color:#537FFF">ي</span>`;
+      out += `${KASRA}<span style="color:#2563EB">ي</span>`;
       i += 2; continue;
     }
     // Superalif madd (ٰ)
     if (ch === SUPERALIF) {
-      out += `<span style="color:#4BC8F0">${ch}</span>`;
+      out += `<span style="color:#0E7490">${ch}</span>`;
       i++; continue;
     }
 
     // 4. Laam shamsiyya : ل dans ال suivi d'une lettre solaire
     if (ch === "ل" && next1 === SUKUN && SUN_LETTERS.has(next2)) {
-      out += `<span style="color:#AAAAAA">ل${SUKUN}</span>`;
+      out += `<span style="color:#8A94A6">ل${SUKUN}</span>`;
       i += 2; continue;
     }
 
     // 5. Hamza wasla ٱ
     if (ch === "ٱ") {
-      out += `<span style="color:#AAAAAA">ٱ</span>`;
+      out += `<span style="color:#8A94A6">ٱ</span>`;
       i++; continue;
     }
 
     // 6. Ikhfa / tanwin + lettre d'ikhfa
     const IKHFA_LETTERS = new Set(["ت","ث","ج","د","ذ","ز","س","ش","ص","ض","ط","ظ","ف","ق","ك"]);
     if ((ch === "ن" || (ch === "\u064B" || ch === "\u064C" || ch === "\u064D")) && IKHFA_LETTERS.has(next1)) {
-      out += `<span style="color:#D070A0">${ch}</span>`;
+      out += `<span style="color:#BE185D">${ch}</span>`;
       i++; continue;
     }
 
@@ -1771,71 +1771,71 @@ function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzP
       {isOpen && (
         <div style={{display:"contents"}}>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm" onClick={onClose}/>
+            className="fixed inset-0 bg-slate-900/35 z-50 backdrop-blur-sm" onClick={onClose}/>
           <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed right-0 top-0 h-full w-full max-w-sm bg-slate-900 z-50 shadow-2xl border-l border-white/10 overflow-y-auto">
-            <div className="p-5 border-b border-white/10 flex items-center justify-between sticky top-0 bg-slate-900/95 backdrop-blur-md">
-              <button onClick={() => { if(window.confirm("Réinitialiser toutes les statistiques ?")) { resetChecked(); } }} className="text-xs text-slate-600 hover:text-red-400 transition-all px-2 py-1 rounded-lg">🗑️ Reset</button>
-              <h2 className="font-bold text-white flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-400"/> Statistiques</h2>
-              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><X className="w-5 h-5"/></button>
+            className="fixed right-0 top-0 h-full w-full max-w-sm bg-white z-50 shadow-2xl border-l border-slate-200 overflow-y-auto">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white backdrop-blur-md">
+              <button onClick={() => { if(window.confirm("Réinitialiser toutes les statistiques ?")) { resetChecked(); } }} className="text-xs text-slate-400 hover:text-red-700 transition-all px-2 py-1 rounded-lg">🗑️ Reset</button>
+              <h2 className="font-bold text-encre flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-700"/> Statistiques</h2>
+              <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre"><X className="w-5 h-5"/></button>
             </div>
             <div className="p-5 space-y-5">
               <div className="text-center">
                 <div className="relative w-28 h-28 mx-auto">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8"/>
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(15,23,42,0.06)" strokeWidth="8"/>
                     <circle cx="60" cy="60" r="52" fill="none" stroke="url(#sg)" strokeWidth="8" strokeLinecap="round"
                       strokeDasharray="327" strokeDashoffset={327*(1-counts.surahChecked/114)}
                       style={{ transition: "stroke-dashoffset 1s ease" }}/>
                     <defs><linearGradient id="sg"><stop offset="0%" stopColor="#10B981"/><stop offset="100%" stopColor="#3B82F6"/></linearGradient></defs>
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-emerald-400">{pct}%</span>
+                    <span className="text-2xl font-black text-emerald-700">{pct}%</span>
                     <span className="text-xs text-slate-500">Coran</span>
                   </div>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mb-2">📖 Coran</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">📖 Coran</p>
                 <div className="space-y-2">
                   {[
-                    { label: "Sourates lues", value: `${counts.surahChecked}/114`, color: "text-blue-400" },
-                    { label: "Programme Khatm", value: juzProgram.program.active ? `${juzProgram.completedCount}/30 Juz` : "Non démarré", color: "text-emerald-400" },
-                    { label: "Jours de lecture", value: juzProgram.daysPassed > 0 ? `${juzProgram.daysPassed}j` : "—", color: "text-purple-400" },
-                    { label: "Dans l'objectif", value: juzProgram.program.active ? (juzProgram.onTrack ? "✅ Oui" : `⚠️ −${juzProgram.behindBy} Juz`) : "—", color: juzProgram.onTrack ? "text-emerald-400" : "text-orange-400" },
+                    { label: "Sourates lues", value: `${counts.surahChecked}/114`, color: "text-blue-700" },
+                    { label: "Programme Khatm", value: juzProgram.program.active ? `${juzProgram.completedCount}/30 Juz` : "Non démarré", color: "text-emerald-700" },
+                    { label: "Jours de lecture", value: juzProgram.daysPassed > 0 ? `${juzProgram.daysPassed}j` : "—", color: "text-purple-700" },
+                    { label: "Dans l'objectif", value: juzProgram.program.active ? (juzProgram.onTrack ? "✅ Oui" : `⚠️ −${juzProgram.behindBy} Juz`) : "—", color: juzProgram.onTrack ? "text-emerald-700" : "text-orange-700" },
                   ].map(({ label, value, color }) => (
-                    <div key={label} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
-                      <span className="text-slate-400 text-sm">{label}</span>
+                    <div key={label} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                      <span className="text-slate-500 text-sm">{label}</span>
                       <span className={`font-bold text-sm ${color}`}>{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mb-2">📿 Adhkār</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">📿 Adhkār</p>
                 <div className="space-y-2">
                   {[
-                    { label: "Adhkār complétés", value: `${adhkarDone}/${adhkarTotal}`, color: "text-emerald-400" },
-                    { label: "Matin & Soir du jour", value: `${matinSoirDone}/${matinSoir.length}`, color: matinSoirDone === matinSoir.length ? "text-emerald-400" : "text-amber-400" },
+                    { label: "Adhkār complétés", value: `${adhkarDone}/${adhkarTotal}`, color: "text-emerald-700" },
+                    { label: "Matin & Soir du jour", value: `${matinSoirDone}/${matinSoir.length}`, color: matinSoirDone === matinSoir.length ? "text-emerald-700" : "text-amber-700" },
                   ].map(({ label, value, color }) => (
-                    <div key={label} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
-                      <span className="text-slate-400 text-sm">{label}</span>
+                    <div key={label} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                      <span className="text-slate-500 text-sm">{label}</span>
                       <span className={`font-bold text-sm ${color}`}>{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-xs text-slate-600 font-bold uppercase tracking-wider mb-2">🕌 Al-Kahf — Vendredi</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">🕌 Al-Kahf — Vendredi</p>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
-                    <span className="text-slate-400 text-sm">Vendredis lus</span>
-                    <span className="font-bold text-sm text-amber-400">{totalFridays} semaine{totalFridays > 1 ? "s" : ""}</span>
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                    <span className="text-slate-500 text-sm">Vendredis lus</span>
+                    <span className="font-bold text-sm text-amber-700">{totalFridays} semaine{totalFridays > 1 ? "s" : ""}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/8">
-                    <span className="text-slate-400 text-sm">Ce vendredi</span>
-                    <span className={`font-bold text-sm ${isReadThisWeek ? "text-emerald-400" : "text-slate-600"}`}>{isReadThisWeek ? "✅ Lu" : "—"}</span>
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                    <span className="text-slate-500 text-sm">Ce vendredi</span>
+                    <span className={`font-bold text-sm ${isReadThisWeek ? "text-emerald-700" : "text-slate-400"}`}>{isReadThisWeek ? "✅ Lu" : "—"}</span>
                   </div>
                 </div>
               </div>
@@ -1909,19 +1909,19 @@ export default function App() {
       const s = document.createElement("style");
       s.id = "tajweed-css";
       s.textContent = `
-        tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#AAAAAA}
-        tajweed[class*="madda_normal"]{color:#537FFF}
-        tajweed[class*="madda_permissible"]{color:#4BC8F0}
+        tajweed[class*="ham_wasl"],tajweed[class*="slnt"],tajweed[class*="laam_shamsiyya"]{color:#8A94A6}
+        tajweed[class*="madda_normal"]{color:#2563EB}
+        tajweed[class*="madda_permissible"]{color:#0E7490}
         tajweed[class*="madda_necessary"]{color:#2B4FBB}
-        tajweed[class*="madda_obligatory"]{color:#3B6FDD}
-        tajweed[class*="qalaqah"]{color:#DD8000}
-        tajweed[class*="ikhafa"]{color:#D070A0}
-        tajweed[class*="idgham_ghunnah"]{color:#169200}
+        tajweed[class*="madda_obligatory"]{color:#1D4ED8}
+        tajweed[class*="qalaqah"]{color:#B45309}
+        tajweed[class*="ikhafa"]{color:#BE185D}
+        tajweed[class*="idgham_ghunnah"]{color:#15803D}
         tajweed[class*="idgham_wo_ghunnah"]{color:#2E8B57}
-        tajweed[class*="idgham_mutajanisayn"]{color:#33AA55}
-        tajweed[class*="idgham_mutaqaribayn"]{color:#44BB66}
-        tajweed[class*="iqlab"]{color:#E05000}
-        tajweed[class*="ghunnah"]{color:#22AA22}
+        tajweed[class*="idgham_mutajanisayn"]{color:#1F7A3F}
+        tajweed[class*="idgham_mutaqaribayn"]{color:#2F855A}
+        tajweed[class*="iqlab"]{color:#C2410C}
+        tajweed[class*="ghunnah"]{color:#15803D}
       `;
       document.head.appendChild(s);
     }
@@ -1942,7 +1942,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="bg-slate-950 min-h-screen text-white font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
+    <div className="bg-creme min-h-screen text-encre font-sans antialiased flex flex-col" style={{ maxHeight: "100dvh", overflow: "hidden" }}>
 
       {/* Barre de navigation en haut */}
       <nav className="shrink-0 flex items-center bg-white border-b border-slate-200 px-1 py-1.5">
@@ -1965,14 +1965,14 @@ export default function App() {
                 {key === "adhkar"    && "📿"}
                 {key === "learn"     && "🎓"}
               </span>
-              <span className={`text-[8px] font-bold leading-none ${active ? "" : "text-slate-400"}`}>{shortLabel}</span>
+              <span className={`text-[8px] font-bold leading-none ${active ? "" : "text-slate-500"}`}>{shortLabel}</span>
             </motion.button>
           );
         })}
         <motion.button whileTap={{ scale: 0.90 }} onClick={() => setStatsOpen(true)}
           className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 px-2 border border-transparent hover:bg-slate-100 transition-all">
-          <Activity className="w-4 h-4 text-slate-400"/>
-          <span className="text-[8px] font-bold text-slate-400 leading-none">Stats</span>
+          <Activity className="w-4 h-4 text-slate-500"/>
+          <span className="text-[8px] font-bold text-slate-500 leading-none">Stats</span>
         </motion.button>
       </nav>
       <GradientBar />

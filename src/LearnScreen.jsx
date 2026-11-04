@@ -31,19 +31,19 @@ function groupLetters(text) {
 function colorizeGroup(grp, groups, idx) {
   const { base, marks } = grp;
   if (grp.isSpace) return null;
-  if (QALQALA.has(base) && marks.includes("\u0652")) return "#DD8000";
-  if ((base === "ن" || base === "م") && marks.includes("\u0651")) return "#22AA22";
-  if (base === "ٱ") return "#AAAAAA";
+  if (QALQALA.has(base) && marks.includes("\u0652")) return "#B45309";
+  if ((base === "ن" || base === "م") && marks.includes("\u0651")) return "#15803D";
+  if (base === "ٱ") return "#8A94A6";
   if (base === "ا" || base === "و" || base === "ي") {
     const prev = groups[idx-1];
     if (prev) {
-      if (base === "ا" && prev.marks.includes("\u064E")) return "#537FFF";
-      if (base === "و" && prev.marks.includes("\u064F")) return "#537FFF";
-      if (base === "ي" && prev.marks.includes("\u0650")) return "#537FFF";
+      if (base === "ا" && prev.marks.includes("\u064E")) return "#2563EB";
+      if (base === "و" && prev.marks.includes("\u064F")) return "#2563EB";
+      if (base === "ي" && prev.marks.includes("\u0650")) return "#2563EB";
     }
   }
-  if (marks.includes("\u0670")) return "#4BC8F0";
-  if (base === "ل" && marks.includes("\u0652")) { const next = groups[idx+1]; if (next && SUN.has(next.base)) return "#AAAAAA"; }
+  if (marks.includes("\u0670")) return "#0E7490";
+  if (base === "ل" && marks.includes("\u0652")) { const next = groups[idx+1]; if (next && SUN.has(next.base)) return "#8A94A6"; }
   return null;
 }
 
@@ -295,9 +295,9 @@ const LESSONS = [
     id:1, title:"Les voyelles courtes", emoji:"🔤", duration:"5 min",
     desc:"Fatha (a), Kasra (i), Damma (u) — la base de toute lecture arabe",
     theory:[
-      {title:"La Fatha — َ", ar:"بَ تَ نَ", tr:"ba — ta — na", text:"La fatha se place AU-DESSUS de la lettre. Elle donne le son 'a' court.", color:"#e5b400"},
-      {title:"La Kasra — ِ", ar:"بِ تِ نِ", tr:"bi — ti — ni", text:"La kasra se place EN-DESSOUS de la lettre. Elle donne le son 'i' court.", color:"#537FFF"},
-      {title:"La Damma — ُ", ar:"بُ تُ نُ", tr:"bu — tu — nu", text:"La damma se place AU-DESSUS de la lettre. Elle donne le son 'u' court.", color:"#22AA22"},
+      {title:"La Fatha — َ", ar:"بَ تَ نَ", tr:"ba — ta — na", text:"La fatha se place AU-DESSUS de la lettre. Elle donne le son 'a' court.", color:"#A16207"},
+      {title:"La Kasra — ِ", ar:"بِ تِ نِ", tr:"bi — ti — ni", text:"La kasra se place EN-DESSOUS de la lettre. Elle donne le son 'i' court.", color:"#2563EB"},
+      {title:"La Damma — ُ", ar:"بُ تُ نُ", tr:"bu — tu — nu", text:"La damma se place AU-DESSUS de la lettre. Elle donne le son 'u' court.", color:"#15803D"},
     ],
     exercise:[
       {ar:"بَ",correct:"ba",options:["ba","bi","bu","ab"]},
@@ -311,9 +311,9 @@ const LESSONS = [
     id:2, title:"Le Sukūn et la Shadda", emoji:"🔇", duration:"5 min",
     desc:"Sukūn = pas de voyelle, Shadda = lettre doublée",
     theory:[
-      {title:"Le Sukūn — ْ", ar:"بْ", tr:"b (silence)", text:"Le sukūn signifie que la lettre n'a PAS de voyelle. On coupe le son.", color:"#AAAAAA"},
-      {title:"La Shadda — ّ", ar:"بّ", tr:"bb (double)", text:"La shadda double la lettre. On la prononce avec emphase, comme 'bb' ou 'nn'.", color:"#DD8000"},
-      {title:"Exemple", ar:"إِنَّ", tr:"inna", text:"Le ن avec shadda = 'nn'. Très fréquent dans le Coran.", color:"#DD8000"},
+      {title:"Le Sukūn — ْ", ar:"بْ", tr:"b (silence)", text:"Le sukūn signifie que la lettre n'a PAS de voyelle. On coupe le son.", color:"#8A94A6"},
+      {title:"La Shadda — ّ", ar:"بّ", tr:"bb (double)", text:"La shadda double la lettre. On la prononce avec emphase, comme 'bb' ou 'nn'.", color:"#B45309"},
+      {title:"Exemple", ar:"إِنَّ", tr:"inna", text:"Le ن avec shadda = 'nn'. Très fréquent dans le Coran.", color:"#B45309"},
     ],
     exercise:[
       {ar:"بْ",correct:"silence",options:["ba","silence","bb","ib"]},
@@ -326,9 +326,9 @@ const LESSONS = [
     id:3, title:"Les voyelles longues (Madd)", emoji:"🔵", duration:"8 min",
     desc:"Extension du son sur 2 temps — ā, ī, ū",
     theory:[
-      {title:"Alif madd — ā", ar:"بَا", tr:"bā (long)", text:"Fatha + ا = son 'aa' long. Ex: اللهُ = Allāhu", color:"#537FFF"},
-      {title:"Yā madd — ī", ar:"بِي", tr:"bī (long)", text:"Kasra + ي = son 'ii' long. Ex: فِي = fī (dans)", color:"#4BC8F0"},
-      {title:"Wāw madd — ū", ar:"بُو", tr:"bū (long)", text:"Damma + و = son 'uu' long. Ex: رَسُولُ = rasūlu", color:"#3B6FDD"},
+      {title:"Alif madd — ā", ar:"بَا", tr:"bā (long)", text:"Fatha + ا = son 'aa' long. Ex: اللهُ = Allāhu", color:"#2563EB"},
+      {title:"Yā madd — ī", ar:"بِي", tr:"bī (long)", text:"Kasra + ي = son 'ii' long. Ex: فِي = fī (dans)", color:"#0E7490"},
+      {title:"Wāw madd — ū", ar:"بُو", tr:"bū (long)", text:"Damma + و = son 'uu' long. Ex: رَسُولُ = rasūlu", color:"#1D4ED8"},
     ],
     exercise:[
       {ar:"بَا",correct:"bā",options:["ba","bā","bi","bī"]},
@@ -341,9 +341,9 @@ const LESSONS = [
     id:4, title:"Lام solaire et lunaire", emoji:"☀️", duration:"8 min",
     desc:"Le ل du article ال change selon la lettre qui suit",
     theory:[
-      {title:"Les lettres lunaires", ar:"الْقَمَرُ", tr:"al-qamaru", text:"Devant les 14 lettres LUNAIRES, le ل se prononce. Ex: الكِتَاب = al-kitāb", color:"#4BC8F0"},
-      {title:"Les lettres solaires", ar:"الشَّمْسُ", tr:"ash-shamsu", text:"Devant les 14 lettres SOLAIRES, le ل s'assimile. Ex: الشَّمْس = ash-shams (pas 'al-shams')", color:"#DD8000"},
-      {title:"Astuce mémorisation", ar:"ت ث د ذ ر ز س ش ص ض ط ظ ل ن", tr:"les 14 solaires", text:"Toutes les lettres proches phonétiquement de la langue (dentales, sifflantes, latérales).", color:"#22AA22"},
+      {title:"Les lettres lunaires", ar:"الْقَمَرُ", tr:"al-qamaru", text:"Devant les 14 lettres LUNAIRES, le ل se prononce. Ex: الكِتَاب = al-kitāb", color:"#0E7490"},
+      {title:"Les lettres solaires", ar:"الشَّمْسُ", tr:"ash-shamsu", text:"Devant les 14 lettres SOLAIRES, le ل s'assimile. Ex: الشَّمْس = ash-shams (pas 'al-shams')", color:"#B45309"},
+      {title:"Astuce mémorisation", ar:"ت ث د ذ ر ز س ش ص ض ط ظ ل ن", tr:"les 14 solaires", text:"Toutes les lettres proches phonétiquement de la langue (dentales, sifflantes, latérales).", color:"#15803D"},
     ],
     exercise:[
       {ar:"الرَّحِيمُ",correct:"ar-raḥīmu",options:["al-raḥīmu","ar-raḥīmu","al-rāḥim","ar-rāḥim"]},
@@ -355,8 +355,8 @@ const LESSONS = [
     id:5, title:"Qalqala — l'écho vibrant", emoji:"🟠", duration:"5 min",
     desc:"Les 5 lettres qui rebondissent quand elles ont un sukūn",
     theory:[
-      {title:"Les 5 lettres de Qalqala", ar:"قَطْبٌ جَدٌّ", tr:"qaṭbun jaddun", text:"ق ط ب ج د — retenez le mot مَجِيد ou قَطَبَ جَد. Quand ces lettres portent un sukūn, elles produisent un écho vibrant.", color:"#DD8000"},
-      {title:"Exemple dans le Coran", ar:"قُلْ هُوَ اللَّهُ أَحَدٌ", tr:"Qul huwa llāhu aḥad", text:"Le ق dans قُلْ, le د dans أَحَدٌ — tous deux produisent la Qalqala.", color:"#DD8000"},
+      {title:"Les 5 lettres de Qalqala", ar:"قَطْبٌ جَدٌّ", tr:"qaṭbun jaddun", text:"ق ط ب ج د — retenez le mot مَجِيد ou قَطَبَ جَد. Quand ces lettres portent un sukūn, elles produisent un écho vibrant.", color:"#B45309"},
+      {title:"Exemple dans le Coran", ar:"قُلْ هُوَ اللَّهُ أَحَدٌ", tr:"Qul huwa llāhu aḥad", text:"Le ق dans قُلْ, le د dans أَحَدٌ — tous deux produisent la Qalqala.", color:"#B45309"},
     ],
     exercise:[
       {ar:"قُلْ",correct:"Qalqala sur ق",options:["Pas de Qalqala","Qalqala sur ق","Qalqala sur ل","Ghunna"]},
@@ -368,8 +368,8 @@ const LESSONS = [
     id:6, title:"Ghunna — la nasalisation", emoji:"🟢", duration:"5 min",
     desc:"Le bourdonnement nasal du nūn et mīm avec shadda",
     theory:[
-      {title:"Ghunna = 2 temps nasaux", ar:"إِنَّ — ثُمَّ", tr:"inna — thumma", text:"Quand ن ou م portent une shadda, on nasalise 2 temps (environ 1 seconde). Comme 'inn...' ou 'umm...'.", color:"#22AA22"},
-      {title:"Ghunna dans le Coran", ar:"إِنَّا أَعْطَيْنَاكَ", tr:"innā aʿṭaynāka", text:"Le ن de إِنَّا se prononce avec un bourdonnement nasal de 2 temps avant le ā.", color:"#22AA22"},
+      {title:"Ghunna = 2 temps nasaux", ar:"إِنَّ — ثُمَّ", tr:"inna — thumma", text:"Quand ن ou م portent une shadda, on nasalise 2 temps (environ 1 seconde). Comme 'inn...' ou 'umm...'.", color:"#15803D"},
+      {title:"Ghunna dans le Coran", ar:"إِنَّا أَعْطَيْنَاكَ", tr:"innā aʿṭaynāka", text:"Le ن de إِنَّا se prononce avec un bourdonnement nasal de 2 temps avant le ā.", color:"#15803D"},
     ],
     exercise:[
       {ar:"إِنَّ",correct:"Ghunna",options:["Ikhfa","Ghunna","Qalqala","Madd"]},
@@ -381,9 +381,9 @@ const LESSONS = [
     id:7, title:"Lecture de mots coraniques", emoji:"📖", duration:"10 min",
     desc:"Synthèse — applique toutes les règles sur des mots du Coran",
     theory:[
-      {title:"بِسْمِ اللَّهِ", ar:"بِسْمِ اللَّهِ", tr:"Bismi llāhi", text:"Kasra sous ب → 'bi'. Sukūn sur س → 'sm'. Laam shamsiyya dans اللَّهِ → 'llāhi'.", color:"#537FFF"},
-      {title:"الرَّحْمَٰنِ", ar:"الرَّحْمَٰنِ", tr:"ar-raḥmāni", text:"Laam solaire → 'ar'. SuperAlif sur ا → madd long 'ā'. Kasra finale → 'ni'.", color:"#DD8000"},
-      {title:"Révision complète", ar:"اللَّهُ أَكْبَرُ", tr:"Allāhu akbaru", text:"Laam shamsiyya + madd + fatha → 'Allāhu'. Qalqala sur ب → 'akbaru'.", color:"#22AA22"},
+      {title:"بِسْمِ اللَّهِ", ar:"بِسْمِ اللَّهِ", tr:"Bismi llāhi", text:"Kasra sous ب → 'bi'. Sukūn sur س → 'sm'. Laam shamsiyya dans اللَّهِ → 'llāhi'.", color:"#2563EB"},
+      {title:"الرَّحْمَٰنِ", ar:"الرَّحْمَٰنِ", tr:"ar-raḥmāni", text:"Laam solaire → 'ar'. SuperAlif sur ا → madd long 'ā'. Kasra finale → 'ni'.", color:"#B45309"},
+      {title:"Révision complète", ar:"اللَّهُ أَكْبَرُ", tr:"Allāhu akbaru", text:"Laam shamsiyya + madd + fatha → 'Allāhu'. Qalqala sur ب → 'akbaru'.", color:"#15803D"},
     ],
     exercise:[
       {ar:"الرَّحِيمِ",correct:"ar-raḥīmi",options:["al-raḥīmi","ar-raḥīmi","ar-raḥimi","al-raḥim"]},
@@ -659,17 +659,17 @@ function SuratesTab() {
   return (
     <div className="space-y-4">
       {/* Progression */}
-      <div className="p-4 bg-white/5 border border-white/8 rounded-2xl">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-white font-bold text-sm">Progression sourates</p>
-          <span className="text-emerald-400 font-bold text-sm">{masteredCount}/{ALL_SURAHS.length}</span>
+          <p className="text-encre font-bold text-sm">Progression sourates</p>
+          <span className="text-emerald-700 font-bold text-sm">{masteredCount}/{ALL_SURAHS.length}</span>
         </div>
-        <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <motion.div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
             animate={{width:`${Math.round((masteredCount/ALL_SURAHS.length)*100)}%`}} transition={{duration:0.5}}/>
         </div>
-        <p className="text-slate-600 text-xs mt-1.5">Marque une sourate ✅ pour déverrouiller le niveau suivant</p>
-        <div style={{textAlign:"right",marginTop:"6px"}}><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
+        <p className="text-slate-400 text-xs mt-1.5">Marque une sourate ✅ pour déverrouiller le niveau suivant</p>
+        <div style={{textAlign:"right",marginTop:"6px"}}><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
       </div>
 
       {/* Niveaux */}
@@ -681,12 +681,12 @@ function SuratesTab() {
           <div key={lvl.id}>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm"
-                style={{background:unlocked?"#059669":"rgba(255,255,255,0.08)",color:unlocked?"white":"#64748b"}}>
+                style={{background:unlocked?"#059669":"rgba(15,23,42,0.08)",color:unlocked?"white":"#64748b"}}>
                 {lvl.id}
               </div>
               <div className="flex-1">
-                <p className="text-white font-bold text-sm">{lvl.label}</p>
-                <p className="text-slate-600 text-xs">{lvlMastered}/{lvlSurahs.length} maîtrisées</p>
+                <p className="text-encre font-bold text-sm">{lvl.label}</p>
+                <p className="text-slate-400 text-xs">{lvlMastered}/{lvlSurahs.length} maîtrisées</p>
               </div>
             </div>
 
@@ -698,23 +698,23 @@ function SuratesTab() {
                 return (
                   <div key={surah.number} className={`rounded-2xl border overflow-hidden transition-all ${
                     !unlocked ? "opacity-35 pointer-events-none" :
-                    isMastered ? "border-emerald-500/30 bg-emerald-900/10" :
-                    isOpen ? "border-white/20 bg-white/5" : "border-white/8 bg-white/3"
+                    isMastered ? "border-emerald-500/30 bg-emerald-50" :
+                    isOpen ? "border-slate-300 bg-slate-50" : "border-slate-200 bg-slate-50"
                   }`}>
                     <button className="w-full flex items-center gap-3 p-3.5 text-left"
                       onClick={() => unlocked && setOpen(isOpen ? null : surah.number)}>
                       <div className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0"
-                        style={{background:"rgba(255,255,255,0.08)"}}>
-                        <span className="text-white font-black text-sm leading-none">{surah.number}</span>
-                        <span className="text-slate-600 text-[9px]">J.{surah.juz}</span>
+                        style={{background:"rgba(15,23,42,0.08)"}}>
+                        <span className="text-encre font-black text-sm leading-none">{surah.number}</span>
+                        <span className="text-slate-400 text-[9px]">J.{surah.juz}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold text-sm">{surah.name}</p>
-                        <p className="text-slate-600 text-xs">{surah.verses.length} versets</p>
+                        <p className="text-encre font-bold text-sm">{surah.name}</p>
+                        <p className="text-slate-400 text-xs">{surah.verses.length} versets</p>
                       </div>
-                      {isMastered && <span className="text-emerald-400 text-lg shrink-0">✅</span>}
+                      {isMastered && <span className="text-emerald-700 text-lg shrink-0">✅</span>}
                       <p className="font-serif text-slate-500 text-xl shrink-0" dir="rtl">{surah.arabic}</p>
-                      <span className="text-slate-600 text-xs shrink-0">{isOpen ? "▲" : "▼"}</span>
+                      <span className="text-slate-400 text-xs shrink-0">{isOpen ? "▲" : "▼"}</span>
                     </button>
 
                     <AnimatePresence>
@@ -727,13 +727,13 @@ function SuratesTab() {
                             {/* Récitateur */}
                             <div style={{position:"relative",display:"inline-block"}}>
                               <button onClick={()=>setShowPicker(p=>!p)}
-                                style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"10px",padding:"6px 10px",color:"white",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer"}}>
+                                style={{background:"rgba(15,23,42,0.12)",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"10px",padding:"6px 10px",color:"#1A1A1A",fontSize:"0.75rem",fontWeight:"bold",cursor:"pointer"}}>
                                 🎙️ {reciter.name} ▾
                               </button>
                               {showPicker && <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:40}} onClick={()=>setShowPicker(false)}/>}
                               {showPicker && (
-                                <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#0f172a",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"12px",padding:"6px",minWidth:"175px",boxShadow:"0 8px 32px rgba(0,0,0,0.7)"}}>
-                                  <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(255,255,255,0.08)",marginBottom:"4px"}}>Récitateur</p>
+                                <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:50,background:"#ffffff",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"12px",padding:"6px",minWidth:"175px",boxShadow:"0 8px 32px rgba(0,0,0,0.7)"}}>
+                                  <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(15,23,42,0.08)",marginBottom:"4px"}}>Récitateur</p>
                                   {LS_RECITERS.map(r => (
                                     <button key={r.id} onClick={()=>{setReciterId(r.id);setShowPicker(false);stopAudio();}}
                                       style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.82rem",fontWeight:"bold",cursor:"pointer"}}>
@@ -754,22 +754,22 @@ function SuratesTab() {
                             {/* Boutons */}
                             <div style={{display:"flex",gap:"5px"}}>
                               <button onClick={()=>handlePlay(surah)}
-                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#059669",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:(isActive&&audioStatus==="playing")?0.55:1}}>
+                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#059669",color:"#1A1A1A",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:(isActive&&audioStatus==="playing")?0.55:1}}>
                                 ▶ PLAY
                               </button>
                               <button onClick={handlePause}
-                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#d97706",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:(isActive&&audioStatus==="playing")?1:0.4}}>
+                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#d97706",color:"#1A1A1A",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:(isActive&&audioStatus==="playing")?1:0.4}}>
                                 ⏸ PAUSE
                               </button>
                               <button onClick={handleStop}
-                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#dc2626",color:"white",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:isActive?1:0.4}}>
+                                style={{flex:1,padding:"8px 4px",borderRadius:"10px",border:"none",background:"#dc2626",color:"#1A1A1A",fontWeight:"bold",fontSize:"0.8rem",cursor:"pointer",opacity:isActive?1:0.4}}>
                                 ⏹ STOP
                               </button>
                             </div>
 
                             {/* Vitesse */}
-                            <div style={{background:"rgba(255,255,255,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
-                              <span style={{color:"#94a3b8",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"white"}}>{speed.toFixed(1)}x</strong></span>
+                            <div style={{background:"rgba(15,23,42,0.05)",borderRadius:"10px",padding:"7px 10px",display:"flex",alignItems:"center",gap:"8px"}}>
+                              <span style={{color:"#64748b",fontSize:"0.7rem",whiteSpace:"nowrap"}}>Vitesse : <strong style={{color:"#1A1A1A"}}>{speed.toFixed(1)}x</strong></span>
                               <input type="range" min="0.5" max="2.0" step="0.1" value={speed}
                                 onChange={e=>handleSpeed(parseFloat(e.target.value))}
                                 style={{flex:1,accentColor:"#10b981"}}/>
@@ -777,10 +777,10 @@ function SuratesTab() {
 
                             {/* Contrôles affichage */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              <button onClick={()=>setShowTr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr?"bg-blue-500/20 text-blue-300 border border-blue-500/30":"bg-white/5 text-slate-600"}`}>ABC</button>
-                              <button onClick={()=>setShowFr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr?"bg-purple-500/20 text-purple-300 border border-purple-500/30":"bg-white/5 text-slate-600"}`}>FR</button>
+                              <button onClick={()=>setShowTr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showTr?"bg-blue-500/20 text-blue-700 border border-blue-500/30":"bg-slate-50 text-slate-400"}`}>ABC</button>
+                              <button onClick={()=>setShowFr(s=>!s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showFr?"bg-purple-500/20 text-purple-700 border border-purple-500/30":"bg-slate-50 text-slate-400"}`}>FR</button>
                               <button onClick={()=>markMastered(surah.number)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ml-auto ${isMastered?"bg-emerald-500/20 text-emerald-300 border border-emerald-500/30":"bg-white/5 text-slate-600 border border-white/10"}`}>
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ml-auto ${isMastered?"bg-emerald-500/20 text-emerald-700 border border-emerald-500/30":"bg-slate-50 text-slate-400 border border-slate-200"}`}>
                                 {isMastered ? "✅ Maîtrisée" : "Marquer maîtrisée"}
                               </button>
                             </div>
@@ -788,9 +788,9 @@ function SuratesTab() {
 
                           {/* Légende tajweed */}
                           <div className="px-4 pb-3 flex flex-wrap gap-1">
-                            {[["#DD8000","Qalqala"],["#537FFF","Madd"],["#22AA22","Ghunna"],["#D070A0","Ikhfāʾ"],["#AAAAAA","Silence"]].map(([color,label])=>(
-                              <span key={label} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 border border-white/8">
-                                <span className="w-1.5 h-1.5 rounded-full" style={{background:color}}/><span className="text-slate-600">{label}</span>
+                            {[["#B45309","Qalqala"],["#2563EB","Madd"],["#15803D","Ghunna"],["#BE185D","Ikhfāʾ"],["#8A94A6","Silence"]].map(([color,label])=>(
+                              <span key={label} className="flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full bg-slate-50 border border-slate-200">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{background:color}}/><span className="text-slate-400">{label}</span>
                               </span>
                             ))}
                           </div>
@@ -799,7 +799,7 @@ function SuratesTab() {
                           <div className="space-y-2 px-4 pb-5">
                             {surah.verses.map((v,i) => (
                               <motion.div key={v.n} initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}
-                                className={`p-4 rounded-2xl border ${audio.playing===`${surah.number}:${v.n}`?"bg-emerald-900/20 border-emerald-500/25":"bg-white/3 border-white/8"}`}>
+                                className={`p-4 rounded-2xl border ${audio.playing===`${surah.number}:${v.n}`?"bg-emerald-50 border-emerald-500/25":"bg-slate-50 border-slate-200"}`}>
                                 <div className="flex items-start gap-3 mb-1">
                                   <button onClick={()=>{ if(audio.playing===`${surah.number}:${v.n}`){audio.stop();return;} audio.playVerse(surah.number,v.n); }}
                                     style={{width:"32px",height:"32px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"4px",fontWeight:"bold",fontSize:"0.75rem",cursor:"pointer",border:"none",transition:"all 0.2s",
@@ -808,11 +808,11 @@ function SuratesTab() {
                                     {audio.playing===`${surah.number}:${v.n}`?"⏸":v.n}
                                   </button>
                                   <div className="flex-1 text-right" style={{lineHeight:"3"}}>
-                                    <p dir="rtl" lang="ar" style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"clamp(1.1rem,3.5vw,1.5rem)",color:"white"}}
+                                    <p dir="rtl" lang="ar" style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"clamp(1.1rem,3.5vw,1.5rem)",color:"#1A1A1A"}}
                                       dangerouslySetInnerHTML={{__html: v.tajweed || v.ar}}/>
                                   </div>
                                 </div>
-                                {showTr && v.tr && <p className="text-blue-300/70 text-xs italic mt-1 text-right">{v.tr}</p>}
+                                {showTr && v.tr && <p className="text-blue-700 text-xs italic mt-1 text-right">{v.tr}</p>}
                                 {showFr && v.fr && <p className="text-slate-500 text-xs italic mt-1">{v.fr}</p>}
                               </motion.div>
                             ))}
@@ -839,9 +839,9 @@ function AlphabetTab() {
   for (let i = 0; i < ALPHABET.length; i += 4) rows.push(ALPHABET.slice(i, i+4));
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-blue-900/20 border border-blue-500/20 rounded-2xl flex items-center justify-between">
-        <p className="text-blue-300 font-bold text-sm">الحروف الهجائية — 28 lettres</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button>
-        <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes. <span className="text-emerald-400">Vert = solaire</span> · <span className="text-blue-400">Bleu = lunaire</span></p>
+      <div className="p-4 bg-blue-50 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+        <p className="text-blue-700 font-bold text-sm">الحروف الهجائية — 28 lettres</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button>
+        <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes. <span className="text-emerald-700">Vert = solaire</span> · <span className="text-blue-700">Bleu = lunaire</span></p>
       </div>
       {rows.map((row, ri) => {
         const selInRow = sel && row.find(l => l.name === sel.name);
@@ -861,10 +861,10 @@ function AlphabetTab() {
                   }}
                   className={`p-3 rounded-2xl border text-center transition-all active:scale-95 ${
                     sel?.name === l.name ? "bg-blue-600 border-blue-400" :
-                    l.group === "solaire" ? "bg-emerald-900/40 border-emerald-700/40" :
-                    "bg-slate-800 border-slate-600"
+                    l.group === "solaire" ? "bg-emerald-50 border-emerald-700/40" :
+                    "bg-slate-100 border-slate-300"
                   }`}>
-                  <p className="text-2xl font-serif" style={{color:"white"}} dir="rtl">{l.ar}</p>
+                  <p className="text-2xl font-serif" style={{color:"#1A1A1A"}} dir="rtl">{l.ar}</p>
                   <p className="text-[10px] mt-0.5" style={{color: l.group==="solaire" ? "#6ee7b7" : "#93c5fd"}}>{l.name}</p>
                 </button>
               ))}
@@ -872,22 +872,22 @@ function AlphabetTab() {
             <AnimatePresence>
               {selInRow && (
                 <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="overflow-hidden mb-2">
-                  <div className="p-4 bg-blue-900/30 border border-blue-500/30 rounded-2xl">
+                  <div className="p-4 bg-blue-50 border border-blue-500/30 rounded-2xl">
                     <div className="flex items-center gap-4 mb-3">
                       <div className="w-16 h-16 rounded-2xl bg-blue-600/40 border border-blue-400/50 flex items-center justify-center">
-                        <span className="text-4xl font-serif" style={{color:"white"}}>{sel.ar}</span>
+                        <span className="text-4xl font-serif" style={{color:"#1A1A1A"}}>{sel.ar}</span>
                       </div>
                       <div>
-                        <p className="font-black text-xl" style={{color:"white"}}>{sel.name}</p>
-                        <p className="text-blue-300 text-sm font-bold">{sel.sound}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${sel.group==="solaire" ? "bg-emerald-900/50 text-emerald-300" : "bg-blue-900/50 text-blue-300"}`}>{sel.group}</span>
+                        <p className="font-black text-xl" style={{color:"#1A1A1A"}}>{sel.name}</p>
+                        <p className="text-blue-700 text-sm font-bold">{sel.sound}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${sel.group==="solaire" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"}`}>{sel.group}</span>
                         <div className="flex gap-2 mt-2">
                           <button onClick={() => speakArabic(sel.ar, 0.4)}
-                            style={{background:"rgba(59,130,246,0.2)",border:"1px solid rgba(96,165,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#93c5fd",fontSize:"0.75rem",cursor:"pointer"}}>
+                            style={{background:"rgba(59,130,246,0.2)",border:"1px solid rgba(96,165,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#1d4ed8",fontSize:"0.75rem",cursor:"pointer"}}>
                             🔊 Lettre
                           </button>
                           <button onClick={() => speakFeedback(`${sel.name}. Son : ${sel.sound}`, "fr-FR")}
-                            style={{background:"rgba(139,92,246,0.2)",border:"1px solid rgba(167,139,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#c4b5fd",fontSize:"0.75rem",cursor:"pointer"}}>
+                            style={{background:"rgba(139,92,246,0.2)",border:"1px solid rgba(167,139,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#6d28d9",fontSize:"0.75rem",cursor:"pointer"}}>
                             🧑‍🏫 Explication
                           </button>
                         </div>
@@ -895,9 +895,9 @@ function AlphabetTab() {
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                       {[{label:"Isolée",text:sel.i},{label:"Initiale",text:sel.ini},{label:"Médiane",text:sel.med},{label:"Finale",text:sel.fin}].map(f => (
-                        <div key={f.label} className="bg-slate-800 rounded-xl p-2.5 text-center border border-slate-600">
-                          <p className="text-[10px] text-slate-400 mb-1">{f.label}</p>
-                          <p className="text-2xl font-serif" style={{color:"white"}} dir="rtl">{f.text}</p>
+                        <div key={f.label} className="bg-slate-100 rounded-xl p-2.5 text-center border border-slate-300">
+                          <p className="text-[10px] text-slate-500 mb-1">{f.label}</p>
+                          <p className="text-2xl font-serif" style={{color:"#1A1A1A"}} dir="rtl">{f.text}</p>
                         </div>
                       ))}
                     </div>
@@ -916,18 +916,18 @@ function AlphabetTab() {
 // COMPOSANT — Tab Tajweed
 // ═══════════════════════════════════════════════════════
 const TAJWEED_INFO = [
-  {cls:"qalaqah",      color:"#DD8000", label:"Qalqala",         desc:"Écho vibrant — ق ط ب ج د avec sukūn"},
-  {cls:"madda_normal", color:"#537FFF", label:"Madd normal",     desc:"Extension 2 temps — après voyelle longue"},
-  {cls:"madda_permissible",color:"#4BC8F0",label:"Madd permissible",desc:"Extension 2, 4 ou 6 temps selon la récitation"},
+  {cls:"qalaqah",      color:"#B45309", label:"Qalqala",         desc:"Écho vibrant — ق ط ب ج د avec sukūn"},
+  {cls:"madda_normal", color:"#2563EB", label:"Madd normal",     desc:"Extension 2 temps — après voyelle longue"},
+  {cls:"madda_permissible",color:"#0E7490",label:"Madd permissible",desc:"Extension 2, 4 ou 6 temps selon la récitation"},
   {cls:"madda_necessary",  color:"#2B4FBB",label:"Madd nécessaire", desc:"Extension obligatoire 6 temps"},
-  {cls:"ghunnah",      color:"#22AA22", label:"Ghunna",          desc:"Nasalisation 2 temps — ن ou م avec shadda"},
-  {cls:"idgham_ghunnah",color:"#169200",label:"Idghām + Ghunna", desc:"Assimilation nasale — ني رم وأ"},
+  {cls:"ghunnah",      color:"#15803D", label:"Ghunna",          desc:"Nasalisation 2 temps — ن ou م avec shadda"},
+  {cls:"idgham_ghunnah",color:"#15803D",label:"Idghām + Ghunna", desc:"Assimilation nasale — ني رم وأ"},
   {cls:"idgham_wo_ghunnah",color:"#2E8B57",label:"Idghām sans Ghunna",desc:"Assimilation — ل et ر"},
-  {cls:"ikhafa",       color:"#D070A0", label:"Ikhfāʾ",          desc:"Dissimulation nasale — نون + 15 lettres"},
-  {cls:"iqlab",        color:"#E05000", label:"Iqlāb",           desc:"Transformation — نون → ميم devant ب"},
-  {cls:"ham_wasl",     color:"#AAAAAA", label:"Hamza Wasla",     desc:"Hamza de liaison — disparaît en continuité"},
-  {cls:"laam_shamsiyya",color:"#AAAAAA",label:"Laam Shamsiyya",  desc:"Laam assimilé — ال devant 14 lettres solaires"},
-  {cls:"slnt",         color:"#666666", label:"Lettre silencieuse",desc:"Ne se prononce pas dans la récitation"},
+  {cls:"ikhafa",       color:"#BE185D", label:"Ikhfāʾ",          desc:"Dissimulation nasale — نون + 15 lettres"},
+  {cls:"iqlab",        color:"#C2410C", label:"Iqlāb",           desc:"Transformation — نون → ميم devant ب"},
+  {cls:"ham_wasl",     color:"#8A94A6", label:"Hamza Wasla",     desc:"Hamza de liaison — disparaît en continuité"},
+  {cls:"laam_shamsiyya",color:"#8A94A6",label:"Laam Shamsiyya",  desc:"Laam assimilé — ال devant 14 lettres solaires"},
+  {cls:"slnt",         color:"#475569", label:"Lettre silencieuse",desc:"Ne se prononce pas dans la récitation"},
 ];
 
 function TajweedTab() {
@@ -941,8 +941,8 @@ function TajweedTab() {
   };
   return (
     <div className="space-y-3">
-      <div className="p-4 bg-emerald-900/20 border border-emerald-500/15 rounded-2xl">
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-emerald-300 font-bold text-sm">🎨 Les règles du Tajweed</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
+      <div className="p-4 bg-emerald-50 border border-emerald-500/15 rounded-2xl">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-emerald-700 font-bold text-sm">🎨 Les règles du Tajweed</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
         <p className="text-slate-500 text-xs">Appuie sur chaque règle → description + exemple prononcé par le professeur.</p>
       </div>
       {TAJWEED_INFO.map(t => (
@@ -955,21 +955,21 @@ function TajweedTab() {
             if (ex) setTimeout(() => speakArabic(ex, 0.5), 2500);
           }
         }}
-          className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${sel === t.cls ? "border-white/25 bg-white/8" : "border-white/8 bg-white/3"}`}>
+          className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${sel === t.cls ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-slate-50"}`}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{background:`${t.color}25`,border:`1px solid ${t.color}50`}}>
             <div className="w-4 h-4 rounded-full" style={{background:t.color}}/>
           </div>
           <div className="flex-1 text-left">
-            <p className="text-white font-semibold text-sm">{t.label}</p>
+            <p className="text-encre font-semibold text-sm">{t.label}</p>
             <AnimatePresence>
               {sel === t.cls && (
                 <motion.div initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} className="overflow-hidden">
-                  <p className="text-slate-400 text-xs mt-1">{t.desc}</p>
+                  <p className="text-slate-500 text-xs mt-1">{t.desc}</p>
                   {TAJWEED_EXAMPLES[t.cls] && (
                     <div className="flex items-center gap-2 mt-2">
                       <p className="font-serif text-base" style={{color:t.color}} dir="rtl">{TAJWEED_EXAMPLES[t.cls]}</p>
                       <button onClick={e=>{e.stopPropagation();speakArabic(TAJWEED_EXAMPLES[t.cls],0.45);}}
-                        style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",padding:"2px 8px",color:"#94a3b8",fontSize:"0.7rem",cursor:"pointer"}}>
+                        style={{background:"rgba(15,23,42,0.08)",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"2px 8px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>
                         🔊
                       </button>
                     </div>
@@ -991,8 +991,8 @@ function TajweedTab() {
 function VoyellesTab() {
   return (
     <div className="space-y-3">
-      <div className="p-4 bg-purple-900/20 border border-purple-500/15 rounded-2xl">
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-300 font-bold text-sm">التشكيل — Les voyelles</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
+      <div className="p-4 bg-purple-50 border border-purple-500/15 rounded-2xl">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-700 font-bold text-sm">التشكيل — Les voyelles</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
         <p className="text-slate-500 text-xs">Appuie sur chaque voyelle → le professeur explique et prononce l'exemple.</p>
       </div>
       {HARAKAT.map((h,i) => (
@@ -1001,33 +1001,33 @@ function VoyellesTab() {
             speakFeedback(`${h.name}. ${h.sound}.`, "fr-FR");
             setTimeout(() => speakArabic(h.example, 0.4), 1500);
           }}
-          className="w-full flex items-center gap-4 p-4 bg-white/4 border border-white/8 rounded-2xl active:bg-white/8 transition-all text-left">
+          className="w-full flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl active:bg-slate-100 transition-all text-left">
           <div className="w-14 h-14 rounded-2xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center shrink-0">
-            <span className="text-3xl font-serif" style={{color:"white"}} dir="rtl">{h.example}</span>
+            <span className="text-3xl font-serif" style={{color:"#1A1A1A"}} dir="rtl">{h.example}</span>
           </div>
           <div className="flex-1">
-            <p className="text-white font-bold text-sm">{h.name}</p>
-            <p className="text-purple-300 text-xs">{h.sound}</p>
-            <p className="text-slate-600 text-xs">→ <span className="text-slate-300 font-semibold">{h.tr}</span></p>
+            <p className="text-encre font-bold text-sm">{h.name}</p>
+            <p className="text-purple-700 text-xs">{h.sound}</p>
+            <p className="text-slate-400 text-xs">→ <span className="text-slate-700 font-semibold">{h.tr}</span></p>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-4xl font-serif text-slate-400">{h.symbol}</span>
-            <p className="text-slate-600 text-[9px] mt-1">🔊 tap</p>
+            <span className="text-4xl font-serif text-slate-500">{h.symbol}</span>
+            <p className="text-slate-400 text-[9px] mt-1">🔊 tap</p>
           </div>
         </motion.button>
       ))}
-      <div className="p-4 bg-white/4 border border-white/10 rounded-2xl">
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-white font-bold text-sm">Exemple complet</p>
+          <p className="text-encre font-bold text-sm">Exemple complet</p>
           <button onClick={() => { speakFeedback("Bismi llāhi", "fr-FR"); setTimeout(()=>speakArabic("بِسْمِ اللَّهِ",0.45),1200); }}
-            style={{background:"rgba(139,92,246,0.2)",border:"1px solid rgba(167,139,250,0.3)",borderRadius:"8px",padding:"4px 12px",color:"#c4b5fd",fontSize:"0.75rem",cursor:"pointer"}}>
+            style={{background:"rgba(139,92,246,0.2)",border:"1px solid rgba(167,139,250,0.3)",borderRadius:"8px",padding:"4px 12px",color:"#6d28d9",fontSize:"0.75rem",cursor:"pointer"}}>
             🧑‍🏫 Écouter
           </button>
         </div>
         <div className="text-center py-3">
           <LetterByLetter text="بِسْمِ اللَّهِ" size="2rem"/>
         </div>
-        <p className="text-blue-300 text-xs text-center italic">Bismi llāh — kasra · sukūn · kasra · madd</p>
+        <p className="text-blue-700 text-xs text-center italic">Bismi llāh — kasra · sukūn · kasra · madd</p>
       </div>
     </div>
   );
@@ -1084,8 +1084,8 @@ function LessonsTab() {
   if (!current) {
     return (
       <div className="space-y-3">
-        <div className="p-4 bg-amber-900/20 border border-amber-500/20 rounded-2xl">
-          <p className="text-amber-300 font-bold text-sm mb-1">📚 Leçons progressives</p>
+        <div className="p-4 bg-amber-50 border border-amber-500/20 rounded-2xl">
+          <p className="text-amber-700 font-bold text-sm mb-1">📚 Leçons progressives</p>
           <p className="text-slate-500 text-xs">7 leçons basées sur la méthode Al-Azhar. Chaque leçon = théorie + exercices. Complète-les dans l'ordre.</p>
         </div>
         {LESSONS.map((lesson, i) => {
@@ -1095,20 +1095,20 @@ function LessonsTab() {
             <motion.button key={lesson.id} disabled={locked}
               onClick={() => !locked && startLesson(lesson)}
               className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
-                locked ? "border-white/5 bg-white/2 opacity-40" :
-                done   ? "border-emerald-500/30 bg-emerald-900/15" :
-                         "border-amber-500/20 bg-amber-900/10 hover:border-amber-500/40"
+                locked ? "border-slate-200 bg-slate-50 opacity-40" :
+                done   ? "border-emerald-500/30 bg-emerald-50" :
+                         "border-amber-500/20 bg-amber-50 hover:border-amber-500/40"
               }`}>
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 ${locked ? "bg-white/5" : done ? "bg-emerald-500/20" : "bg-amber-500/15"}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 ${locked ? "bg-slate-50" : done ? "bg-emerald-500/20" : "bg-amber-500/15"}`}>
                 {locked ? "🔒" : done ? "✅" : lesson.emoji}
               </div>
               <div className="flex-1">
-                <p className={`font-bold text-sm ${locked ? "text-slate-600" : "text-white"}`}>Leçon {lesson.id} — {lesson.title}</p>
+                <p className={`font-bold text-sm ${locked ? "text-slate-400" : "text-encre"}`}>Leçon {lesson.id} — {lesson.title}</p>
                 <p className={`text-xs mt-0.5 ${locked ? "text-slate-700" : "text-slate-500"}`}>{lesson.desc}</p>
-                {done && <p className="text-xs text-emerald-400 mt-0.5">Score : {done.score}/{done.total}</p>}
+                {done && <p className="text-xs text-emerald-700 mt-0.5">Score : {done.score}/{done.total}</p>}
               </div>
-              {!locked && !done && <span className="text-xs text-amber-400 shrink-0">{lesson.duration}</span>}
-              {!locked && <ChevronRight className="w-4 h-4 text-slate-600 shrink-0"/>}
+              {!locked && !done && <span className="text-xs text-amber-700 shrink-0">{lesson.duration}</span>}
+              {!locked && <ChevronRight className="w-4 h-4 text-slate-400 shrink-0"/>}
             </motion.button>
           );
         })}
@@ -1120,15 +1120,15 @@ function LessonsTab() {
     return (
       <div className="flex flex-col items-center justify-center py-10 space-y-5 text-center">
         <motion.div initial={{scale:0}} animate={{scale:1}} className="text-7xl">🎉</motion.div>
-        <p className="text-white font-black text-2xl">Leçon {current.id} terminée !</p>
+        <p className="text-encre font-black text-2xl">Leçon {current.id} terminée !</p>
         <div className="flex items-center gap-3">
           {Array.from({length: current.exercise.length}).map((_,i) => (
-            <div key={i} className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${i < score ? "bg-emerald-500" : "bg-white/10"}`}>
+            <div key={i} className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${i < score ? "bg-emerald-500" : "bg-slate-100"}`}>
               {i < score ? "✓" : "✗"}
             </div>
           ))}
         </div>
-        <p className="text-emerald-400 font-bold text-lg">{score}/{current.exercise.length} bonnes réponses</p>
+        <p className="text-emerald-700 font-bold text-lg">{score}/{current.exercise.length} bonnes réponses</p>
         <button onClick={() => setCurrent(null)} className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl">
           ← Retour aux leçons
         </button>
@@ -1141,21 +1141,21 @@ function LessonsTab() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3 mb-2">
-          <button onClick={() => setCurrent(null)} className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
-          <p className="text-white font-bold">Leçon {current.id} · {current.title}</p>
+          <button onClick={() => setCurrent(null)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+          <p className="text-encre font-bold">Leçon {current.id} · {current.title}</p>
           <span className="ml-auto text-xs text-slate-500">{theoryIdx+1}/{current.theory.length}</span>
         </div>
-        <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
           <motion.div className="h-full bg-amber-500 rounded-full" animate={{width:`${((theoryIdx+1)/current.theory.length)*100}%`}}/>
         </div>
         <motion.div key={theoryIdx} initial={{opacity:0,x:20}} animate={{opacity:1,x:0}} className="space-y-4">
-          <div className="p-5 rounded-3xl border border-white/10" style={{background:`${step.color}15`,borderColor:`${step.color}30`}}>
-            <p className="font-bold text-white text-base mb-4">{step.title}</p>
+          <div className="p-5 rounded-3xl border border-slate-200" style={{background:`${step.color}15`,borderColor:`${step.color}30`}}>
+            <p className="font-bold text-encre text-base mb-4">{step.title}</p>
             <div className="text-center mb-4">
               <LetterByLetter text={step.ar} size="2.5rem"/>
             </div>
-            <p className="text-blue-300 text-sm italic text-center mb-3">{step.tr}</p>
-            <p className="text-slate-300 text-sm leading-relaxed bg-black/20 rounded-2xl p-4">{step.text}</p>
+            <p className="text-blue-700 text-sm italic text-center mb-3">{step.tr}</p>
+            <p className="text-slate-700 text-sm leading-relaxed bg-slate-900/10 rounded-2xl p-4">{step.text}</p>
           </div>
         </motion.div>
         <button onClick={nextTheory} className="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold rounded-2xl text-sm">
@@ -1170,24 +1170,24 @@ function LessonsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <button onClick={() => setCurrent(null)} className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
-        <p className="text-white font-bold">Exercice {exerciseIdx+1}/{current.exercise.length}</p>
-        <span className="ml-auto text-emerald-400 font-bold text-sm">{score} ✓</span>
+        <button onClick={() => setCurrent(null)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+        <p className="text-encre font-bold">Exercice {exerciseIdx+1}/{current.exercise.length}</p>
+        <span className="ml-auto text-emerald-700 font-bold text-sm">{score} ✓</span>
       </div>
-      <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <motion.div className="h-full bg-emerald-500 rounded-full" animate={{width:`${(exerciseIdx/current.exercise.length)*100}%`}}/>
       </div>
-      <p className="text-slate-400 text-sm text-center">Comment se prononce ce texte ?</p>
-      <div className="py-8 text-center bg-white/5 border border-white/10 rounded-3xl">
+      <p className="text-slate-500 text-sm text-center">Comment se prononce ce texte ?</p>
+      <div className="py-8 text-center bg-slate-50 border border-slate-200 rounded-3xl">
         <LetterByLetter text={ex.ar} size="3rem"/>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {ex.options.map(opt => {
           const isCorrect = opt === ex.correct;
           const isSelected = opt === selected;
-          let cls = "bg-white/5 border-white/15 text-white";
-          if (answered && isCorrect) cls = "bg-emerald-500/30 border-emerald-500 text-emerald-300";
-          else if (answered && isSelected && !isCorrect) cls = "bg-red-500/30 border-red-500 text-red-300";
+          let cls = "bg-slate-50 border-slate-300 text-encre";
+          if (answered && isCorrect) cls = "bg-emerald-500/30 border-emerald-500 text-emerald-700";
+          else if (answered && isSelected && !isCorrect) cls = "bg-red-500/30 border-red-500 text-red-700";
           return (
             <button key={opt} onClick={() => handleAnswer(opt)}
               className={`p-4 rounded-2xl border font-bold text-sm transition-all active:scale-95 ${cls}`}>
@@ -1198,7 +1198,7 @@ function LessonsTab() {
       </div>
       {answered && (
         <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-3">
-          <p className={`text-center font-bold ${selected === ex.correct ? "text-emerald-400" : "text-red-400"}`}>
+          <p className={`text-center font-bold ${selected === ex.correct ? "text-emerald-700" : "text-red-700"}`}>
             {selected === ex.correct ? "✅ Correct !" : `❌ La bonne réponse : ${ex.correct}`}
           </p>
           <button onClick={nextExercise} className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl">
@@ -1255,31 +1255,31 @@ function RevisionTab() {
   if (due.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="p-5 bg-emerald-900/20 border border-emerald-500/20 rounded-3xl text-center">
+        <div className="p-5 bg-emerald-50 border border-emerald-500/20 rounded-3xl text-center">
           <p className="text-4xl mb-3">🎓</p>
-          <p className="text-white font-black text-xl mb-1">{sessionDone > 0 ? `Session terminée !` : "À jour !"}</p>
-          {sessionDone > 0 && <p className="text-emerald-400 text-sm">{sessionDone} cartes révisées</p>}
+          <p className="text-encre font-black text-xl mb-1">{sessionDone > 0 ? `Session terminée !` : "À jour !"}</p>
+          {sessionDone > 0 && <p className="text-emerald-700 text-sm">{sessionDone} cartes révisées</p>}
           <p className="text-slate-500 text-sm mt-2">{learned}/500 mots appris</p>
         </div>
 
         {/* Explication du compteur */}
-        <div className="p-3 bg-blue-900/20 border border-blue-500/20 rounded-2xl">
-          <p className="text-blue-300 font-bold text-xs mb-1">ℹ️ Comment fonctionne le compteur ?</p>
-          <p className="text-slate-500 text-xs leading-relaxed">Retourne une carte → réponds <span className="text-blue-300 font-bold">Bien</span> ou <span className="text-emerald-400 font-bold">Facile</span> → le mot est marqué "appris". Plus tu réponds correctement, plus l'intervalle avant la prochaine révision s'allonge (1j → 3j → 1 sem → …)</p>
+        <div className="p-3 bg-blue-50 border border-blue-500/20 rounded-2xl">
+          <p className="text-blue-700 font-bold text-xs mb-1">ℹ️ Comment fonctionne le compteur ?</p>
+          <p className="text-slate-500 text-xs leading-relaxed">Retourne une carte → réponds <span className="text-blue-700 font-bold">Bien</span> ou <span className="text-emerald-700 font-bold">Facile</span> → le mot est marqué "appris". Plus tu réponds correctement, plus l'intervalle avant la prochaine révision s'allonge (1j → 3j → 1 sem → …)</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
+          <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-200">
             <p className="text-slate-500 text-xs">Appris</p>
-            <p className="text-emerald-400 font-black text-xl">{learned}</p>
+            <p className="text-emerald-700 font-black text-xl">{learned}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
+          <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-200">
             <p className="text-slate-500 text-xs">Total</p>
-            <p className="text-white font-black text-xl">500</p>
+            <p className="text-encre font-black text-xl">500</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-3 text-center border border-white/8">
+          <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-200">
             <p className="text-slate-500 text-xs">À revoir</p>
-            <p className="text-amber-400 font-black text-xl">{VOCAB.filter(w => cards[w.id]?.nextReview > Date.now()).length}</p>
+            <p className="text-amber-700 font-black text-xl">{VOCAB.filter(w => cards[w.id]?.nextReview > Date.now()).length}</p>
           </div>
         </div>
         <div className="space-y-2">
@@ -1289,16 +1289,16 @@ function RevisionTab() {
           </button>
           {!confirmReset ? (
             <button onClick={() => setConfirmReset(true)}
-              className="w-full py-2.5 bg-red-900/20 text-red-400 border border-red-500/25 rounded-2xl text-sm font-semibold hover:bg-red-900/35 transition-all">
+              className="w-full py-2.5 bg-red-50 text-red-700 border border-red-500/25 rounded-2xl text-sm font-semibold hover:bg-red-50 transition-all">
               🗑️ Réinitialiser la progression
             </button>
           ) : (
-            <div className="p-4 bg-red-900/25 border border-red-500/35 rounded-2xl space-y-3">
-              <p className="text-red-300 text-sm font-bold text-center">⚠️ Supprimer toute la progression ?</p>
+            <div className="p-4 bg-red-50 border border-red-500/35 rounded-2xl space-y-3">
+              <p className="text-red-700 text-sm font-bold text-center">⚠️ Supprimer toute la progression ?</p>
               <p className="text-slate-500 text-xs text-center">Les {learned} mots appris seront remis à zéro.</p>
               <div className="flex gap-2">
                 <button onClick={() => setConfirmReset(false)}
-                  className="flex-1 py-2.5 bg-white/8 text-slate-400 rounded-xl text-sm font-bold">
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-sm font-bold">
                   Annuler
                 </button>
                 <button onClick={reset}
@@ -1310,15 +1310,15 @@ function RevisionTab() {
           )}
         </div>
         <div>
-          <p className="text-sm font-bold text-white mb-2">Tous les mots</p>
+          <p className="text-sm font-bold text-encre mb-2">Tous les mots</p>
           <div className="space-y-1.5 max-h-60 overflow-y-auto">
             {VOCAB.map(w => {
               const c = cards[w.id];
               const done = c?.reps > 0;
               return (
-                <div key={w.id} className={`flex items-center gap-3 p-2.5 rounded-xl border ${done ? "border-emerald-500/15 bg-emerald-900/8" : "border-white/8 bg-white/3"}`}>
-                  <span className={`text-xs font-bold w-6 text-center ${done ? "text-emerald-400" : "text-slate-600"}`}>{done ? "✓" : w.id}</span>
-                  <span className="font-serif text-white text-base" dir="rtl">{w.ar}</span>
+                <div key={w.id} className={`flex items-center gap-3 p-2.5 rounded-xl border ${done ? "border-emerald-500/15 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
+                  <span className={`text-xs font-bold w-6 text-center ${done ? "text-emerald-700" : "text-slate-400"}`}>{done ? "✓" : w.id}</span>
+                  <span className="font-serif text-encre text-base" dir="rtl">{w.ar}</span>
                   <span className="text-slate-500 text-xs flex-1">{w.fr}</span>
                   <span className="text-[10px] text-slate-700">{w.cat}</span>
                 </div>
@@ -1333,10 +1333,10 @@ function RevisionTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-white font-bold">Révision · {idx+1}/{totalDue}</p>
+        <p className="text-encre font-bold">Révision · {idx+1}/{totalDue}</p>
         <p className="text-slate-500 text-xs">{VOCAB.findIndex(w => w.id === card?.id)+1}e mot le plus fréquent</p>
       </div>
-      <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all" style={{width:`${((idx)/totalDue)*100}%`}}/>
       </div>
       <motion.button key={card?.id + String(flipped)} onClick={() => {
@@ -1347,25 +1347,25 @@ function RevisionTab() {
           setTimeout(() => speakFeedback(card?.fr, "fr-FR"), 1800);
         }
       }}
-        className="w-full min-h-48 rounded-3xl border border-white/15 bg-white/5 flex flex-col items-center justify-center p-6 gap-3 active:scale-98 transition-all"
+        className="w-full min-h-48 rounded-3xl border border-slate-300 bg-slate-50 flex flex-col items-center justify-center p-6 gap-3 active:scale-98 transition-all"
         whileTap={{scale:0.98}}>
         {!flipped ? (
           <div style={{display:"contents"}}>
-            <p className="font-serif text-white" style={{fontSize:"3.5rem"}} dir="rtl">{card?.ar}</p>
+            <p className="font-serif text-encre" style={{fontSize:"3.5rem"}} dir="rtl">{card?.ar}</p>
             <p className="text-slate-500 text-sm">Appuie pour voir la réponse</p>
           </div>
         ) : (
           <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} className="text-center space-y-2">
-            <p className="font-serif text-white" style={{fontSize:"3rem"}} dir="rtl">{card?.ar}</p>
-            <p className="text-blue-300 text-lg italic font-bold">{card?.tr}</p>
-            <p className="text-white text-xl font-bold">{card?.fr}</p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-slate-400">{card?.cat} · {card?.freq}× dans le Coran</span>
+            <p className="font-serif text-encre" style={{fontSize:"3rem"}} dir="rtl">{card?.ar}</p>
+            <p className="text-blue-700 text-lg italic font-bold">{card?.tr}</p>
+            <p className="text-encre text-xl font-bold">{card?.fr}</p>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{card?.cat} · {card?.freq}× dans le Coran</span>
           </motion.div>
         )}
       </motion.button>
       {flipped && (
         <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="grid grid-cols-2 gap-2">
-          {[{q:0,label:"À revoir",color:"bg-red-500/20 border-red-500/40 text-red-300"},{q:1,label:"Difficile",color:"bg-orange-500/20 border-orange-500/40 text-orange-300"},{q:2,label:"Bien",color:"bg-blue-500/20 border-blue-500/40 text-blue-300"},{q:3,label:"Facile",color:"bg-emerald-500/20 border-emerald-500/40 text-emerald-300"}].map(b => (
+          {[{q:0,label:"À revoir",color:"bg-red-500/20 border-red-500/40 text-red-700"},{q:1,label:"Difficile",color:"bg-orange-500/20 border-orange-500/40 text-orange-300"},{q:2,label:"Bien",color:"bg-blue-500/20 border-blue-500/40 text-blue-700"},{q:3,label:"Facile",color:"bg-emerald-500/20 border-emerald-500/40 text-emerald-700"}].map(b => (
             <button key={b.q} onClick={() => answer(b.q)}
               className={`py-3.5 rounded-2xl border font-bold text-sm transition-all active:scale-95 ${b.color}`}>
               {b.label}
@@ -1484,8 +1484,8 @@ function QuizTab() {
   // ── Menu ──────────────────────────────────────────────
   if (!mode) return (
     <div className="space-y-3">
-      <div className="p-4 bg-yellow-900/20 border border-yellow-500/20 rounded-2xl">
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-yellow-300 font-bold text-sm">🎯 6 types de quiz</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
+      <div className="p-4 bg-yellow-50 border border-yellow-500/20 rounded-2xl">
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-yellow-700 font-bold text-sm">🎯 6 types de quiz</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
         <p className="text-slate-500 text-xs">La voix du professeur lit la bonne réponse après chaque question.</p>
       </div>
       <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Alphabet</p>
@@ -1521,18 +1521,18 @@ function QuizTab() {
     return (
       <div className="text-center space-y-5 py-6">
         <motion.div initial={{scale:0}} animate={{scale:1}} className="text-7xl">{pct>=90?"🏆":pct>=70?"⭐":pct>=50?"👍":"📚"}</motion.div>
-        <p className="text-white font-black text-3xl">{score}<span className="text-xl text-slate-400">/{questions.length}</span></p>
-        <p className="text-slate-400">{pct>=90?"Mashā Allāh !":pct>=70?"Très bien !":pct>=50?"Continue !":"Réessaie !"}</p>
+        <p className="text-encre font-black text-3xl">{score}<span className="text-xl text-slate-500">/{questions.length}</span></p>
+        <p className="text-slate-500">{pct>=90?"Mashā Allāh !":pct>=70?"Très bien !":pct>=50?"Continue !":"Réessaie !"}</p>
         <div className="flex gap-1.5 justify-center flex-wrap">
           {questions.map((_,i)=>(
-            <div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i<score?"bg-emerald-500 text-white":"bg-red-500/40 text-red-300"}`}>
+            <div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i<score?"bg-emerald-500 text-white":"bg-red-500/40 text-red-700"}`}>
               {i<score?"✓":"✗"}
             </div>
           ))}
         </div>
         <div className="flex gap-2 justify-center pt-2">
           <button onClick={()=>start(mode)} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl">🔄 Rejouer</button>
-          <button onClick={()=>setMode(null)} className="px-5 py-2.5 bg-white/10 text-white rounded-xl">Menu</button>
+          <button onClick={()=>setMode(null)} className="px-5 py-2.5 bg-slate-100 text-encre rounded-xl">Menu</button>
         </div>
       </div>
     );
@@ -1545,69 +1545,69 @@ function QuizTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <button onClick={()=>setMode(null)} className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+        <button onClick={()=>setMode(null)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500"><ChevronRight className="w-5 h-5 rotate-180"/></button>
         <div className="flex items-center gap-2">
-          {streak>=2 && <span className="text-xs text-amber-400 font-bold">🔥 {streak}</span>}
-          <span className="text-emerald-400 font-bold text-sm">{score} ✓</span>
+          {streak>=2 && <span className="text-xs text-amber-700 font-bold">🔥 {streak}</span>}
+          <span className="text-emerald-700 font-bold text-sm">{score} ✓</span>
           <span className="text-slate-500 text-xs">{qIdx+1}/{questions.length}</span>
         </div>
       </div>
-      <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <motion.div className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full" animate={{width:`${(qIdx/questions.length)*100}%`}}/>
       </div>
-      <p className="text-slate-400 text-sm text-center font-semibold">{q.question}</p>
+      <p className="text-slate-500 text-sm text-center font-semibold">{q.question}</p>
 
       {/* Zone centrale selon type */}
       {q.type==="letter_forms" && (
         <div className="space-y-3">
           <div className="grid grid-cols-4 gap-2">
             {q.variants.map(v=>(
-              <div key={v.label} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"16px",padding:"12px 4px",textAlign:"center"}}>
-                <p style={{fontSize:"0.6rem",color:"#94a3b8",marginBottom:"6px"}}>{v.label}</p>
-                <p style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"1.8rem",color:"white",lineHeight:"2"}} dir="rtl">{v.text}</p>
+              <div key={v.label} style={{background:"rgba(15,23,42,0.05)",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"16px",padding:"12px 4px",textAlign:"center"}}>
+                <p style={{fontSize:"0.6rem",color:"#64748b",marginBottom:"6px"}}>{v.label}</p>
+                <p style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"1.8rem",color:"#1A1A1A",lineHeight:"2"}} dir="rtl">{v.text}</p>
               </div>
             ))}
           </div>
           <div className="text-center">
             <button onClick={()=>speakArabic(q.ar, 0.4)}
-              style={{background:"rgba(16,185,129,0.15)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:"12px",padding:"8px 20px",color:"#6ee7b7",fontSize:"0.85rem",cursor:"pointer",fontWeight:"bold"}}>
+              style={{background:"rgba(16,185,129,0.15)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:"12px",padding:"8px 20px",color:"#047857",fontSize:"0.85rem",cursor:"pointer",fontWeight:"bold"}}>
               🔊 Écouter
             </button>
-            <p style={{color:"#64748b",fontSize:"0.75rem",marginTop:"6px"}}>Son : <span style={{color:"white",fontWeight:"bold"}}>{q.sound}</span></p>
+            <p style={{color:"#64748b",fontSize:"0.75rem",marginTop:"6px"}}>Son : <span style={{color:"#1A1A1A",fontWeight:"bold"}}>{q.sound}</span></p>
           </div>
         </div>
       )}
 
       {q.type==="letter_sound" && (
-        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"24px",padding:"32px",textAlign:"center"}}>
-          <p style={{color:"#94a3b8",fontSize:"0.85rem",marginBottom:"16px"}}>Appuie pour entendre la lettre</p>
+        <div style={{background:"rgba(15,23,42,0.05)",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"24px",padding:"32px",textAlign:"center"}}>
+          <p style={{color:"#64748b",fontSize:"0.85rem",marginBottom:"16px"}}>Appuie pour entendre la lettre</p>
           <button onClick={()=>speakArabic(q.ar, 0.35)}
             style={{background:"linear-gradient(135deg,#7c3aed,#6d28d9)",border:"none",borderRadius:"50%",width:"80px",height:"80px",fontSize:"2rem",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 20px rgba(124,58,237,0.4)"}}>
             🔊
           </button>
-          <p style={{color:"#64748b",fontSize:"0.8rem",marginTop:"12px"}}>Son attendu : <span style={{color:"white",fontWeight:"bold"}}>{q.sound}</span></p>
+          <p style={{color:"#64748b",fontSize:"0.8rem",marginTop:"12px"}}>Son attendu : <span style={{color:"#1A1A1A",fontWeight:"bold"}}>{q.sound}</span></p>
         </div>
       )}
 
       {(q.type==="word_meaning"||q.type==="word_arabic"||q.type==="tajweed") && (
-        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"24px",padding:"24px",textAlign:"center"}}>
+        <div style={{background:"rgba(15,23,42,0.05)",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"24px",padding:"24px",textAlign:"center"}}>
           <div style={{lineHeight:"3"}}>
             <LetterByLetter text={q.ar} size="clamp(1.5rem,5vw,2rem)"/>
           </div>
-          {q.tr && <p style={{color:"rgba(147,197,253,0.6)",fontSize:"0.75rem",fontStyle:"italic",marginTop:"4px"}} dir="ltr">{q.tr}</p>}
+          {q.tr && <p style={{color:"#3b82f6",fontSize:"0.75rem",fontStyle:"italic",marginTop:"4px"}} dir="ltr">{q.tr}</p>}
           {q.freq && <p style={{color:"#475569",fontSize:"0.7rem",marginTop:"2px"}}>{q.freq.toLocaleString()}× dans le Coran</p>}
           <button onClick={()=>speakArabic(q.ar,0.55)}
-            style={{marginTop:"12px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:"10px",padding:"6px 16px",color:"#6ee7b7",fontSize:"0.75rem",cursor:"pointer"}}>
+            style={{marginTop:"12px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:"10px",padding:"6px 16px",color:"#047857",fontSize:"0.75rem",cursor:"pointer"}}>
             🔊 Écouter
           </button>
         </div>
       )}
 
       {q.type==="letter" && (
-        <div style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"24px",padding:"40px",textAlign:"center"}}>
-          <p style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"4rem",color:"white"}} dir="rtl">{q.ar}</p>
+        <div style={{background:"rgba(15,23,42,0.05)",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"24px",padding:"40px",textAlign:"center"}}>
+          <p style={{fontFamily:"'Amiri Quran','Scheherazade New',serif",fontSize:"4rem",color:"#1A1A1A"}} dir="rtl">{q.ar}</p>
           <button onClick={()=>speakArabic(q.ar,0.4)}
-            style={{marginTop:"12px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:"10px",padding:"6px 16px",color:"#6ee7b7",fontSize:"0.75rem",cursor:"pointer"}}>
+            style={{marginTop:"12px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:"10px",padding:"6px 16px",color:"#047857",fontSize:"0.75rem",cursor:"pointer"}}>
             🔊 Écouter
           </button>
         </div>
@@ -1617,7 +1617,7 @@ function QuizTab() {
       <div className="grid grid-cols-2 gap-2">
         {q.options.map((opt,oi)=>{
           const isCorrect=opt===q.correct, isSelected=opt===selected;
-          let bg="rgba(255,255,255,0.05)",border="rgba(255,255,255,0.15)",color="white";
+          let bg="rgba(15,23,42,0.05)",border="rgba(15,23,42,0.12)",color="white";
           if(answered&&isCorrect){bg="rgba(16,185,129,0.25)";border="#10b981";color="#6ee7b7";}
           else if(answered&&isSelected&&!isCorrect){bg="rgba(239,68,68,0.25)";border="#ef4444";color="#fca5a5";}
           return (
@@ -1629,7 +1629,7 @@ function QuizTab() {
               direction:isArabicOpt?"rtl":"ltr",lineHeight:isArabicOpt?"2":"1.4",
             }}>
               {opt}
-              {answered&&isCorrect&&<span style={{display:"block",fontSize:"0.6rem",fontFamily:"system-ui",color:"#6ee7b7",marginTop:"2px"}}>✓</span>}
+              {answered&&isCorrect&&<span style={{display:"block",fontSize:"0.6rem",fontFamily:"system-ui",color:"#047857",marginTop:"2px"}}>✓</span>}
             </button>
           );
         })}
@@ -1641,8 +1641,8 @@ function QuizTab() {
             <p style={{color:lastCorrect?"#6ee7b7":"#fca5a5",fontWeight:"bold"}}>
               {lastCorrect?"✅ Correct !":"❌ Réponse : "+q.correct}
             </p>
-            {q.type==="letter_forms" && <p style={{color:"#93c5fd",fontSize:"0.75rem",marginTop:"4px"}}>Son : {q.sound}</p>}
-            {(q.type==="word_meaning"||q.type==="word_arabic")&&q.tr && <p style={{color:"#93c5fd",fontSize:"0.75rem",fontStyle:"italic",marginTop:"4px"}} dir="ltr">{q.tr}</p>}
+            {q.type==="letter_forms" && <p style={{color:"#1d4ed8",fontSize:"0.75rem",marginTop:"4px"}}>Son : {q.sound}</p>}
+            {(q.type==="word_meaning"||q.type==="word_arabic")&&q.tr && <p style={{color:"#1d4ed8",fontSize:"0.75rem",fontStyle:"italic",marginTop:"4px"}} dir="ltr">{q.tr}</p>}
           </div>
           <button onClick={()=>{if(qIdx<questions.length-1){setQIdx(i=>i+1);setSelected(null);setAnswered(false);}else setMode("done");}}
             className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl">
@@ -1843,19 +1843,19 @@ function ProfesseurTab() {
     return (
       <div className="space-y-4">
         {/* Bannière son */}
-        <div className="p-4 bg-amber-900/20 border border-amber-500/25 rounded-2xl">
-          <p className="text-amber-300 font-bold text-sm mb-1">🔊 Pour activer le son et le micro</p>
-          <p className="text-slate-400 text-xs leading-relaxed">
-            Android : ouvre dans <span className="text-white font-bold">Chrome</span> → Menu ⋮ → Ajouter à l'écran d'accueil{"\n"}
-            iPhone : ouvre dans <span className="text-white font-bold">Safari</span> → Partager → Sur l'écran d'accueil
+        <div className="p-4 bg-amber-50 border border-amber-500/25 rounded-2xl">
+          <p className="text-amber-700 font-bold text-sm mb-1">🔊 Pour activer le son et le micro</p>
+          <p className="text-slate-500 text-xs leading-relaxed">
+            Android : ouvre dans <span className="text-encre font-bold">Chrome</span> → Menu ⋮ → Ajouter à l'écran d'accueil{"\n"}
+            iPhone : ouvre dans <span className="text-encre font-bold">Safari</span> → Partager → Sur l'écran d'accueil
           </p>
-          {hasMic === false && <p className="text-red-400 text-xs mt-1 font-bold">❌ Microphone non disponible dans ce navigateur</p>}
-          {hasMic === true  && <p className="text-emerald-400 text-xs mt-1 font-bold">✅ Microphone disponible !</p>}
+          {hasMic === false && <p className="text-red-700 text-xs mt-1 font-bold">❌ Microphone non disponible dans ce navigateur</p>}
+          {hasMic === true  && <p className="text-emerald-700 text-xs mt-1 font-bold">✅ Microphone disponible !</p>}
         </div>
 
-        <div className="p-4 bg-purple-900/20 border border-purple-500/20 rounded-2xl">
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-300 font-bold text-sm mb-0">🎙️ Professeur de Tajweed — Comment ça marche</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
-          <p className="text-slate-400 text-xs leading-relaxed">1. Écoute le verset ou la lettre · 2. Appuie sur 🎙️ Répéter · 3. Le professeur analyse ta prononciation et te reprend vocalement</p>
+        <div className="p-4 bg-purple-50 border border-purple-500/20 rounded-2xl">
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-700 font-bold text-sm mb-0">🎙️ Professeur de Tajweed — Comment ça marche</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
+          <p className="text-slate-500 text-xs leading-relaxed">1. Écoute le verset ou la lettre · 2. Appuie sur 🎙️ Répéter · 3. Le professeur analyse ta prononciation et te reprend vocalement</p>
         </div>
 
         {/* Sélection sourate */}
@@ -1864,7 +1864,7 @@ function ProfesseurTab() {
           <div className="flex flex-wrap gap-2">
             {PROF_SURAHS.map(s => (
               <button key={s.number} onClick={() => { setSelectedSurah(s); setVerseIdx(0); }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedSurah.number===s.number ? "bg-emerald-600 text-white" : "bg-white/8 text-slate-400 border border-white/10"}`}>
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedSurah.number===s.number ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
                 {s.name}
               </button>
             ))}
@@ -1890,14 +1890,14 @@ function ProfesseurTab() {
 
         {/* Score session */}
         {avgScore !== null && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-white font-bold text-sm">📊 Session en cours</p>
-              <span className={`font-black text-lg ${avgScore>=80?"text-emerald-400":avgScore>=60?"text-blue-400":"text-orange-400"}`}>{avgScore}%</span>
+              <p className="text-encre font-bold text-sm">📊 Session en cours</p>
+              <span className={`font-black text-lg ${avgScore>=80?"text-emerald-700":avgScore>=60?"text-blue-700":"text-orange-700"}`}>{avgScore}%</span>
             </div>
             <div className="flex gap-1.5 flex-wrap">
               {sessionScores.map((s,i) => (
-                <span key={i} className={`text-xs font-bold px-2 py-0.5 rounded-lg ${s>=90?"bg-emerald-500/25 text-emerald-300":s>=70?"bg-blue-500/25 text-blue-300":"bg-orange-500/25 text-orange-300"}`}>{s}%</span>
+                <span key={i} className={`text-xs font-bold px-2 py-0.5 rounded-lg ${s>=90?"bg-emerald-500/25 text-emerald-700":s>=70?"bg-blue-500/25 text-blue-700":"bg-orange-500/25 text-orange-300"}`}>{s}%</span>
               ))}
             </div>
           </div>
@@ -1913,42 +1913,42 @@ function ProfesseurTab() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => { setMode(null); stopRec(); setStep("idle"); }} className="p-2 hover:bg-white/10 rounded-xl text-slate-400">
+          <button onClick={() => { setMode(null); stopRec(); setStep("idle"); }} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500">
             <ChevronRight className="w-5 h-5 rotate-180"/>
           </button>
-          <p className="text-white font-bold">Mode Lettre · {letterIdx+1}/{ALPHABET.length}</p>
+          <p className="text-encre font-bold">Mode Lettre · {letterIdx+1}/{ALPHABET.length}</p>
         </div>
 
         {/* Bulle professeur */}
         <AnimatePresence>
           {voiceMsg && (
             <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-              className="flex items-start gap-3 p-3 bg-purple-900/30 border border-purple-500/30 rounded-2xl">
+              className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-500/30 rounded-2xl">
               <span className="text-xl shrink-0">🧑‍🏫</span>
-              <p className="text-purple-200 text-sm italic">{voiceMsg}</p>
+              <p className="text-purple-700 text-sm italic">{voiceMsg}</p>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Lettre */}
         <div className={`rounded-3xl p-6 border text-center transition-all ${
-          letterResult==="correct" ? "bg-emerald-900/30 border-emerald-500/40" :
-          letterResult==="wrong"   ? "bg-red-900/25 border-red-500/35" :
-          step==="listening"       ? "bg-purple-900/25 border-purple-500/30 animate-pulse" :
-          "bg-white/5 border-white/15"}`}>
-          <p className="font-serif mb-2" style={{color:"white", fontSize:"6rem"}}>{letter.ar}</p>
-          <p className="text-blue-300 font-bold text-xl">{letter.name}</p>
-          <p className="text-slate-400 text-sm mt-1">Son : <span className="text-white font-bold">{letter.sound}</span></p>
-          <p className="text-slate-600 text-xs mt-1">{letter.group}</p>
-          {letterResult==="correct" && <motion.p initial={{scale:0}} animate={{scale:1}} className="text-emerald-400 font-black text-2xl mt-3">✅ Correct !</motion.p>}
-          {letterResult==="wrong"   && <motion.p initial={{scale:0}} animate={{scale:1}} className="text-red-400 font-bold text-sm mt-2">❌ Écoute et réessaie</motion.p>}
-          {step==="listening"       && <p className="text-purple-300 text-sm mt-2 font-bold">🎙️ J'écoute…</p>}
+          letterResult==="correct" ? "bg-emerald-50 border-emerald-500/40" :
+          letterResult==="wrong"   ? "bg-red-50 border-red-500/35" :
+          step==="listening"       ? "bg-purple-50 border-purple-500/30 animate-pulse" :
+          "bg-slate-50 border-slate-300"}`}>
+          <p className="font-serif mb-2" style={{color:"#1A1A1A", fontSize:"6rem"}}>{letter.ar}</p>
+          <p className="text-blue-700 font-bold text-xl">{letter.name}</p>
+          <p className="text-slate-500 text-sm mt-1">Son : <span className="text-encre font-bold">{letter.sound}</span></p>
+          <p className="text-slate-400 text-xs mt-1">{letter.group}</p>
+          {letterResult==="correct" && <motion.p initial={{scale:0}} animate={{scale:1}} className="text-emerald-700 font-black text-2xl mt-3">✅ Correct !</motion.p>}
+          {letterResult==="wrong"   && <motion.p initial={{scale:0}} animate={{scale:1}} className="text-red-700 font-bold text-sm mt-2">❌ Écoute et réessaie</motion.p>}
+          {step==="listening"       && <p className="text-purple-700 text-sm mt-2 font-bold">🎙️ J'écoute…</p>}
         </div>
 
         {/* Boutons */}
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => { speakArabic(letter.ar, 0.35); }}
-            className="py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
+            className="py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-700 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
             <Volume2 className="w-4 h-4"/> Écouter
           </button>
           <motion.button whileTap={{scale:0.95}}
@@ -1962,23 +1962,23 @@ function ProfesseurTab() {
         <div className="flex items-center justify-between">
           <button disabled={letterIdx===0}
             onClick={() => { setLetterIdx(i=>i-1); setLetterResult(null); setStep("idle"); setVoiceMsg(""); }}
-            className="px-4 py-2.5 bg-white/8 rounded-xl text-slate-400 disabled:opacity-30 font-bold">← Préc.</button>
+            className="px-4 py-2.5 bg-slate-100 rounded-xl text-slate-500 disabled:opacity-30 font-bold">← Préc.</button>
           <div className="flex gap-1 flex-wrap justify-center max-w-48">
             {ALPHABET.map((_,i) => (
-              <div key={i} className={`w-2 h-2 rounded-full ${i===letterIdx?"bg-purple-400":"bg-white/15"}`}/>
+              <div key={i} className={`w-2 h-2 rounded-full ${i===letterIdx?"bg-purple-400":"bg-slate-200"}`}/>
             ))}
           </div>
           <button disabled={letterIdx===ALPHABET.length-1}
             onClick={() => { setLetterIdx(i=>i+1); setLetterResult(null); setStep("idle"); setVoiceMsg(""); }}
-            className="px-4 py-2.5 bg-white/8 rounded-xl text-slate-400 disabled:opacity-30 font-bold">Suiv. →</button>
+            className="px-4 py-2.5 bg-slate-100 rounded-xl text-slate-500 disabled:opacity-30 font-bold">Suiv. →</button>
         </div>
 
         {/* Grille */}
         <div className="grid grid-cols-7 gap-1.5">
           {ALPHABET.map((l,i) => (
             <button key={i} onClick={() => { setLetterIdx(i); setLetterResult(null); setStep("idle"); setVoiceMsg(""); }}
-              className={`p-1.5 rounded-xl text-center font-serif text-base transition-all ${i===letterIdx?"bg-purple-600":"bg-white/8 border border-white/10"}`}
-              style={{color:"white"}} dir="rtl">{l.ar}
+              className={`p-1.5 rounded-xl text-center font-serif text-base transition-all ${i===letterIdx?"bg-purple-600":"bg-slate-100 border border-slate-200"}`}
+              style={{color:"#1A1A1A"}} dir="rtl">{l.ar}
             </button>
           ))}
         </div>
@@ -1992,13 +1992,13 @@ function ProfesseurTab() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <button onClick={() => { setMode(null); stopRec(); setScore(null); setResults(null); setStep("idle"); setVoiceMsg(""); }}
-          className="p-2 hover:bg-white/10 rounded-xl text-slate-400"><ChevronRight className="w-5 h-5 rotate-180"/></button>
+          className="p-2 hover:bg-slate-100 rounded-xl text-slate-500"><ChevronRight className="w-5 h-5 rotate-180"/></button>
         <div className="flex-1">
-          <p className="text-white font-bold text-sm">{isWordMode ? "Mot par mot" : "Verset complet"} · {selectedSurah.name}</p>
+          <p className="text-encre font-bold text-sm">{isWordMode ? "Mot par mot" : "Verset complet"} · {selectedSurah.name}</p>
           <p className="text-slate-500 text-xs">Verset {verseIdx+1}/{selectedSurah.verses.length}</p>
         </div>
         <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); }}
-          className="p-2 bg-emerald-500/15 text-emerald-400 rounded-xl active:scale-95">
+          className="p-2 bg-emerald-500/15 text-emerald-700 rounded-xl active:scale-95">
           <Volume2 className="w-4 h-4"/>
         </button>
       </div>
@@ -2007,19 +2007,19 @@ function ProfesseurTab() {
       <AnimatePresence>
         {voiceMsg && (
           <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-            className="flex items-start gap-3 p-3 bg-purple-900/30 border border-purple-500/30 rounded-2xl">
+            className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-500/30 rounded-2xl">
             <span className="text-xl shrink-0">🧑‍🏫</span>
-            <p className="text-purple-200 text-sm italic leading-relaxed">{voiceMsg}</p>
+            <p className="text-purple-700 text-sm italic leading-relaxed">{voiceMsg}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Verset */}
       <div className={`p-5 rounded-3xl border text-center transition-all ${
-        score===null ? step==="listening" ? "bg-purple-900/20 border-purple-500/30" : "bg-white/5 border-white/12" :
-        score>=90 ? "bg-emerald-900/25 border-emerald-500/30" :
-        score>=70 ? "bg-blue-900/25 border-blue-500/30" :
-        "bg-orange-900/20 border-orange-500/25"}`}>
+        score===null ? step==="listening" ? "bg-purple-50 border-purple-500/30" : "bg-slate-50 border-slate-200" :
+        score>=90 ? "bg-emerald-50 border-emerald-500/30" :
+        score>=70 ? "bg-blue-50 border-blue-500/30" :
+        "bg-orange-50 border-orange-500/25"}`}>
 
         {results && isWordMode ? (
           <div className="flex flex-wrap justify-center gap-3 py-3" dir="rtl">
@@ -2056,11 +2056,11 @@ function ProfesseurTab() {
           </div>
         )}
 
-        <p className="text-blue-300/60 text-xs italic mt-1" dir="ltr">{verse.tr}</p>
+        <p className="text-blue-700 text-xs italic mt-1" dir="ltr">{verse.tr}</p>
 
         {score !== null && (
           <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} className="mt-3 space-y-1">
-            <p className={`font-black text-4xl ${score>=90?"text-emerald-400":score>=70?"text-blue-400":"text-orange-400"}`}>{score}<span className="text-xl">%</span></p>
+            <p className={`font-black text-4xl ${score>=90?"text-emerald-700":score>=70?"text-blue-700":"text-orange-700"}`}>{score}<span className="text-xl">%</span></p>
             {isWordMode && results && (
               <div className="flex gap-3 justify-center text-xs mt-2">
                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"/> {results.filter(r=>r.status==="correct").length} correct</span>
@@ -2070,21 +2070,21 @@ function ProfesseurTab() {
             )}
           </motion.div>
         )}
-        {step==="listening" && <p className="text-purple-300 text-sm mt-2 font-bold animate-pulse">🎙️ Je t'écoute… récite lentement</p>}
+        {step==="listening" && <p className="text-purple-700 text-sm mt-2 font-bold animate-pulse">🎙️ Je t'écoute… récite lentement</p>}
       </div>
 
       {/* Ce que j'ai entendu */}
       {transcript && step==="result" && (
-        <div className="bg-white/5 border border-white/8 rounded-2xl p-3">
-          <p className="text-slate-600 text-xs mb-1">🎙️ Ce que j'ai entendu :</p>
-          <p className="text-white font-serif text-lg" dir="rtl">{transcript}</p>
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+          <p className="text-slate-400 text-xs mb-1">🎙️ Ce que j'ai entendu :</p>
+          <p className="text-encre font-serif text-lg" dir="rtl">{transcript}</p>
         </div>
       )}
 
       {/* Boutons principaux */}
       <div className="flex gap-2">
         <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); }}
-          className="flex-1 py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
+          className="flex-1 py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-700 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
           <Volume2 className="w-4 h-4"/> Écouter
         </button>
         <motion.button whileTap={{scale:0.95}}
@@ -2097,7 +2097,7 @@ function ProfesseurTab() {
           <button onClick={() => {
             const next = (verseIdx+1) % selectedSurah.verses.length;
             setVerseIdx(next); setScore(null); setResults(null); setTranscript(""); setStep("idle"); setVoiceMsg("");
-          }} className="px-4 py-3.5 bg-white/10 border border-white/20 text-white font-bold rounded-2xl">
+          }} className="px-4 py-3.5 bg-slate-100 border border-slate-300 text-encre font-bold rounded-2xl">
             {verseIdx < selectedSurah.verses.length-1 ? "→" : "↺"}
           </button>
         )}
@@ -2108,7 +2108,7 @@ function ProfesseurTab() {
         {selectedSurah.verses.map((_,i) => (
           <button key={i}
             onClick={() => { setVerseIdx(i); setScore(null); setResults(null); setTranscript(""); setStep("idle"); setVoiceMsg(""); }}
-            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${i===verseIdx ? "bg-purple-600 text-white" : "bg-white/8 text-slate-500 border border-white/10"}`}>
+            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${i===verseIdx ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
             {i+1}
           </button>
         ))}
@@ -2149,32 +2149,32 @@ export default function LearnScreen() {
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-black text-white">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
-          <p className="text-slate-600 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed</p>
+          <h2 className="text-xl font-black text-encre">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
+          <p className="text-slate-400 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed</p>
         </div>
         <button onClick={unlockAudio}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${audioUnlocked ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse"}`}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${audioUnlocked ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30" : "bg-amber-500/20 text-amber-700 border border-amber-500/30 animate-pulse"}`}>
           {audioUnlocked ? "🔊 Son OK" : "🔇 Activer le son"}
         </button>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
-          <p className="text-emerald-400 font-black text-lg">{lessonsDone}/7</p>
-          <p className="text-slate-600 text-[10px]">Leçons</p>
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
+          <p className="text-emerald-700 font-black text-lg">{lessonsDone}/7</p>
+          <p className="text-slate-400 text-[10px]">Leçons</p>
         </div>
-        <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
-          <p className="text-blue-400 font-black text-lg">{VOCAB.filter(w => anki[w.id]?.reps > 0).length}/500</p>
-          <p className="text-slate-600 text-[10px]">Mots appris</p>
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
+          <p className="text-blue-700 font-black text-lg">{VOCAB.filter(w => anki[w.id]?.reps > 0).length}/500</p>
+          <p className="text-slate-400 text-[10px]">Mots appris</p>
         </div>
-        <div className="bg-white/5 border border-white/8 rounded-2xl p-2.5 text-center">
-          <p className={`font-black text-lg ${ankiDue > 0 ? "text-amber-400" : "text-emerald-400"}`}>{ankiDue}</p>
-          <p className="text-slate-600 text-[10px]">À réviser</p>
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
+          <p className={`font-black text-lg ${ankiDue > 0 ? "text-amber-700" : "text-emerald-700"}`}>{ankiDue}</p>
+          <p className="text-slate-400 text-[10px]">À réviser</p>
         </div>
       </div>
       <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.key ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg" : "bg-white/5 text-slate-500 hover:text-white border border-white/8"}`}>
+            className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.key ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg" : "bg-slate-50 text-slate-500 hover:text-encre border border-slate-200"}`}>
             {t.label}
             {t.key === "revision" && ankiDue > 0 && <span className="ml-1 bg-amber-500 text-white text-[9px] px-1 rounded-full">{ankiDue}</span>}
           </button>
