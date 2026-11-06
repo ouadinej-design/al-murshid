@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { cycleInfo } from "../lib/dhikr";
 import { ChevronLeft, ChevronRight, LayoutGrid, RotateCcw, Volume2, Pause, X, Check } from "lucide-react";
 
 const R = 40, CIRC = 2 * Math.PI * R;
@@ -13,14 +14,14 @@ function loadShow() {
 }
 
 /** Grains de chapelet : un par répétition (jusqu'à 11), sinon une barre. */
-function Beads({ count, total }) {
+function Beads({ count, total, group = 0 }) {
   if (total <= 1) return null;
-  if (total <= 11) {
+  if (total <= 12) {
     return (
-      <span className="mt-1.5 flex gap-1" aria-label={`${count} sur ${total}`}>
+      <span className="mt-1.5 flex items-center gap-1" aria-label={`${count} sur ${total}`}>
         {Array.from({ length: total }, (_, i) => (
           <motion.span key={i} animate={{ scale: i === count - 1 ? [1.5, 1] : 1 }}
-            className={`h-3 w-3 rounded-full border ${i < count ? "border-vert bg-vert" : "border-slate-300 bg-white"}`} />
+            className={`h-3 w-3 rounded-full border ${i < count ? "border-vert bg-vert" : "border-slate-300 bg-white"} ${group && i > 0 && i % group === 0 ? "ml-2" : ""}`} />
         ))}
         <span className="ml-1 text-[11px] font-bold text-vert">{count}/{total}</span>
       </span>
@@ -61,6 +62,8 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
   const count = recited[d.id] || 0;
   const done = count >= d.repetition;
   const phase = d.phases?.find((p) => count < p.upto) || null;
+  const cyc = done ? null : cycleInfo(d, count);   // ex. Ikhlāṣ → Falaq → Nās, 3 tours
+  const view = cyc ? { ...d, arabic: cyc.arabic, transliteration: cyc.transliteration, french: cyc.french } : d;
 
   const go = (i) => {
     clearTimeout(advanceRef.current);
@@ -143,7 +146,17 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
             <div className="min-w-0">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-vert">{tabLabel} · {idx + 1}/{list.length}</p>
               <p className="mt-0.5 text-sm font-bold leading-snug text-encre">{d.title.replace(/^\d+\.\s*/, "")}</p>
-              <Beads count={count} total={d.repetition} />
+              <Beads count={count} total={d.repetition} group={cyc?.n || (d.cycle ? 3 : 0)} />
+              {cyc && (
+                <span className="mt-2 flex flex-wrap items-center gap-1">
+                  <span className="mr-1 text-[11px] font-bold text-slate-500">Tour {cyc.round}/{cyc.rounds} :</span>
+                  {cyc.names.map((nm, i) => (
+                    <span key={nm} className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${i === cyc.index ? "bg-vert text-white" : i < cyc.index ? "bg-vert/10 text-vert" : "bg-slate-100 text-slate-400"}`}>
+                      {i < cyc.index ? "✓ " : ""}{nm}
+                    </span>
+                  ))}
+                </span>
+              )}
             </div>
             <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => speak(d)} aria-label={isPlaying ? "Arrêter" : "Écouter"}
@@ -158,8 +171,8 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
 
           {show.ar && (
             <p dir="rtl" lang="ar" className="text-center leading-[2.2] text-encre"
-              style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: phase ? "2rem" : d.arabic.length > 260 ? "1.2rem" : d.arabic.length > 120 ? "1.4rem" : "1.7rem" }}>
-              {phase ? phase.arabic : d.arabic}
+              style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: phase ? "2rem" : view.arabic.length > 260 ? "1.2rem" : view.arabic.length > 120 ? "1.4rem" : "1.7rem" }}>
+              {phase ? phase.arabic : view.arabic}
             </p>
           )}
           {phase && (show.ar
@@ -168,12 +181,12 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
 
           {/* Phonétique : en grand quand l'arabe est masqué */}
           {show.tr && !phase && (show.ar
-            ? <p className="mt-3 rounded-xl bg-slate-50 p-3 text-center text-sm font-semibold italic text-slate-600">{d.transliteration}</p>
-            : <p className="whitespace-pre-line text-center font-semibold leading-relaxed text-encre" style={{ fontSize: d.transliteration.length > 300 ? "1.1rem" : d.transliteration.length > 140 ? "1.25rem" : "1.45rem" }}>
+            ? <p className="mt-3 rounded-xl bg-slate-50 p-3 text-center text-sm font-semibold italic text-slate-600">{view.transliteration}</p>
+            : <p className="whitespace-pre-line text-center font-semibold leading-relaxed text-encre" style={{ fontSize: view.transliteration.length > 300 ? "1.1rem" : view.transliteration.length > 140 ? "1.25rem" : "1.45rem" }}>
                 {/* une ligne par segment (séparés par « — »), et un saut avant chaque sourate nommée */}
-                {d.transliteration.replace(/\s+—\s+/g, "\n").replace(/\s+(Al-Falaq|An-Nās|Al-Ikhlāṣ)\s*:/g, "\n\n$1 :")}
+                {view.transliteration.replace(/\s+—\s+/g, "\n").replace(/\s+(Al-Falaq|An-Nās|Al-Ikhlāṣ)\s*:/g, "\n\n$1 :")}
               </p>)}
-          {show.fr && <p className="mt-3 text-center text-sm leading-relaxed text-slate-600">{d.french}</p>}
+          {show.fr && <p className="mt-3 text-center text-sm leading-relaxed text-slate-600">{view.french}</p>}
           {show.vertu && d.benefice && <p className="mt-3 rounded-xl bg-jaune/15 p-3 text-xs italic leading-relaxed text-amber-900">📜 {d.benefice}</p>}
           <p className="mt-3 text-center text-[10px] italic text-slate-400">{d.source}</p>
 
@@ -204,7 +217,7 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
             <span className="min-w-0 flex-1 leading-tight">
               <span className="block font-display text-xl font-extrabold">{done ? `${d.repetition}/${d.repetition} ✓` : `${count} / ${d.repetition}`}</span>
               <span className="block text-[11px] font-semibold text-white/85">
-                {done ? (idx < list.length - 1 ? "Terminé — toucher pour le suivant →" : "Dernier dhikr terminé") : `Toucher pour compter · reste ${d.repetition - count}`}
+                {done ? (idx < list.length - 1 ? "Terminé — toucher pour le suivant →" : "Dernier dhikr terminé") : cyc ? `Récite ${cyc.name}, puis touche · reste ${d.repetition - count}` : `Toucher pour compter · reste ${d.repetition - count}`}
               </span>
             </span>
           </motion.button>
@@ -214,7 +227,7 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
         </div>
         <div className="mt-1.5 flex justify-center gap-4 text-[11px] font-semibold text-slate-500">
           {count > 0 && <button onClick={() => onSet((p) => ({ ...p, [d.id]: 0 }))} className="flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" /> Recommencer</button>}
-          {d.repetition > 1 && !done && onOpenTasbih && <button onClick={() => onOpenTasbih(d)} className="text-vert">📿 Tasbih plein écran</button>}
+          {d.repetition > 1 && !done && onOpenTasbih && <button onClick={() => onOpenTasbih(d)} className={d.repetition >= 33 ? "rounded-full bg-vert/10 px-3 py-1 font-bold text-vert" : "text-vert"}>📿 Ouvrir le chapelet</button>}
         </div>
       </div>
 
