@@ -250,14 +250,14 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, ad
         </div>
 
         {/* Session éclair */}
-        <motion.button whileTap={{ scale: 0.98 }} onClick={() => onNavigate("learn", { tab: words.due > 0 ? "revision" : "quiz" })}
+        <motion.button whileTap={{ scale: 0.98 }} onClick={() => onNavigate("learn", { tab: words.due > 0 ? "revision" : words.nextLesson ? "lesson" : "quiz" })}
           className="flex w-full items-center gap-3 rounded-2xl px-5 py-4 text-left text-white shadow-lg"
           style={{ background: "linear-gradient(90deg,#E30613,#F58220,#F5A800)", boxShadow: "0 6px 20px rgba(227,6,19,.22)" }}>
           <Sparkles className="h-6 w-6 shrink-0" aria-hidden="true" />
           <span className="flex-1">
             <span className="block font-display text-base font-bold">Session éclair — 5 min</span>
             <span className="block text-[11px] font-medium text-white/90">
-              {words.due > 0 ? `${words.due} mots à réviser maintenant` : "Un quiz rapide pour garder le rythme"}
+              {words.due > 0 ? `${words.due} mot${words.due > 1 ? "s" : ""} à réviser maintenant` : words.nextLesson ? `Leçon ${words.nextLesson} : 5 nouveaux mots du Coran` : "Un quiz rapide pour garder le rythme"}
             </span>
           </span>
           <ChevronRight className="h-5 w-5" aria-hidden="true" />
@@ -289,7 +289,7 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, ad
         {/* Modules (maquette B : blocs colorés) */}
         <div className="grid grid-cols-2 gap-3">
           <Module gradient="linear-gradient(135deg,#0F4C9B,#1E64C9)" icon="📖" title="Les 500 mots"
-            sub={`${words.learned}/500 appris · ${words.due} à revoir`} onClick={() => onNavigate("learn", { tab: "mots" })} />
+            sub={`${words.learned}/500 appris · ${words.due} à revoir`} onClick={() => onNavigate("learn")} />
           <Module gradient="linear-gradient(135deg,#00A19A,#00B8AF)" icon="📿" title={evening ? "Adhkar du soir" : "Adhkar du matin"}
             sub={`${adhkarSlot.done}/${adhkarSlot.total} récités aujourd'hui`} onClick={() => onNavigate("adhkar", { tab: evening ? "soir" : "matin" })} />
           <Module wide gradient="linear-gradient(135deg,#C70511,#E8322F)" icon="🎙️" title="Réciter avec le coach"

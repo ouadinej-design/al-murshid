@@ -400,6 +400,8 @@ import VOCAB from "./vocabData";
 import { normalizeAr, calcScore, bestTranscript } from "./lib/arabic";
 import { logActivity, startOfLocalDay } from "./lib/progress";
 import WordsTab from "./components/WordsTab";
+import LearnHub, { TOOLS } from "./components/LearnHub";
+import PathLesson from "./components/PathLesson";
 import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
 import SurahPicker from "./components/SurahPicker";
 
@@ -440,7 +442,9 @@ function getDueCards(cards) {
   const due = VOCAB.filter(w => cards[w.id]?.reps > 0 && cards[w.id].nextReview <= now)
     .sort((a, b) => cards[a.id].nextReview - cards[b.id].nextReview);
   // 2. complétés par des mots nouveaux, dans l'ordre de fréquence du Coran
-  const room = Math.max(0, 15 - due.length);
+  // les nouveaux mots arrivent par le parcours (leçons de 5) ; ici seulement s'il n'a pas commencé
+  const pathStarted = Object.keys(ls("path_progress_v1", { done: {} }).done || {}).length > 0;
+  const room = pathStarted ? 0 : Math.max(0, 15 - due.length);
   const fresh = VOCAB.filter(w => !(cards[w.id]?.reps > 0) && (!cards[w.id] || cards[w.id].nextReview <= now))
     .sort((a, b) => (b.freq || 0) - (a.freq || 0))
     .slice(0, Math.min(room, NEW_PER_SESSION));
@@ -1876,21 +1880,21 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
     const avgScore = sessionScores.length ? Math.round(sessionScores.reduce((a,b)=>a+b,0)/sessionScores.length) : null;
     return (
       <div className="space-y-4">
-        {/* Bannière son */}
-        <div className="p-4 bg-amber-50 border border-amber-500/25 rounded-2xl">
+        {/* Bannière son : seulement si le micro n'est pas disponible */}
+        {hasMic === false && <div className="p-4 bg-amber-50 border border-amber-500/25 rounded-2xl">
           <p className="text-amber-700 font-bold text-sm mb-1">🔊 Pour activer le son et le micro</p>
           <p className="text-slate-500 text-xs leading-relaxed">
             Android : ouvre dans <span className="text-encre font-bold">Chrome</span> → Menu ⋮ → Ajouter à l'écran d'accueil{"\n"}
             iPhone : ouvre dans <span className="text-encre font-bold">Safari</span> → Partager → Sur l'écran d'accueil
           </p>
           {hasMic === false && <p className="text-red-700 text-xs mt-1 font-bold">❌ Microphone non disponible dans ce navigateur</p>}
-          {hasMic === true  && <p className="text-emerald-700 text-xs mt-1 font-bold">✅ Microphone disponible !</p>}
-        </div>
+        </div>}
 
-        <div className="p-4 bg-purple-50 border border-purple-500/20 rounded-2xl">
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p className="text-purple-700 font-bold text-sm mb-0">🎙️ Professeur de Tajweed — Comment ça marche</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button></div>
-          <p className="text-slate-500 text-xs leading-relaxed">1. Écoute le verset ou la lettre · 2. Appuie sur 🎙️ Répéter · 3. Le professeur analyse ta prononciation et te reprend vocalement</p>
-        </div>
+        <details className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5">
+          <summary className="cursor-pointer text-sm font-bold text-slate-600">ℹ️ Comment ça marche ?</summary>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">1. Choisis une sourate et un mode · 2. Écoute le verset · 3. Appuie sur 🎙️ Répéter · 4. Le professeur analyse ta récitation, mot par mot, et te reprend. Un verset récité à 80 % ou plus compte comme appris.</p>
+          <button onClick={doReset} className="mt-2 rounded-lg border border-slate-200 px-3 py-1 text-[11px] text-slate-500">🔄 Réinitialiser la séance</button>
+        </details>
 
         {/* Sélection sourate (raccourcis + les 114) */}
         <SurahPicker index={surahIndex.length ? surahIndex : PROF_SURAHS.map(x => ({ number: x.number, name: x.name, arabic: x.arabic, verses: x.verses.length }))}
@@ -2148,70 +2152,34 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
 // ═══════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════
-const TABS = [
-  {key:"mots",     label:"📖 500 mots"},
-  {key:"surahs",   label:"🕌 Sourates"},
-  {key:"prof",     label:"🎙️ Professeur"},
-  {key:"lessons",  label:"📚 Leçons"},
-  {key:"revision", label:"🃏 Révision"},
-  {key:"quiz",     label:"🎯 Quiz"},
-  {key:"alphabet", label:"ح Alphabet"},
-  {key:"tajweed",  label:"🎨 Tajweed"},
-  {key:"voyelles", label:"◌ Voyelles"},
-];
+const TOOL_TITLES = { revision: "🃏 Révision", ...Object.fromEntries(TOOLS.map(t => [t.key, `${t.icon} ${t.title}`])) };
 
 export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSurah, profMode }) {
-  const [tab, setTab] = useState(initialTab || "surahs");
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const lessonsProgress = ls("lessons_progress", {});
+  // "hub" = accueil d'Apprendre ; sinon un outil ouvert en plein
+  const [tab, setTab] = useState(initialTab && initialTab !== "lesson" ? initialTab : "hub");
+  const [lesson, setLesson] = useState(() => (initialTab === "lesson" ? nextUnitIndex() : null));
+  const [, refresh] = useState(0);
+  useEffect(() => { document.querySelector("main .overflow-y-auto")?.scrollTo({ top: 0 }); }, [tab]);
   const anki = ls("anki_cards", getInitialCardState());
-  const ankiDue = getDueCards(anki).length;
-  const lessonsDone = Object.keys(lessonsProgress).length;
-
-  // Déverrouille l'audio sur Android (nécessite un geste utilisateur)
-  const unlockAudio = () => {
-    const a = new Audio();
-    a.play().catch(() => {});
-    setAudioUnlocked(true);
-  };
+  const now = Date.now();
+  const due = Object.values(anki).filter(c => c?.reps > 0 && c.nextReview <= now).length;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-      <div className="flex items-center justify-between">
+      {tab === "hub" ? (
         <div>
-          <h2 className="text-xl font-black text-encre">🎓 تَعَلَّمِ الْعَرَبِيَّةَ</h2>
-          <p className="text-slate-400 text-xs">Méthode Al-Azhar · Répétition espacée · Tajweed</p>
+          <h2 className="font-display text-2xl font-extrabold text-encre">Apprendre</h2>
+          <p className="text-sm text-slate-500">5 mots par leçon, les plus fréquents du Coran d'abord.</p>
         </div>
-        <button onClick={unlockAudio}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${audioUnlocked ? "bg-emerald-500/20 text-emerald-700 border border-emerald-500/30" : "bg-amber-500/20 text-amber-700 border border-amber-500/30 animate-pulse"}`}>
-          {audioUnlocked ? "🔊 Son OK" : "🔇 Activer le son"}
-        </button>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
-          <p className="text-emerald-700 font-black text-lg">{lessonsDone}/7</p>
-          <p className="text-slate-400 text-[10px]">Leçons</p>
+      ) : (
+        <div className="flex items-center gap-2">
+          <button onClick={() => setTab("hub")} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600">← Apprendre</button>
+          <h2 className="truncate font-display text-lg font-extrabold text-encre">{TOOL_TITLES[tab] || ""}</h2>
         </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
-          <p className="text-blue-700 font-black text-lg">{VOCAB.filter(w => anki[w.id]?.reps > 0).length}/500</p>
-          <p className="text-slate-400 text-[10px]">Mots appris</p>
-        </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-center">
-          <p className={`font-black text-lg ${ankiDue > 0 ? "text-amber-700" : "text-emerald-700"}`}>{ankiDue}</p>
-          <p className="text-slate-400 text-[10px]">À réviser</p>
-        </div>
-      </div>
-      <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} ref={el => { if (el && tab === t.key) el.scrollIntoView({ block: "nearest", inline: "center" }); }}
-            className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.key ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg" : "bg-slate-50 text-slate-500 hover:text-encre border border-slate-200"}`}>
-            {t.label}
-            {t.key === "revision" && ankiDue > 0 && <span className="ml-1 bg-amber-500 text-white text-[9px] px-1 rounded-full">{ankiDue}</span>}
-          </button>
-        ))}
-      </div>
+      )}
       <AnimatePresence mode="wait">
-        <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="pb-8">
+        <motion.div key={tab} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.15}} className="pb-8">
+          {tab === "hub"      && <LearnHub due={due} onOpenTool={setTab} onOpenLesson={setLesson}/>}
           {tab === "surahs"   && <SuratesTab/>}
           {tab === "prof"     && <ProfesseurTab surahIndex={surahIndex} loadSurah={loadSurah} initialSurah={profSurah} initialMode={profMode}/>}
           {tab === "mots"     && <WordsTab anki={anki} onStartReview={() => setTab("revision")}/>}
@@ -2223,6 +2191,18 @@ export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSur
           {tab === "voyelles" && <VoyellesTab/>}
         </motion.div>
       </AnimatePresence>
+      {lesson !== null && (
+        <PathLesson key={lesson} unit={lesson}
+          onClose={() => { setLesson(null); refresh(x => x + 1); }}
+          onDone={(n) => { setLesson(n); refresh(x => x + 1); }}/>
+      )}
     </div>
   );
+}
+
+function nextUnitIndex() {
+  const done = ls("path_progress_v1", { done: {} }).done || {};
+  let i = 0;
+  while (done[i]) i++;
+  return i;
 }

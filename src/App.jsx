@@ -1977,7 +1977,7 @@ export default function App() {
     return {
       adhkar: { matin: slot("matin"), soir: slot("soir") },
       // « à revoir » = mots arrivés à échéance, sinon les nouveaux mots de la prochaine session
-      words: { learned, due: dueReviews || (learned < 500 ? Math.min(8, 500 - learned) : 0) },
+      words: { learned, due: dueReviews, nextLesson: (() => { const d = storage("path_progress_v1", { done: {} }).done || {}; let i = 0; while (d[i]) i++; return i < 100 ? i + 1 : null; })() },
       todayReading, bookmarksCount,
     };
   }, [page, juzProgram.program, juzProgram.dailyCompleted]);
