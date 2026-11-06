@@ -16,6 +16,7 @@ import AdhkarSession from "./components/AdhkarSession";
 import ADHKAR_EXTRA from "./data/adhkarExtra";
 import { localDayKey, logActivity, useProgress, applyArabicScale } from "./lib/progress";
 import { normalizeAr } from "./lib/arabic";
+import { isKahfTime } from "./lib/memorize";
 
 // ════════════════════════════════════════════════════════════════════
 // DONNÉES — 30 JUZ avec durées de lecture moyennes (minutes)
@@ -255,7 +256,7 @@ function useSurahProgress() {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Modal Encouragement
 // ════════════════════════════════════════════════════════════════════
-const CONFETTI_COLORS = ["#F59E0B","#10B981","#3B82F6","#EC4899","#A78BFA","#FBBF24"];
+const CONFETTI_COLORS = ["#F59E0B","#10B981","#3B82F6","#EC4899","#A78BFA","#B45309"];
 const confettiParticles = Array.from({ length: 20 }, (_, i) => ({
   id: i, x: Math.random() * 100, y: Math.random() * 100,
   color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
@@ -997,7 +998,7 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
   );
 }
 
-function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
+function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin", onReadKahf }) {
   const [favorites, setFavorites] = useState(() => storage("adhkar_favs", {}));
   const [copied,    setCopied]    = useState({});
   const [recited,   setRecited]   = useState(loadRecitedToday);
@@ -1019,7 +1020,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
   const { speaking, speak, voicesLoaded } = useArabicSpeech();
   const { isReadThisWeek, markRead, totalFridays } = fridayKahfProp || useFridayKahf();
   const today = new Date();
-  const isFriday = today.getDay() === 5;
+  const isFriday = isKahfTime(today); // vendredi (dès jeudi soir)
   const handleResetRecited = () => { saveRecitedToday({}); recitedRef.current = {}; setRecited({}); setConfirmReset(false); };
   const handleCopy = useCallback((dhikr) => {
     navigator.clipboard.writeText(`${dhikr.arabic}\n\n${dhikr.transliteration}\n\n${dhikr.french}\n\nSource : ${dhikr.source}`);
@@ -1085,6 +1086,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
         <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs ${isReadThisWeek ? "bg-vert/5 border-vert/30 text-vert" : "bg-jaune/10 border-jaune/40 text-amber-800"}`}>
           <span>🕌</span>
           <span className="flex-1 font-semibold">{isReadThisWeek ? "Al-Kahf lu ce vendredi ✅" : "C'est vendredi : lis la sourate Al-Kahf"}</span>
+          {onReadKahf && <button onClick={onReadKahf} className="rounded-lg bg-vert px-2 py-1 font-bold text-white">📖 Lire</button>}
           {!isReadThisWeek && <button onClick={markRead} className="rounded-lg bg-white px-2 py-1 font-bold border border-jaune/40">Marquer lu</button>}
         </div>
       )}
@@ -1099,9 +1101,12 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
             <p className="text-slate-500 text-xs leading-relaxed">« Celui qui lit Al-Kahf le vendredi, une lumière l'illuminera jusqu'au vendredi suivant. » — Ṣaḥīḥ al-Jāmi'</p>
             {totalFridays > 0 && <p className="text-slate-500 text-xs mt-1">📊 Tu as lu Al-Kahf {totalFridays} vendredi{totalFridays > 1 ? "s" : ""}</p>}
           </div>
-          {!isReadThisWeek && (
-            <button onClick={markRead} className="shrink-0 px-3 py-1.5 bg-jaune/20 text-amber-800 border border-jaune/40 rounded-xl text-xs font-bold hover:bg-jaune/30 transition-all">Marquer lu</button>
-          )}
+          <div className="flex shrink-0 flex-col gap-1.5">
+            {onReadKahf && <button onClick={onReadKahf} className="px-3 py-1.5 bg-vert text-white rounded-xl text-xs font-bold">📖 Lire</button>}
+            {!isReadThisWeek && (
+              <button onClick={markRead} className="px-3 py-1.5 bg-jaune/20 text-amber-800 border border-jaune/40 rounded-xl text-xs font-bold hover:bg-jaune/30 transition-all">Marquer lu</button>
+            )}
+          </div>
         </motion.div>
       )}
       {view === "list" && filtered.length > 1 && (
@@ -1297,7 +1302,7 @@ function ImamAudioButton({ surah, verses, autoScroll, setAutoScroll, scrollRef, 
             <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 6px",borderBottom:"1px solid rgba(15,23,42,0.08)",marginBottom:"4px"}}>Récitateur</p>
             {RECITERS.map(r => (
               <button key={r.id} onClick={() => changeReciter(r.id)}
-                style={{display:"block",width:"100%",textAlign:"left",padding:"9px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
+                style={{display:"block",width:"100%",textAlign:"left",padding:"9px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#047857":"white",fontSize:"0.85rem",fontWeight:"bold",cursor:"pointer"}}>
                 {r.id===reciterId ? "▶ " : "   "}{r.name}
               </button>
             ))}
@@ -2009,6 +2014,13 @@ export default function App() {
     navigate("quran");
   }, []);
 
+  // Ouvre directement une sourate dans le lecteur (ex. « Lire Al-Kahf »)
+  const openSurah = useCallback((surahNum, verseNum = 1) => {
+    setNavTarget({ surahNum, verseNum });
+    setNavConsumed(false);
+    navigate("quran");
+  }, [navigate]);
+
   const handleNavigateToRange = useCallback((startSurah, startVerse, endSurah, endVerse) => {
     setNavTarget({ surahNum: startSurah, verseNum: startVerse, bounds: { startSurah, startVerse, endSurah, endVerse } });
     setNavConsumed(false);
@@ -2025,7 +2037,9 @@ export default function App() {
           <motion.div key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
             className={`h-full overflow-y-auto ${page === "adhkar" ? "bg-white" : ""}`}>
             {page === "home" && homeData && (
-              <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} {...homeData}/>
+              <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} {...homeData}
+                kahf={{ isRead: fridayKahf.isReadThisWeek, markRead: () => { if (!fridayKahf.isReadThisWeek) logActivity("reading"); fridayKahf.markRead(); }, total: fridayKahf.totalFridays,
+                  open: () => openSurah(18, 1), learn: () => navigate("learn", { tab: "prof", surah: 18, mode: "verse" }) }}/>
             )}
             {page === "quran" && (
               <QuranReader
@@ -2040,8 +2054,8 @@ export default function App() {
             )}
             {page === "program" && <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>}
             {page === "bookmarks" && <BookmarksPage/>}
-            {page === "adhkar" && <AdhkarPage fridayKahf={fridayKahf} initialTab={pageOpts.tab || "matin"}/>}
-            {page === "learn" && <LearnScreen initialTab={pageOpts.tab} surahIndex={SURAH_INDEX} loadSurah={loadSurahForCoach}/>}
+            {page === "adhkar" && <AdhkarPage fridayKahf={fridayKahf} initialTab={pageOpts.tab || "matin"} onReadKahf={() => openSurah(18, 1)}/>}
+            {page === "learn" && <LearnScreen initialTab={pageOpts.tab} surahIndex={SURAH_INDEX} loadSurah={loadSurahForCoach} profSurah={pageOpts.surah} profMode={pageOpts.mode}/>}
           </motion.div>
         </AnimatePresence>
       </main>

@@ -104,6 +104,20 @@ export default function SettingsSheet({ open, onClose }) {
               )}
             </section>
 
+            {/* Al-Kahf */}
+            <section className="mb-5">
+              <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">🕌 Apprendre Al-Kahf : versets par semaine</p>
+              <div className="grid grid-cols-5 gap-2">
+                {[3, 5, 10, 15, 20].map((g) => (
+                  <button key={g} onClick={() => updateSettings({ kahfWeekly: g })}
+                    className={`rounded-xl py-2.5 text-sm font-bold border transition-all ${settings.kahfWeekly === g ? "bg-vert text-white border-vert" : "bg-white text-slate-600 border-slate-200"}`}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px] text-slate-400">À ce rythme : sourate apprise en environ {Math.ceil(110 / (settings.kahfWeekly || 10))} semaines.</p>
+            </section>
+
             <p className="text-center text-[11px] text-slate-400">Al-Murshid · ta progression reste sur ton téléphone</p>
           </motion.div>
         </>

@@ -2,6 +2,72 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Settings, Activity, Flame, Sparkles, ChevronRight, Trophy } from "lucide-react";
 import { useProgress, ACTIVITIES } from "./lib/progress";
+import { memoProgress, isKahfTime, KAHF } from "./lib/memorize";
+
+/** Carte Al-Kahf : lecture du vendredi + objectif d'apprentissage de la sourate. */
+function KahfCard({ kahf, weekly, onSettings, compact }) {
+  const m = memoProgress(KAHF.number, KAHF.verses);
+  const weekPct = Math.min(100, Math.round((m.thisWeek / Math.max(1, weekly)) * 100));
+  if (compact) {
+    return (
+      <button onClick={kahf.learn} className="flex w-full items-center gap-3 rounded-2xl border-l-4 border-vert bg-white p-4 text-left shadow-sm">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-vert/10 text-lg" aria-hidden="true">🕌</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Objectif : apprendre Al-Kahf</span>
+          <span className="block text-sm font-bold text-encre">{m.learned}/{KAHF.verses} versets · cette semaine {m.thisWeek}/{weekly}</span>
+          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-slate-100"><span className="block h-full rounded-full bg-vert" style={{ width: `${(m.learned / KAHF.verses) * 100}%` }} /></span>
+        </span>
+        <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />
+      </button>
+    );
+  }
+  return (
+    <section className="overflow-hidden rounded-2xl text-white shadow-lg" style={{ background: "linear-gradient(135deg,#00756F,#00A19A 55%,#0F4C9B)" }} aria-label="Vendredi : sourate Al-Kahf">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/80">Jumuʿa mubāraka 🕌</p>
+            <p className="mt-0.5 font-display text-lg font-extrabold leading-tight">Sourate Al-Kahf</p>
+          </div>
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${kahf.isRead ? "bg-white text-vert" : "bg-jaune text-encre"}`}>
+            {kahf.isRead ? "✅ Lue" : "À lire aujourd'hui"}
+          </span>
+        </div>
+        <p className="mt-2 text-[11px] italic leading-relaxed text-white/85">
+          « Celui qui lit la sourate Al-Kahf le vendredi, une lumière l'éclairera d'un vendredi à l'autre. » — al-Ḥākim, al-Bayhaqī
+        </p>
+        <div className="mt-3 flex gap-2">
+          <motion.button whileTap={{ scale: 0.97 }} onClick={kahf.open} className="flex-1 rounded-xl bg-white py-3 text-sm font-extrabold text-vert shadow">
+            📖 Lire ma sourate Al-Kahf
+          </motion.button>
+          {!kahf.isRead && (
+            <button onClick={kahf.markRead} className="rounded-xl border border-white/50 px-3 text-xs font-bold">Marquer lue</button>
+          )}
+        </div>
+      </div>
+      <div className="bg-white/10 p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/80">🎯 Objectif : l'apprendre par cœur</p>
+          <button onClick={onSettings} className="text-[10px] font-bold text-white/80 underline">Régler</button>
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p className="font-bold">{m.learned}/{KAHF.verses} versets</p>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/25"><div className="h-full rounded-full bg-jaune" style={{ width: `${(m.learned / KAHF.verses) * 100}%` }} /></div>
+          </div>
+          <div>
+            <p className="font-bold">Cette semaine : {m.thisWeek}/{weekly}</p>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/25"><div className="h-full rounded-full bg-white" style={{ width: `${weekPct}%` }} /></div>
+          </div>
+        </div>
+        <button onClick={kahf.learn} className="mt-3 w-full rounded-xl bg-encre/25 py-2.5 text-xs font-bold">
+          🎙️ {m.next ? `Apprendre avec le professeur — verset ${m.next}` : "Réviser avec le professeur (sourate apprise ✨)"}
+        </button>
+        <p className="mt-1.5 text-[10px] text-white/70">Un verset est compté comme appris quand tu le récites avec au moins 80 % de précision.</p>
+      </div>
+    </section>
+  );
+}
 
 const COACH = [
   { min: 0,  text: "Un petit pas aujourd'hui vaut mieux qu'un grand demain. 🌱" },
@@ -60,8 +126,9 @@ function Module({ gradient, icon, title, sub, onClick, wide }) {
   );
 }
 
-export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, adhkar, todayReading, words, bookmarksCount }) {
-  const { done, goal, goalPct, goalItems, goalCustom, goalReached, today, streak, week, xp, level } = useProgress();
+export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, adhkar, todayReading, words, bookmarksCount, kahf }) {
+  const { done, goal, goalPct, goalItems, goalCustom, goalReached, today, streak, week, xp, level, settings } = useProgress();
+  const friday = isKahfTime();
   const now = new Date();
   const coach = useMemo(() => [...COACH].reverse().find((c) => streak >= c.min)?.text, [streak]);
   const pct = goalPct;
@@ -99,6 +166,9 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, ad
         <div className="rounded-2xl p-4" style={{ background: "linear-gradient(90deg, rgba(255,209,0,.28), rgba(245,130,32,.18), rgba(227,6,19,.08))" }}>
           <p className="text-sm font-semibold leading-relaxed text-slate-700">{coach}</p>
         </div>
+
+        {/* Vendredi : Al-Kahf en premier */}
+        {kahf && friday && <KahfCard kahf={kahf} weekly={settings.kahfWeekly} onSettings={onOpenSettings} />}
 
         {/* Objectif du jour — chiffres réels */}
         <section className="rounded-2xl border-l-4 border-rouge bg-white p-4 shadow-sm" aria-label="Objectif du jour">
@@ -212,6 +282,9 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, ad
           </span>
           <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />
         </button>
+
+        {/* Le reste de la semaine : objectif Al-Kahf en version compacte */}
+        {kahf && !friday && <KahfCard kahf={kahf} weekly={settings.kahfWeekly} onSettings={onOpenSettings} compact />}
 
         {/* Modules (maquette B : blocs colorés) */}
         <div className="grid grid-cols-2 gap-3">

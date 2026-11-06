@@ -54,7 +54,7 @@ function LetterByLetter({ text, size = "1.5rem" }) {
       {groups.map((grp, idx) => {
         if (grp.isSpace) return <span key={idx}> </span>;
         const color = colorizeGroup(grp, groups, idx);
-        return <span key={idx} style={{ color: color || "white" }}>{grp.base + grp.marks}</span>;
+        return <span key={idx} style={{ color: color || "#1A1A1A" }}>{grp.base + grp.marks}</span>;
       })}
     </span>
   );
@@ -400,6 +400,7 @@ import VOCAB from "./vocabData";
 import { normalizeAr, calcScore, bestTranscript } from "./lib/arabic";
 import { logActivity, startOfLocalDay } from "./lib/progress";
 import WordsTab from "./components/WordsTab";
+import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
 import SurahPicker from "./components/SurahPicker";
 
 // RÉPÉTITION ESPACÉE — Algorithme SM-2 simplifié
@@ -753,7 +754,7 @@ function SuratesTab() {
                                   <p style={{color:"#64748b",fontSize:"0.65rem",fontWeight:"bold",padding:"3px 10px 5px",borderBottom:"1px solid rgba(15,23,42,0.08)",marginBottom:"4px"}}>Récitateur</p>
                                   {LS_RECITERS.map(r => (
                                     <button key={r.id} onClick={()=>{setReciterId(r.id);setShowPicker(false);stopAudio();}}
-                                      style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#6ee7b7":"white",fontSize:"0.82rem",fontWeight:"bold",cursor:"pointer"}}>
+                                      style={{display:"block",width:"100%",textAlign:"left",padding:"8px 10px",borderRadius:"8px",border:"none",background:r.id===reciterId?"rgba(16,185,129,0.2)":"transparent",color:r.id===reciterId?"#047857":"#1A1A1A",fontSize:"0.82rem",fontWeight:"bold",cursor:"pointer"}}>
                                       {r.id===reciterId?"▶ ":"   "}{r.name}
                                     </button>
                                   ))}
@@ -821,7 +822,7 @@ function SuratesTab() {
                                   <button onClick={()=>{ if(audio.playing===`${surah.number}:${v.n}`){audio.stop();return;} audio.playVerse(surah.number,v.n); }}
                                     style={{width:"32px",height:"32px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:"4px",fontWeight:"bold",fontSize:"0.75rem",cursor:"pointer",border:"none",transition:"all 0.2s",
                                       background:audio.playing===`${surah.number}:${v.n}`?"#10b981":"rgba(16,185,129,0.15)",
-                                      color:audio.playing===`${surah.number}:${v.n}`?"white":"#6ee7b7"}}>
+                                      color:audio.playing===`${surah.number}:${v.n}`?"white":"#047857"}}>
                                     {audio.playing===`${surah.number}:${v.n}`?"⏸":v.n}
                                   </button>
                                   <div className="flex-1 text-right" style={{lineHeight:"3"}}>
@@ -882,7 +883,7 @@ function AlphabetTab() {
                     "bg-slate-100 border-slate-300"
                   }`}>
                   <p className="text-2xl font-serif" style={{color:"#1A1A1A"}} dir="rtl">{l.ar}</p>
-                  <p className="text-[10px] mt-0.5" style={{color: l.group==="solaire" ? "#6ee7b7" : "#93c5fd"}}>{l.name}</p>
+                  <p className="text-[10px] mt-0.5" style={{color: l.group==="solaire" ? "#047857" : "#1D4ED8"}}>{l.name}</p>
                 </button>
               ))}
             </div>
@@ -1637,9 +1638,9 @@ function QuizTab() {
       <div className="grid grid-cols-2 gap-2">
         {q.options.map((opt,oi)=>{
           const isCorrect=opt===q.correct, isSelected=opt===selected;
-          let bg="rgba(15,23,42,0.05)",border="rgba(15,23,42,0.12)",color="white";
-          if(answered&&isCorrect){bg="rgba(16,185,129,0.25)";border="#10b981";color="#6ee7b7";}
-          else if(answered&&isSelected&&!isCorrect){bg="rgba(239,68,68,0.25)";border="#ef4444";color="#fca5a5";}
+          let bg="rgba(15,23,42,0.05)",border="rgba(15,23,42,0.12)",color="#1A1A1A";
+          if(answered&&isCorrect){bg="rgba(16,185,129,0.15)";border="#10b981";color="#047857";}
+          else if(answered&&isSelected&&!isCorrect){bg="rgba(239,68,68,0.25)";border="#ef4444";color="#B91C1C";}
           return (
             <button key={oi} onClick={()=>answer(opt)} style={{
               padding:isArabicOpt?"16px 8px":"14px 10px",borderRadius:"16px",
@@ -1658,7 +1659,7 @@ function QuizTab() {
       {answered && (
         <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} className="space-y-2">
           <div style={{background:lastCorrect?"rgba(16,185,129,0.1)":"rgba(239,68,68,0.1)",border:`1px solid ${lastCorrect?"rgba(16,185,129,0.3)":"rgba(239,68,68,0.3)"}`,borderRadius:"16px",padding:"12px",textAlign:"center"}}>
-            <p style={{color:lastCorrect?"#6ee7b7":"#fca5a5",fontWeight:"bold"}}>
+            <p style={{color:lastCorrect?"#047857":"#B91C1C",fontWeight:"bold"}}>
               {lastCorrect?"✅ Correct !":"❌ Réponse : "+q.correct}
             </p>
             {q.type==="letter_forms" && <p style={{color:"#1d4ed8",fontSize:"0.75rem",marginTop:"4px"}}>Son : {q.sound}</p>}
@@ -1704,17 +1705,24 @@ async function speakArabic(text, rate) {
   window.speechSynthesis.speak(u);
 }
 
-function ProfesseurTab({ surahIndex = [], loadSurah }) {
+function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }) {
   const [mode, setMode] = useState(null);
   const [selectedSurah, setSelectedSurah] = useState(PROF_SURAHS[0]);
   const [surahLoading, setSurahLoading] = useState(false);
   const [surahError, setSurahError] = useState("");
+  const [memo, setMemo] = useState(() => getMemorized(PROF_SURAHS[0].number));
   // Choix parmi les 114 : versets locaux si disponibles, sinon chargés depuis l'API
   const chooseSurah = async (num) => {
     setSurahError("");
     const local = ALL_SURAHS.find(x => x.number === num && x.verses?.length);
     const reset = () => { setVerseIdx(0); setScore(null); setResults(null); setTranscript(""); setStep("idle"); };
-    if (local) { setSelectedSurah(local); reset(); return; }
+    setMemo(getMemorized(num));
+    // reprendre au premier verset pas encore appris
+    const startAt = (verses) => { const m = getMemorized(num); const i = verses.findIndex(v => !m[v.n]); return i < 0 ? 0 : i; };
+    const fullCount = surahIndex[num - 1]?.verses;
+    // l'app ne contient parfois qu'un extrait (ex. Al-Kahf « début ») : on charge alors la sourate complète
+    const localComplete = local && (!fullCount || local.verses.length >= fullCount);
+    if (localComplete || (local && !loadSurah)) { setSelectedSurah(local); reset(); setVerseIdx(startAt(local.verses)); return; }
     if (!loadSurah) return;
     setSurahLoading(true);
     try {
@@ -1723,7 +1731,9 @@ function ProfesseurTab({ surahIndex = [], loadSurah }) {
       const meta = surahIndex[num - 1] || { name: `Sourate ${num}`, arabic: "" };
       setSelectedSurah({ number: num, name: meta.name, arabic: meta.arabic, verses });
       reset();
+      setVerseIdx(startAt(verses));
     } catch {
+      if (local) { setSelectedSurah(local); reset(); setVerseIdx(startAt(local.verses)); setSurahError("Hors connexion : seul un extrait de cette sourate est disponible."); return; }
       setSurahError("Impossible de charger cette sourate (connexion internet nécessaire). Réessaie dans un instant.");
     } finally { setSurahLoading(false); }
   };
@@ -1767,6 +1777,10 @@ function ProfesseurTab({ surahIndex = [], loadSurah }) {
     xhr.onerror = () => {};
     xhr.send();
   };
+
+  useEffect(() => {
+    if (initialSurah) { chooseSurah(initialSurah); if (initialMode) setMode(initialMode); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const verse = selectedSurah.verses[verseIdx];
   const letter = ALPHABET[letterIdx];
@@ -1819,6 +1833,8 @@ function ProfesseurTab({ surahIndex = [], loadSurah }) {
     const sc = best.score;
     setTranscript(best.heard);
     if (sc >= 60) logActivity("recite");
+    // verset validé : compté comme appris (mémorisation, ex. objectif Al-Kahf)
+    if (sc >= MEMO_THRESHOLD && markVerseLearned(selectedSurah.number, verse.n)) setMemo(getMemorized(selectedSurah.number));
     setResults(wordMode ? res : null);
     setScore(sc);
     setStep("result");
@@ -2005,6 +2021,8 @@ function ProfesseurTab({ surahIndex = [], loadSurah }) {
         <div className="flex-1">
           <p className="text-encre font-bold text-sm">{isWordMode ? "Mot par mot" : "Verset complet"} · {selectedSurah.name}</p>
           <p className="text-slate-500 text-xs">Verset {verseIdx+1}/{selectedSurah.verses.length}</p>
+          {surahLoading && <p className="text-xs text-bleu">⏳ Chargement de la sourate complète…</p>}
+          {surahError && <p className="text-xs text-rouge">{surahError}</p>}
         </div>
         <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); }}
           className="p-2 bg-emerald-500/15 text-emerald-700 rounded-xl active:scale-95">
@@ -2033,10 +2051,10 @@ function ProfesseurTab({ surahIndex = [], loadSurah }) {
         {results && isWordMode ? (
           <div className="flex flex-wrap justify-center gap-3 py-3" dir="rtl">
             {results.map((r,i) => {
-              const color = r.status==="correct" ? "#34d399"
-                : r.status==="close"   ? "#fbbf24"
-                : r.status==="missing" ? "#475569"
-                : "#f87171";
+              const color = r.status==="correct" ? "#059669"
+                : r.status==="close"   ? "#B45309"
+                : r.status==="missing" ? "#64748B"
+                : "#DC2626";
               const bg = r.status==="wrong" ? "rgba(239,68,68,0.12)" : r.status==="missing" ? "rgba(71,85,105,0.15)" : "transparent";
               return (
                 <div key={i} style={{display:"inline-flex", flexDirection:"column", alignItems:"center", gap:"4px"}}>
@@ -2112,13 +2130,15 @@ function ProfesseurTab({ surahIndex = [], loadSurah }) {
         )}
       </div>
 
+      <p className="text-xs text-slate-500">✅ {Object.keys(memo).length}/{selectedSurah.verses.length} versets appris dans {selectedSurah.name} · un verset est validé à partir de {MEMO_THRESHOLD} %</p>
       {/* Navigation versets */}
       <div className="flex gap-1.5 flex-wrap max-h-44 overflow-y-auto">
         {selectedSurah.verses.map((_,i) => (
           <button key={i}
             onClick={() => { setVerseIdx(i); setScore(null); setResults(null); setTranscript(""); setStep("idle"); setVoiceMsg(""); }}
-            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${i===verseIdx ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
-            {i+1}
+            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${i===verseIdx ? "bg-purple-600 text-white" : memo[selectedSurah.verses[i]?.n] ? "bg-vert/15 text-vert border border-vert/30" : "bg-slate-100 text-slate-500 border border-slate-200"}`}
+            title={memo[selectedSurah.verses[i]?.n] ? "Verset appris" : undefined}>
+            {selectedSurah.verses[i]?.n ?? i+1}
           </button>
         ))}
       </div>
@@ -2140,7 +2160,7 @@ const TABS = [
   {key:"voyelles", label:"◌ Voyelles"},
 ];
 
-export default function LearnScreen({ initialTab, surahIndex, loadSurah }) {
+export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSurah, profMode }) {
   const [tab, setTab] = useState(initialTab || "surahs");
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const lessonsProgress = ls("lessons_progress", {});
@@ -2193,7 +2213,7 @@ export default function LearnScreen({ initialTab, surahIndex, loadSurah }) {
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="pb-8">
           {tab === "surahs"   && <SuratesTab/>}
-          {tab === "prof"     && <ProfesseurTab surahIndex={surahIndex} loadSurah={loadSurah}/>}
+          {tab === "prof"     && <ProfesseurTab surahIndex={surahIndex} loadSurah={loadSurah} initialSurah={profSurah} initialMode={profMode}/>}
           {tab === "mots"     && <WordsTab anki={anki} onStartReview={() => setTab("revision")}/>}
           {tab === "lessons"  && <LessonsTab/>}
           {tab === "revision" && <RevisionTab/>}

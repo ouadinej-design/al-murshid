@@ -40,7 +40,7 @@ export const ACTIVITIES = {
 // goalMode "total" : un nombre d'actions toutes confondues (dailyGoal)
 // goalMode "custom" : un objectif par activité choisie (goals ; 0 = activité non suivie)
 const DEFAULT_GOALS = { words: 10, adhkar: 5, recite: 3, quiz: 0, lessons: 0, reading: 1 };
-const DEFAULT_SETTINGS = { dailyGoal: 10, arabicScale: 1, goalMode: "total", goals: DEFAULT_GOALS };
+const DEFAULT_SETTINGS = { dailyGoal: 10, arabicScale: 1, goalMode: "total", goals: DEFAULT_GOALS, kahfWeekly: 10 };
 
 function emptyState() {
   return { days: {}, xp: 0, settings: { ...DEFAULT_SETTINGS } };
