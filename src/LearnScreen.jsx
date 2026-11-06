@@ -2154,7 +2154,7 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
 // ═══════════════════════════════════════════════════════
 const TOOL_TITLES = { revision: "🃏 Révision", ...Object.fromEntries(TOOLS.map(t => [t.key, `${t.icon} ${t.title}`])) };
 
-export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSurah, profMode }) {
+export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSurah, profMode, onRecognize }) {
   // "hub" = accueil d'Apprendre ; sinon un outil ouvert en plein
   const [tab, setTab] = useState(initialTab && initialTab !== "lesson" ? initialTab : "hub");
   const [lesson, setLesson] = useState(() => (initialTab === "lesson" ? nextUnitIndex() : null));
@@ -2179,7 +2179,7 @@ export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSur
       )}
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.15}} className="pb-8">
-          {tab === "hub"      && <LearnHub due={due} onOpenTool={setTab} onOpenLesson={setLesson}/>}
+          {tab === "hub"      && <LearnHub due={due} onOpenTool={(k) => (k === "recognize" ? onRecognize?.() : setTab(k))} onOpenLesson={setLesson}/>}
           {tab === "surahs"   && <SuratesTab/>}
           {tab === "prof"     && <ProfesseurTab surahIndex={surahIndex} loadSurah={loadSurah} initialSurah={profSurah} initialMode={profMode}/>}
           {tab === "mots"     && <WordsTab anki={anki} onStartReview={() => setTab("revision")}/>}

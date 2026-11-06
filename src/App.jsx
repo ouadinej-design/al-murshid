@@ -11,6 +11,7 @@ import LearnScreen from "./LearnScreen";
 import HomeScreen from "./HomeScreen";
 import SettingsSheet from "./components/SettingsSheet";
 import StatsPanel from "./components/StatsPanel";
+import RecognizeVerse from "./components/RecognizeVerse";
 import TasbihCounter from "./components/TasbihCounter";
 import AdhkarSession from "./components/AdhkarSession";
 import ADHKAR_EXTRA from "./data/adhkarExtra";
@@ -1916,6 +1917,7 @@ export default function App() {
   const [pageOpts, setPageOpts] = useState({});
   const [statsOpen, setStatsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [recognizeOpen, setRecognizeOpen] = useState(false);
   const [navTarget, setNavTarget] = useState(null);
   const [navConsumed, setNavConsumed] = useState(false);
   const juzProgram = useJuzProgram();
@@ -2037,7 +2039,7 @@ export default function App() {
           <motion.div key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
             className={`h-full overflow-y-auto ${page === "adhkar" ? "bg-white" : ""}`}>
             {page === "home" && homeData && (
-              <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} {...homeData}
+              <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} onRecognize={() => setRecognizeOpen(true)} {...homeData}
                 kahf={{ isRead: fridayKahf.isReadThisWeek, markRead: () => { if (!fridayKahf.isReadThisWeek) logActivity("reading"); fridayKahf.markRead(); }, total: fridayKahf.totalFridays,
                   open: () => openSurah(18, 1), learn: () => navigate("learn", { tab: "prof", surah: 18, mode: "verse" }) }}/>
             )}
@@ -2055,7 +2057,7 @@ export default function App() {
             {page === "program" && <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>}
             {page === "bookmarks" && <BookmarksPage/>}
             {page === "adhkar" && <AdhkarPage fridayKahf={fridayKahf} initialTab={pageOpts.tab || "matin"} onReadKahf={() => openSurah(18, 1)}/>}
-            {page === "learn" && <LearnScreen initialTab={pageOpts.tab} surahIndex={SURAH_INDEX} loadSurah={loadSurahForCoach} profSurah={pageOpts.surah} profMode={pageOpts.mode}/>}
+            {page === "learn" && <LearnScreen initialTab={pageOpts.tab} surahIndex={SURAH_INDEX} loadSurah={loadSurahForCoach} profSurah={pageOpts.surah} profMode={pageOpts.mode} onRecognize={() => setRecognizeOpen(true)}/>}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -2078,6 +2080,8 @@ export default function App() {
       <StatsPanel isOpen={statsOpen} onClose={() => setStatsOpen(false)} onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)}
         counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} resetChecked={resetChecked} {...statsData}/>
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)}/>
+      <RecognizeVerse open={recognizeOpen} onClose={() => setRecognizeOpen(false)} surahIndex={SURAH_INDEX} embedded={EMBEDDED_VERSES}
+        onOpenVerse={(sn, vn) => { setRecognizeOpen(false); openSurah(sn, vn); }}/>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { UNITS, LEVELS, getPath, nextUnit, isUnlocked, pathStats } from "../lib/
 const AR = { fontFamily: "'Amiri Quran','Scheherazade New',serif" };
 
 export const TOOLS = [
+  { key: "recognize", icon: "🎧", title: "Reconnaître un verset", sub: "Récite : sourate + traduction", color: "#7C3AED" },
   { key: "prof",     icon: "🎙️", title: "Réciter & être corrigé", sub: "Le professeur écoute ta récitation", color: "#E30613" },
   { key: "surahs",   icon: "🕌", title: "Comprendre les sourates", sub: "Mot à mot, audio, traduction", color: "#00A19A" },
   { key: "lessons",  icon: "📚", title: "Apprendre à lire",        sub: "7 leçons : lettres, voyelles…", color: "#F58220" },

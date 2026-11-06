@@ -126,7 +126,7 @@ function Module({ gradient, icon, title, sub, onClick, wide }) {
   );
 }
 
-export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, adhkar, todayReading, words, bookmarksCount, kahf }) {
+export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, onRecognize, adhkar, todayReading, words, bookmarksCount, kahf }) {
   const { done, goal, goalPct, goalItems, goalCustom, goalReached, today, streak, week, xp, level, settings } = useProgress();
   const friday = isKahfTime();
   const now = new Date();
@@ -292,6 +292,8 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, ad
             sub={`${words.learned}/500 appris · ${words.due} à revoir`} onClick={() => onNavigate("learn")} />
           <Module gradient="linear-gradient(135deg,#00A19A,#00B8AF)" icon="📿" title={evening ? "Adhkar du soir" : "Adhkar du matin"}
             sub={`${adhkarSlot.done}/${adhkarSlot.total} récités aujourd'hui`} onClick={() => onNavigate("adhkar", { tab: evening ? "soir" : "matin" })} />
+          <Module wide gradient="linear-gradient(135deg,#0B3A78,#7C3AED)" icon="🎧" title="Reconnaître un verset"
+            sub="Récite quelques mots : l'app trouve la sourate, le verset et la traduction" onClick={onRecognize} />
           <Module wide gradient="linear-gradient(135deg,#C70511,#E8322F)" icon="🎙️" title="Réciter avec le coach"
             sub="Le professeur écoute ta récitation et te corrige mot par mot" onClick={() => onNavigate("learn", { tab: "prof" })} />
           <Module gradient="linear-gradient(135deg,#D96A0B,#F58220)" icon="🔖" title="Mes repères"
