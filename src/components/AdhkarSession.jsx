@@ -8,8 +8,8 @@ const PREF_KEY = "adhkar_session_show";
 
 function vibrate(p) { try { navigator.vibrate?.(p); } catch { /* non supporté */ } }
 function loadShow() {
-  try { return { fr: true, tr: false, vertu: false, ...(JSON.parse(localStorage.getItem(PREF_KEY)) || {}) }; }
-  catch { return { fr: true, tr: false, vertu: false }; }
+  try { return { ar: true, fr: true, tr: false, vertu: false, ...(JSON.parse(localStorage.getItem(PREF_KEY)) || {}) }; }
+  catch { return { ar: true, fr: true, tr: false, vertu: false }; }
 }
 
 /**
@@ -57,7 +57,17 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
     }
   };
 
-  const toggle = (k) => setShow((s) => ({ ...s, [k]: !s[k] }));
+  // au moins un texte (arabe, phonétique ou traduction) reste toujours affiché
+  const toggle = (k) => setShow((s) => {
+    const next = { ...s, [k]: !s[k] };
+    if (!next.ar && !next.tr && !next.fr) next[k === "tr" ? "ar" : "tr"] = true;
+    return next;
+  });
+  const PRESETS = [
+    ["Phonétique seule", { ar: false, tr: true, fr: false, vertu: false }],
+    ["Arabe seul", { ar: true, tr: false, fr: false, vertu: false }],
+    ["Tout", { ar: true, tr: true, fr: true, vertu: true }],
+  ];
   const isPlaying = speaking === d.id;
 
   return (
@@ -81,12 +91,18 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
       </div>
 
       {/* Affichage : choix de ce qu'on voit sous l'arabe */}
-      <div className="flex gap-1.5">
-        {[["fr", "Traduction"], ["tr", "Phonétique"], ["vertu", "Vertu"]].map(([k, l]) => (
+      <div className="flex flex-wrap gap-1.5">
+        {[["ar", "Arabe"], ["tr", "Phonétique"], ["fr", "Traduction"], ["vertu", "Vertu"]].map(([k, l]) => (
           <button key={k} onClick={() => toggle(k)}
             className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${show[k] ? "border-vert bg-vert/10 text-vert" : "border-slate-200 bg-white text-slate-400"}`}>
             {show[k] ? "✓ " : ""}{l}
           </button>
+        ))}
+      </div>
+      <div className="-mt-1 flex gap-1.5 text-[10px]">
+        <span className="py-0.5 text-slate-400">Raccourcis :</span>
+        {PRESETS.map(([l, v]) => (
+          <button key={l} onClick={() => setShow(v)} className="rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-500">{l}</button>
         ))}
       </div>
 
@@ -116,13 +132,23 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
             </div>
           </div>
 
-          <p dir="rtl" lang="ar" className="text-center leading-[2.2] text-encre"
-            style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: phase ? "2rem" : d.arabic.length > 260 ? "1.2rem" : d.arabic.length > 120 ? "1.4rem" : "1.7rem" }}>
-            {phase ? phase.arabic : d.arabic}
-          </p>
-          {phase && <p className="mt-1 text-center text-xs font-semibold text-slate-500">{phase.label}</p>}
+          {show.ar && (
+            <p dir="rtl" lang="ar" className="text-center leading-[2.2] text-encre"
+              style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif", fontSize: phase ? "2rem" : d.arabic.length > 260 ? "1.2rem" : d.arabic.length > 120 ? "1.4rem" : "1.7rem" }}>
+              {phase ? phase.arabic : d.arabic}
+            </p>
+          )}
+          {phase && (show.ar
+            ? <p className="mt-1 text-center text-xs font-semibold text-slate-500">{phase.label}</p>
+            : <p className="text-center font-display text-3xl font-extrabold text-encre">{phase.label}</p>)}
 
-          {show.tr && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-center text-sm font-semibold italic text-slate-600">{d.transliteration}</p>}
+          {/* Phonétique : en grand quand l'arabe est masqué */}
+          {show.tr && !phase && (show.ar
+            ? <p className="mt-3 rounded-xl bg-slate-50 p-3 text-center text-sm font-semibold italic text-slate-600">{d.transliteration}</p>
+            : <p className="whitespace-pre-line text-center font-semibold leading-relaxed text-encre" style={{ fontSize: d.transliteration.length > 300 ? "1.1rem" : d.transliteration.length > 140 ? "1.25rem" : "1.45rem" }}>
+                {/* une ligne par segment (séparés par « — »), et un saut avant chaque sourate nommée */}
+                {d.transliteration.replace(/\s+—\s+/g, "\n").replace(/\s+(Al-Falaq|An-Nās|Al-Ikhlāṣ)\s*:/g, "\n\n$1 :")}
+              </p>)}
           {show.fr && <p className="mt-3 text-center text-sm leading-relaxed text-slate-600">{d.french}</p>}
           {show.vertu && d.benefice && <p className="mt-3 rounded-xl bg-jaune/15 p-3 text-xs italic leading-relaxed text-amber-900">📜 {d.benefice}</p>}
           <p className="mt-3 text-center text-[10px] italic text-slate-400">{d.source}</p>
