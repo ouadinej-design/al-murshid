@@ -399,6 +399,8 @@ const LESSONS = [
 import VOCAB from "./vocabData";
 import { normalizeAr, calcScore, bestTranscript } from "./lib/arabic";
 import { logActivity, startOfLocalDay } from "./lib/progress";
+import WordsTab from "./components/WordsTab";
+import SurahPicker from "./components/SurahPicker";
 
 // RÉPÉTITION ESPACÉE — Algorithme SM-2 simplifié
 // ═══════════════════════════════════════════════════════
@@ -1702,9 +1704,29 @@ async function speakArabic(text, rate) {
   window.speechSynthesis.speak(u);
 }
 
-function ProfesseurTab() {
+function ProfesseurTab({ surahIndex = [], loadSurah }) {
   const [mode, setMode] = useState(null);
   const [selectedSurah, setSelectedSurah] = useState(PROF_SURAHS[0]);
+  const [surahLoading, setSurahLoading] = useState(false);
+  const [surahError, setSurahError] = useState("");
+  // Choix parmi les 114 : versets locaux si disponibles, sinon chargés depuis l'API
+  const chooseSurah = async (num) => {
+    setSurahError("");
+    const local = ALL_SURAHS.find(x => x.number === num && x.verses?.length);
+    const reset = () => { setVerseIdx(0); setScore(null); setResults(null); setTranscript(""); setStep("idle"); };
+    if (local) { setSelectedSurah(local); reset(); return; }
+    if (!loadSurah) return;
+    setSurahLoading(true);
+    try {
+      const verses = await loadSurah(num);
+      if (!verses.length) throw new Error("vide");
+      const meta = surahIndex[num - 1] || { name: `Sourate ${num}`, arabic: "" };
+      setSelectedSurah({ number: num, name: meta.name, arabic: meta.arabic, verses });
+      reset();
+    } catch {
+      setSurahError("Impossible de charger cette sourate (connexion internet nécessaire). Réessaie dans un instant.");
+    } finally { setSurahLoading(false); }
+  };
   const [verseIdx, setVerseIdx] = useState(0);
   const [letterIdx, setLetterIdx] = useState(0);
   const [step, setStep] = useState("idle"); // idle | listening | result
@@ -1854,18 +1876,9 @@ function ProfesseurTab() {
           <p className="text-slate-500 text-xs leading-relaxed">1. Écoute le verset ou la lettre · 2. Appuie sur 🎙️ Répéter · 3. Le professeur analyse ta prononciation et te reprend vocalement</p>
         </div>
 
-        {/* Sélection sourate */}
-        <div>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Sourate d'entraînement</p>
-          <div className="flex flex-wrap gap-2">
-            {PROF_SURAHS.map(s => (
-              <button key={s.number} onClick={() => { setSelectedSurah(s); setVerseIdx(0); }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${selectedSurah.number===s.number ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
-                {s.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Sélection sourate (raccourcis + les 114) */}
+        <SurahPicker index={surahIndex.length ? surahIndex : PROF_SURAHS.map(x => ({ number: x.number, name: x.name, arabic: x.arabic, verses: x.verses.length }))}
+          quick={PROF_SURAHS} selected={selectedSurah.number} onSelect={chooseSurah} loading={surahLoading} error={surahError}/>
 
         {/* 3 modes */}
         {[
@@ -2100,7 +2113,7 @@ function ProfesseurTab() {
       </div>
 
       {/* Navigation versets */}
-      <div className="flex gap-1.5 flex-wrap">
+      <div className="flex gap-1.5 flex-wrap max-h-44 overflow-y-auto">
         {selectedSurah.verses.map((_,i) => (
           <button key={i}
             onClick={() => { setVerseIdx(i); setScore(null); setResults(null); setTranscript(""); setStep("idle"); setVoiceMsg(""); }}
@@ -2116,7 +2129,8 @@ function ProfesseurTab() {
 // MAIN
 // ═══════════════════════════════════════════════════════
 const TABS = [
-  {key:"surahs",   label:"📖 Sourates"},
+  {key:"mots",     label:"📖 500 mots"},
+  {key:"surahs",   label:"🕌 Sourates"},
   {key:"prof",     label:"🎙️ Professeur"},
   {key:"lessons",  label:"📚 Leçons"},
   {key:"revision", label:"🃏 Révision"},
@@ -2126,7 +2140,7 @@ const TABS = [
   {key:"voyelles", label:"◌ Voyelles"},
 ];
 
-export default function LearnScreen({ initialTab }) {
+export default function LearnScreen({ initialTab, surahIndex, loadSurah }) {
   const [tab, setTab] = useState(initialTab || "surahs");
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const lessonsProgress = ls("lessons_progress", {});
@@ -2169,7 +2183,7 @@ export default function LearnScreen({ initialTab }) {
       </div>
       <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
         {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
+          <button key={t.key} onClick={() => setTab(t.key)} ref={el => { if (el && tab === t.key) el.scrollIntoView({ block: "nearest", inline: "center" }); }}
             className={`flex-shrink-0 py-2 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.key ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg" : "bg-slate-50 text-slate-500 hover:text-encre border border-slate-200"}`}>
             {t.label}
             {t.key === "revision" && ankiDue > 0 && <span className="ml-1 bg-amber-500 text-white text-[9px] px-1 rounded-full">{ankiDue}</span>}
@@ -2179,7 +2193,8 @@ export default function LearnScreen({ initialTab }) {
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="pb-8">
           {tab === "surahs"   && <SuratesTab/>}
-          {tab === "prof"     && <ProfesseurTab/>}
+          {tab === "prof"     && <ProfesseurTab surahIndex={surahIndex} loadSurah={loadSurah}/>}
+          {tab === "mots"     && <WordsTab anki={anki} onStartReview={() => setTab("revision")}/>}
           {tab === "lessons"  && <LessonsTab/>}
           {tab === "revision" && <RevisionTab/>}
           {tab === "quiz"     && <QuizTab/>}

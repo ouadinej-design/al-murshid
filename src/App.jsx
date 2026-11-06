@@ -10,9 +10,11 @@ import {
 import LearnScreen from "./LearnScreen";
 import HomeScreen from "./HomeScreen";
 import SettingsSheet from "./components/SettingsSheet";
+import StatsPanel from "./components/StatsPanel";
 import TasbihCounter from "./components/TasbihCounter";
 import ADHKAR_EXTRA from "./data/adhkarExtra";
 import { localDayKey, logActivity, useProgress, applyArabicScale } from "./lib/progress";
+import { normalizeAr } from "./lib/arabic";
 
 // ════════════════════════════════════════════════════════════════════
 // DONNÉES — 30 JUZ avec durées de lecture moyennes (minutes)
@@ -1752,6 +1754,21 @@ async function fetchSurahFromAPI(surahNumber) {
   throw new Error("Toutes les sources ont échoué");
 }
 
+// ── Versets pour le professeur (114 sourates) : numérotation réelle conservée pour l'audio
+function stripBasmalaPrefix(text, surahNum, verseNum) {
+  if (surahNum === 1 || verseNum !== 1 || !text) return text;
+  const words = text.trim().split(/\s+/);
+  if (words.length > 4 && normalizeAr(words.slice(0, 4).join(" ")) === "بسم الله الرحمن الرحيم") return words.slice(4).join(" ");
+  return text;
+}
+async function loadSurahForCoach(num) {
+  const raw = EMBEDDED_VERSES[num] || await fetchSurahFromAPI(num);
+  return raw
+    .map(v => ({ n: v.number, ar: stripBasmalaPrefix(v.arabic, num, v.number), tr: v.transliteration || "", fr: v.french || "" }))
+    .filter(v => v.ar);
+}
+const SURAH_INDEX = QURAN_SURAHS.map(x => ({ number: x.number, name: x.name, arabic: x.arabic, verses: x.verses }));
+
 function cleanBasmala(verses, surahNumber) {
   if (!verses || verses.length === 0) return verses;
   if (surahNumber === 1) return verses;
@@ -1810,97 +1827,6 @@ function getVerseText(surah, verse) {
 // ════════════════════════════════════════════════════════════════════
 // COMPOSANT — Stats Drawer
 // ════════════════════════════════════════════════════════════════════
-function StatsDrawer({ isOpen, onClose, counts, fridayKahf: fridayKahfProp, juzProgram: juzProp, resetChecked }) {
-  const pct = Math.round((counts.surahChecked / 114) * 100);
-  const [recited, setRecited] = useState(loadRecitedToday);
-  const { totalFridays, isReadThisWeek } = fridayKahfProp || useFridayKahf();
-  const juzProgram = juzProp || useJuzProgram();
-  useEffect(() => { if (isOpen) setRecited(loadRecitedToday()); }, [isOpen]);
-  const adhkarDone = ALL_ADHKAR.filter(d => (recited[d.id] || 0) >= d.repetition).length;
-  const adhkarTotal = ALL_ADHKAR.length;
-  const matinSoir = ALL_ADHKAR.filter(d => ["matin","soir","matin_soir"].includes(d.category.toLowerCase()));
-  const matinSoirDone = matinSoir.filter(d => (recited[d.id] || 0) >= d.repetition).length;
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div style={{display:"contents"}}>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/35 z-50 backdrop-blur-sm" onClick={onClose}/>
-          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed right-0 top-0 h-full w-full max-w-sm bg-white z-50 shadow-2xl border-l border-slate-200 overflow-y-auto">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white backdrop-blur-md">
-              <button onClick={() => { if(window.confirm("Réinitialiser toutes les statistiques ?")) { resetChecked(); } }} className="text-xs text-slate-400 hover:text-red-700 transition-all px-2 py-1 rounded-lg">🗑️ Reset</button>
-              <h2 className="font-bold text-encre flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-700"/> Statistiques</h2>
-              <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-encre"><X className="w-5 h-5"/></button>
-            </div>
-            <div className="p-5 space-y-5">
-              <div className="text-center">
-                <div className="relative w-28 h-28 mx-auto">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(15,23,42,0.06)" strokeWidth="8"/>
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="url(#sg)" strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray="327" strokeDashoffset={327*(1-counts.surahChecked/114)}
-                      style={{ transition: "stroke-dashoffset 1s ease" }}/>
-                    <defs><linearGradient id="sg"><stop offset="0%" stopColor="#10B981"/><stop offset="100%" stopColor="#3B82F6"/></linearGradient></defs>
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black text-emerald-700">{pct}%</span>
-                    <span className="text-xs text-slate-500">Coran</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">📖 Coran</p>
-                <div className="space-y-2">
-                  {[
-                    { label: "Sourates lues", value: `${counts.surahChecked}/114`, color: "text-blue-700" },
-                    { label: "Programme Khatm", value: juzProgram.program.active ? `${juzProgram.completedCount}/30 Juz` : "Non démarré", color: "text-emerald-700" },
-                    { label: "Jours de lecture", value: juzProgram.daysPassed > 0 ? `${juzProgram.daysPassed}j` : "—", color: "text-purple-700" },
-                    { label: "Dans l'objectif", value: juzProgram.program.active ? (juzProgram.onTrack ? "✅ Oui" : `⚠️ −${juzProgram.behindBy} Juz`) : "—", color: juzProgram.onTrack ? "text-emerald-700" : "text-orange-700" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                      <span className="text-slate-500 text-sm">{label}</span>
-                      <span className={`font-bold text-sm ${color}`}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">📿 Adhkār</p>
-                <div className="space-y-2">
-                  {[
-                    { label: "Adhkār complétés", value: `${adhkarDone}/${adhkarTotal}`, color: "text-emerald-700" },
-                    { label: "Matin & Soir du jour", value: `${matinSoirDone}/${matinSoir.length}`, color: matinSoirDone === matinSoir.length ? "text-emerald-700" : "text-amber-700" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                      <span className="text-slate-500 text-sm">{label}</span>
-                      <span className={`font-bold text-sm ${color}`}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">🕌 Al-Kahf — Vendredi</p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                    <span className="text-slate-500 text-sm">Vendredis lus</span>
-                    <span className="font-bold text-sm text-amber-700">{totalFridays} semaine{totalFridays > 1 ? "s" : ""}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                    <span className="text-slate-500 text-sm">Ce vendredi</span>
-                    <span className={`font-bold text-sm ${isReadThisWeek ? "text-emerald-700" : "text-slate-400"}`}>{isReadThisWeek ? "✅ Lu" : "—"}</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-center text-slate-700 text-xs italic">« وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا » — Muzzammil 4</p>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-}
 
 // ════════════════════════════════════════════════════════════════════
 // ROOT APP — PAGES (avec Learn)
@@ -1965,6 +1891,25 @@ export default function App() {
   useEffect(() => { applyArabicScale(settings.arabicScale); }, [settings.arabicScale]);
 
   const navigate = useCallback((key, opts = {}) => { setPageOpts(opts); setPage(key); }, []);
+
+  // ── Résumé de la révision des 500 mots
+  const wordsSummary = () => {
+    const cards = Object.values(storage("anki_cards", {}) || {});
+    const now = Date.now();
+    const learned = cards.filter(c => c?.reps > 0).length;
+    const due = cards.filter(c => c?.reps > 0 && c.nextReview <= now).length;
+    return { learned, due };
+  };
+  // ── Données des statistiques (recalculées à l'ouverture)
+  const statsData = useMemo(() => {
+    if (!statsOpen) return { adhkarTabs: [], words: { learned: 0, due: 0 }, lessonsDone: 0 };
+    const recited = loadRecitedToday();
+    const adhkarTabs = Object.entries(TAB_LABELS).map(([key, label]) => {
+      const list = adhkarOfTab(key);
+      return { key, label, total: list.length, done: list.filter(d => (recited[d.id] || 0) >= d.repetition).length };
+    });
+    return { adhkarTabs, words: wordsSummary(), lessonsDone: Object.keys(storage("lessons_progress", {}) || {}).length };
+  }, [statsOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Données résumées pour l'accueil (recalculées à chaque retour sur l'accueil)
   const homeData = useMemo(() => {
@@ -2065,7 +2010,7 @@ export default function App() {
             {page === "program" && <JuzProgram onNavigateToJuz={handleNavigateToJuz} onNavigateToRange={handleNavigateToRange} juzProgram={juzProgram}/>}
             {page === "bookmarks" && <BookmarksPage/>}
             {page === "adhkar" && <AdhkarPage fridayKahf={fridayKahf} initialTab={pageOpts.tab || "matin"}/>}
-            {page === "learn" && <LearnScreen initialTab={pageOpts.tab}/>}
+            {page === "learn" && <LearnScreen initialTab={pageOpts.tab} surahIndex={SURAH_INDEX} loadSurah={loadSurahForCoach}/>}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -2085,7 +2030,8 @@ export default function App() {
         })}
       </nav>
 
-      <StatsDrawer isOpen={statsOpen} onClose={() => setStatsOpen(false)} counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} resetChecked={resetChecked}/>
+      <StatsPanel isOpen={statsOpen} onClose={() => setStatsOpen(false)} onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)}
+        counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} resetChecked={resetChecked} {...statsData}/>
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)}/>
     </div>
   );

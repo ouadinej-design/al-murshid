@@ -37,7 +37,10 @@ export const ACTIVITIES = {
   reading: { label: "Lectures",         icon: "🕌", xp: 10 },
 };
 
-const DEFAULT_SETTINGS = { dailyGoal: 10, arabicScale: 1 };
+// goalMode "total" : un nombre d'actions toutes confondues (dailyGoal)
+// goalMode "custom" : un objectif par activité choisie (goals ; 0 = activité non suivie)
+const DEFAULT_GOALS = { words: 10, adhkar: 5, recite: 3, quiz: 0, lessons: 0, reading: 1 };
+const DEFAULT_SETTINGS = { dailyGoal: 10, arabicScale: 1, goalMode: "total", goals: DEFAULT_GOALS };
 
 function emptyState() {
   return { days: {}, xp: 0, settings: { ...DEFAULT_SETTINGS } };
@@ -48,7 +51,9 @@ function read() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return emptyState();
     const s = JSON.parse(raw);
-    return { ...emptyState(), ...s, settings: { ...DEFAULT_SETTINGS, ...(s.settings || {}) } };
+    const settings = { ...DEFAULT_SETTINGS, ...(s.settings || {}) };
+    settings.goals = { ...DEFAULT_GOALS, ...(settings.goals || {}) };
+    return { ...emptyState(), ...s, settings };
   } catch {
     return emptyState();
   }
@@ -87,6 +92,57 @@ export function logActivity(type, n = 1, now = new Date()) {
 
 export function updateSettings(patch) {
   commit({ ...state, settings: { ...state.settings, ...patch } });
+}
+
+/**
+ * Avancement de l'objectif d'une journée selon les réglages.
+ * Renvoie { done, target, pct, reached, items } ; items = détail par activité en mode "custom".
+ */
+export function goalProgress(dayEntry = {}, settings = DEFAULT_SETTINGS) {
+  if (settings.goalMode === "custom") {
+    const items = Object.entries(settings.goals || {})
+      .filter(([k, t]) => ACTIVITIES[k] && t > 0)
+      .map(([k, target]) => ({ key: k, ...ACTIVITIES[k], target, done: dayEntry[k] || 0, reached: (dayEntry[k] || 0) >= target }));
+    if (items.length) {
+      const target = items.reduce((a, i) => a + i.target, 0);
+      const done = items.reduce((a, i) => a + Math.min(i.done, i.target), 0);
+      return { done, target, pct: Math.round((done / target) * 100), reached: items.every((i) => i.reached), items, custom: true };
+    }
+  }
+  const done = dayTotal(dayEntry);
+  const target = settings.dailyGoal || 10;
+  return { done, target, pct: Math.min(100, Math.round((done / target) * 100)), reached: done >= target, items: [], custom: false };
+}
+
+/** Plus longue série jamais réalisée (sur l'historique conservé). */
+export function bestStreak(days) {
+  const keys = Object.keys(days).filter((k) => dayTotal(days[k]) > 0).sort();
+  let best = 0, cur = 0, prev = null;
+  for (const k of keys) {
+    cur = prev && shiftDayKey(prev, 1) === k ? cur + 1 : 1;
+    best = Math.max(best, cur);
+    prev = k;
+  }
+  return best;
+}
+
+/** Rapport sur les n derniers jours : détail par jour et totaux par activité. */
+export function activityReport(days, n = 7, settings = DEFAULT_SETTINGS, now = new Date()) {
+  const today = localDayKey(now);
+  const list = Array.from({ length: n }, (_, i) => {
+    const key = shiftDayKey(today, i - (n - 1));
+    const entry = days[key] || {};
+    return { key, entry, total: dayTotal(entry), reached: dayTotal(entry) > 0 && goalProgress(entry, settings).reached };
+  });
+  const totals = Object.fromEntries(Object.keys(ACTIVITIES).map((k) => [k, list.reduce((a, d) => a + (d.entry[k] || 0), 0)]));
+  return {
+    days: list,
+    totals,
+    activeDays: list.filter((d) => d.total > 0).length,
+    goalDays: list.filter((d) => d.reached).length,
+    xp: Object.entries(totals).reduce((a, [k, v]) => a + v * ACTIVITIES[k].xp, 0),
+    total: list.reduce((a, d) => a + d.total, 0),
+  };
 }
 
 export function dayTotal(dayEntry) {
@@ -129,14 +185,18 @@ export function useProgress() {
   const s = useSyncExternalStore(subscribe, getState);
   const todayKey = localDayKey();
   const today = s.days[todayKey] || {};
-  const done = dayTotal(today);
+  const g = goalProgress(today, s.settings);
   return {
     xp: s.xp,
     settings: s.settings,
+    days: s.days,
     today,
-    done,
-    goal: s.settings.dailyGoal,
-    goalReached: done >= s.settings.dailyGoal,
+    done: g.done,
+    goal: g.target,
+    goalPct: g.pct,
+    goalItems: g.items,
+    goalCustom: g.custom,
+    goalReached: g.reached,
     streak: computeStreak(s.days),
     week: lastDays(s.days),
     level: levelFromXp(s.xp),

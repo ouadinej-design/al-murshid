@@ -49,3 +49,31 @@ describe("objectif et niveaux", () => {
     expect(w[6]).toEqual({ key: "2026-11-04", total: 2 });
   });
 });
+
+import { goalProgress, bestStreak, activityReport } from "../progress";
+
+describe("objectifs personnalisés et rapports", () => {
+  const custom = { goalMode: "custom", dailyGoal: 10, goals: { words: 10, adhkar: 2, recite: 0 } };
+  it("mode par activité : chaque objectif choisi compte, plafonné à sa cible", () => {
+    const g = goalProgress({ words: 15, adhkar: 1, recite: 9 }, custom);
+    expect(g.items.map((i) => i.key)).toEqual(["words", "adhkar"]);
+    expect(g.done).toBe(11);   // 10 (plafonné) + 1
+    expect(g.target).toBe(12);
+    expect(g.reached).toBe(false);
+    expect(goalProgress({ words: 10, adhkar: 2 }, custom).reached).toBe(true);
+  });
+  it("mode total : toutes les actions confondues", () => {
+    const g = goalProgress({ words: 4, adhkar: 3 }, { goalMode: "total", dailyGoal: 5 });
+    expect(g).toMatchObject({ done: 7, target: 5, reached: true, pct: 100 });
+  });
+  it("meilleure série", () => {
+    expect(bestStreak({ "2026-10-01": { words: 1 }, "2026-10-02": { quiz: 1 }, "2026-10-03": { quiz: 1 }, "2026-10-10": { quiz: 1 } })).toBe(3);
+  });
+  it("rapport sur 7 jours", () => {
+    const r = activityReport({ "2026-11-04": { words: 2, adhkar: 1 }, "2026-11-01": { quiz: 3 } }, 7, { goalMode: "total", dailyGoal: 3 }, new Date(2026, 10, 4, 9));
+    expect(r.totals.words).toBe(2);
+    expect(r.activeDays).toBe(2);
+    expect(r.goalDays).toBe(2);
+    expect(r.total).toBe(6);
+  });
+});
