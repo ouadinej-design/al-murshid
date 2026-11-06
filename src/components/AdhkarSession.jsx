@@ -12,12 +12,34 @@ function loadShow() {
   catch { return { ar: true, fr: true, tr: false, vertu: false }; }
 }
 
+/** Grains de chapelet : un par répétition (jusqu'à 11), sinon une barre. */
+function Beads({ count, total }) {
+  if (total <= 1) return null;
+  if (total <= 11) {
+    return (
+      <span className="mt-1.5 flex gap-1" aria-label={`${count} sur ${total}`}>
+        {Array.from({ length: total }, (_, i) => (
+          <motion.span key={i} animate={{ scale: i === count - 1 ? [1.5, 1] : 1 }}
+            className={`h-3 w-3 rounded-full border ${i < count ? "border-vert bg-vert" : "border-slate-300 bg-white"}`} />
+        ))}
+        <span className="ml-1 text-[11px] font-bold text-vert">{count}/{total}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="mt-1.5 flex items-center gap-2">
+      <span className="h-2 w-28 overflow-hidden rounded-full bg-slate-100"><span className="block h-full rounded-full bg-vert" style={{ width: `${(count / total) * 100}%` }} /></span>
+      <span className="text-[11px] font-bold text-vert">{count}/{total}</span>
+    </span>
+  );
+}
+
 /**
  * Mode séance : un dhikr à la fois. On touche la carte pour compter ;
  * une fois le nombre atteint, on passe automatiquement au suivant.
  * Glisser à gauche/droite pour naviguer, sommaire pour sauter directement.
  */
-export default function AdhkarSession({ list, recited, onSet, speak, speaking, favorites, toggleFav, tabLabel, nextTab, onGoTab }) {
+export default function AdhkarSession({ list, recited, onSet, speak, speaking, favorites, toggleFav, tabLabel, nextTab, onGoTab, onOpenTasbih }) {
   // on reprend au premier dhikr pas encore fait (la page est recréée à chaque changement d'onglet)
   const [idx, setIdx] = useState(() => {
     const i = list.findIndex((d) => (recited[d.id] || 0) < d.repetition);
@@ -47,8 +69,10 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
     setIdx(i);
   };
 
+  const [pulse, setPulse] = useState(0);
   const tap = () => {
     if (done) { go(idx + 1); return; }
+    setPulse((p) => p + 1);
     const next = count + 1;
     onSet((p) => ({ ...p, [d.id]: Math.min(d.repetition, (p[d.id] || 0) + 1) }));
     vibrate(next >= d.repetition ? [40, 60, 40] : 10);
@@ -113,13 +137,13 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
           transition={{ duration: 0.22 }}
           drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.25}
           onDragEnd={(_, info) => { if (info.offset.x < -70) go(idx + 1); else if (info.offset.x > 70) go(idx - 1); }}
-          onTap={(e) => { if (!e.target.closest?.("button")) tap(); }}
-          className={`relative cursor-pointer select-none overflow-hidden rounded-3xl border-2 bg-white p-5 shadow-sm transition-colors ${done ? "border-vert bg-vert/5" : "border-slate-200 active:bg-slate-50"}`}
+          className={`relative select-none overflow-hidden rounded-3xl border-2 bg-white p-5 shadow-sm transition-colors ${done ? "border-vert bg-vert/5" : "border-slate-200"}`}
           style={{ touchAction: "pan-y", WebkitTapHighlightColor: "transparent" }}>
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-vert">{tabLabel} · {idx + 1}/{list.length}</p>
               <p className="mt-0.5 text-sm font-bold leading-snug text-encre">{d.title.replace(/^\d+\.\s*/, "")}</p>
+              <Beads count={count} total={d.repetition} />
             </div>
             <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => speak(d)} aria-label={isPlaying ? "Arrêter" : "Écouter"}
@@ -153,44 +177,45 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
           {show.vertu && d.benefice && <p className="mt-3 rounded-xl bg-jaune/15 p-3 text-xs italic leading-relaxed text-amber-900">📜 {d.benefice}</p>}
           <p className="mt-3 text-center text-[10px] italic text-slate-400">{d.source}</p>
 
-          {/* Compteur */}
-          <div className="mt-4 flex flex-col items-center">
-            <div className="relative h-24 w-24">
-              <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
-                <circle cx="50" cy="50" r={R} fill="none" stroke="#E0F2F1" strokeWidth="8" />
-                <circle cx="50" cy="50" r={R} fill="none" stroke="#00A19A" strokeWidth="8" strokeLinecap="round"
-                  strokeDasharray={`${Math.min(1, count / d.repetition) * CIRC} ${CIRC}`} style={{ transition: "stroke-dasharray .2s" }} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                {done ? <Check className="h-9 w-9 text-vert" /> : (
-                  <>
-                    <span className="font-display text-3xl font-extrabold text-vert">{count}</span>
-                    <span className="text-[10px] text-slate-400">/ {d.repetition}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <p className="mt-2 text-xs font-semibold text-slate-400">
-              {done ? (idx < list.length - 1 ? "Touche pour passer au suivant →" : "Dernier dhikr terminé") : "Touche la carte pour compter"}
-            </p>
-          </div>
+          <p className="mt-4 text-center text-[11px] text-slate-400">Glisse ← → pour changer de dhikr · compte avec le bouton tasbih en bas</p>
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation (reste visible en bas même si le texte est long) */}
-      <div className="sticky bottom-0 z-10 -mx-4 flex items-center gap-2 border-t border-slate-100 bg-white/95 px-4 py-2 backdrop-blur">
-        <button onClick={() => go(idx - 1)} disabled={idx === 0} aria-label="Précédent"
-          className="rounded-2xl border border-slate-200 bg-white p-3.5 text-slate-600 disabled:opacity-30"><ChevronLeft className="h-5 w-5" /></button>
-        {count > 0 && (
-          <button onClick={() => onSet((p) => ({ ...p, [d.id]: 0 }))} aria-label="Remettre ce dhikr à zéro"
-            className="rounded-2xl border border-slate-200 bg-white p-3.5 text-slate-400"><RotateCcw className="h-5 w-5" /></button>
-        )}
-        <button onClick={tap}
-          className={`flex-1 rounded-2xl py-3.5 font-display text-base font-bold text-white shadow-md ${done ? "bg-bleu" : "bg-vert"}`}>
-          {done ? (idx < list.length - 1 ? "Suivant →" : "✓ Terminé") : d.repetition === 1 ? "Récité ✓" : `Compter (${count + 1}/${d.repetition})`}
-        </button>
-        <button onClick={() => go(idx + 1)} disabled={idx >= list.length - 1} aria-label="Suivant"
-          className="rounded-2xl border border-slate-200 bg-white p-3.5 text-slate-600 disabled:opacity-30"><ChevronRight className="h-5 w-5" /></button>
+      {/* Tasbih : toujours visible en bas, même si le texte est long */}
+      <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-100 bg-white/95 px-4 pb-2 pt-2 backdrop-blur">
+        <div className="flex items-center gap-2">
+          <button onClick={() => go(idx - 1)} disabled={idx === 0} aria-label="Dhikr précédent"
+            className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 disabled:opacity-30"><ChevronLeft className="h-5 w-5" /></button>
+
+          <motion.button key={pulse} onClick={tap} whileTap={{ scale: 0.96 }}
+            aria-label={done ? "Dhikr suivant" : `Compter : ${count + 1} sur ${d.repetition}`}
+            className={`flex flex-1 items-center gap-3 rounded-2xl px-3 py-2 text-left text-white shadow-md ${done ? "bg-bleu" : "bg-vert"}`}
+            style={{ touchAction: "manipulation" }}>
+            <span className="relative h-12 w-12 shrink-0">
+              <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(255,255,255,.3)" strokeWidth="10" />
+                <circle cx="50" cy="50" r={R} fill="none" stroke="#fff" strokeWidth="10" strokeLinecap="round"
+                  strokeDasharray={`${Math.min(1, count / d.repetition) * CIRC} ${CIRC}`} style={{ transition: "stroke-dasharray .15s" }} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center">
+                {done ? <Check className="h-5 w-5" /> : <span className="font-display text-base font-extrabold">{count}</span>}
+              </span>
+            </span>
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="block font-display text-xl font-extrabold">{done ? `${d.repetition}/${d.repetition} ✓` : `${count} / ${d.repetition}`}</span>
+              <span className="block text-[11px] font-semibold text-white/85">
+                {done ? (idx < list.length - 1 ? "Terminé — toucher pour le suivant →" : "Dernier dhikr terminé") : `Toucher pour compter · reste ${d.repetition - count}`}
+              </span>
+            </span>
+          </motion.button>
+
+          <button onClick={() => go(idx + 1)} disabled={idx >= list.length - 1} aria-label="Dhikr suivant"
+            className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 disabled:opacity-30"><ChevronRight className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-1.5 flex justify-center gap-4 text-[11px] font-semibold text-slate-500">
+          {count > 0 && <button onClick={() => onSet((p) => ({ ...p, [d.id]: 0 }))} className="flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" /> Recommencer</button>}
+          {d.repetition > 1 && !done && onOpenTasbih && <button onClick={() => onOpenTasbih(d)} className="text-vert">📿 Tasbih plein écran</button>}
+        </div>
       </div>
 
       {/* Fin de séance */}

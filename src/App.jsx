@@ -1135,7 +1135,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin", onReadKa
               const k = keys.slice(keys.indexOf(activeTab) + 1).find(t => adhkarOfTab(t).some(d => (recited[d.id] || 0) < d.repetition));
               return k ? { key: k, label: TAB_LABELS[k] } : null;
             })()}
-            onGoTab={setActiveTab}/>
+            onGoTab={setActiveTab} onOpenTasbih={setTasbih}/>
         </div>
       ) : (
       <AnimatePresence mode="wait">
