@@ -12,6 +12,7 @@ import HomeScreen from "./HomeScreen";
 import SettingsSheet from "./components/SettingsSheet";
 import StatsPanel from "./components/StatsPanel";
 import TasbihCounter from "./components/TasbihCounter";
+import AdhkarSession from "./components/AdhkarSession";
 import ADHKAR_EXTRA from "./data/adhkarExtra";
 import { localDayKey, logActivity, useProgress, applyArabicScale } from "./lib/progress";
 import { normalizeAr } from "./lib/arabic";
@@ -1002,6 +1003,9 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
   const [recited,   setRecited]   = useState(loadRecitedToday);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [tasbih,    setTasbih]    = useState(null);
+  // affichage : "session" (un dhikr à la fois) ou "list" (toutes les cartes)
+  const [view, setView] = useState(() => storage("adhkar_view", "session"));
+  const changeView = (v) => { setView(v); storageSet("adhkar_view", v); };
   const recitedRef = useRef(recited);
   // si l'app reste ouverte après minuit, on repart de zéro
   useEffect(() => {
@@ -1039,12 +1043,12 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
   const filtered = adhkarOfTab(activeTab);
   const totalDone = filtered.filter(d => (recited[d.id] || 0) >= d.repetition).length;
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 bg-white text-encre min-h-full">
+    <div className={`max-w-2xl mx-auto px-4 bg-white text-encre min-h-full ${view === "session" ? "py-4 space-y-3" : "py-6 space-y-5"}`}>
       <div className="flex items-center justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vert/10 text-vert text-xs font-bold border border-vert/25 uppercase tracking-wider">📿 Madhhab Malikite — Muwatta Mālik</div>
+          {view === "list" && <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-vert/10 text-vert text-xs font-bold border border-vert/25 uppercase tracking-wider">📿 Madhhab Malikite — Muwatta Mālik</div>}
           <h2 className="text-2xl font-display font-black text-encre mt-2">الأذكار اليومية</h2>
-          <p className="text-slate-500 text-xs mt-0.5">{voicesLoaded ? "🔊 Voix arabe prête" : "🔊 Appuie sur le texte arabe pour écouter"}</p>
+          {view === "list" && <p className="text-slate-500 text-xs mt-0.5">{voicesLoaded ? "🔊 Voix arabe prête" : "🔊 Appuie sur le texte arabe pour écouter"}</p>}
         </div>
         <div className="flex flex-col items-end gap-2">
           {!confirmReset ? (
@@ -1073,11 +1077,18 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
           );
         })}
       </div>
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-bleu/5 border border-bleu/15 rounded-2xl">
+      {view === "list" && <div className="flex items-center gap-2 px-3 py-2.5 bg-bleu/5 border border-bleu/15 rounded-2xl">
         <span className="text-lg">🔊</span>
         <p className="text-bleu/80 text-xs">Appuie sur <strong className="text-bleu">🔊</strong> ou le texte arabe pour entendre la récitation. Vitesse lente pour faciliter le suivi.</p>
-      </div>
-      {isFriday && (
+      </div>}
+      {isFriday && view === "session" && (
+        <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs ${isReadThisWeek ? "bg-vert/5 border-vert/30 text-vert" : "bg-jaune/10 border-jaune/40 text-amber-800"}`}>
+          <span>🕌</span>
+          <span className="flex-1 font-semibold">{isReadThisWeek ? "Al-Kahf lu ce vendredi ✅" : "C'est vendredi : lis la sourate Al-Kahf"}</span>
+          {!isReadThisWeek && <button onClick={markRead} className="rounded-lg bg-white px-2 py-1 font-bold border border-jaune/40">Marquer lu</button>}
+        </div>
+      )}
+      {isFriday && view === "list" && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className={`flex items-start gap-3 p-4 rounded-2xl border ${isReadThisWeek ? "bg-vert/5 border-vert/30" : "bg-jaune/10 border-jaune/40"}`}>
           <span className="text-2xl shrink-0">🕌</span>
@@ -1093,7 +1104,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
           )}
         </motion.div>
       )}
-      {filtered.length > 1 && (
+      {view === "list" && filtered.length > 1 && (
         <div className="flex items-center gap-3 px-1">
           <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
             <motion.div className="h-full bg-gradient-to-r from-vert to-emerald-400 rounded-full"
@@ -1103,6 +1114,25 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
           <span className="text-xs text-slate-500 shrink-0">{totalDone}/{filtered.length} adhkār</span>
         </div>
       )}
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+        {[["session", "▶ Mode séance"], ["list", "☰ Liste complète"]].map(([k, l]) => (
+          <button key={k} onClick={() => changeView(k)}
+            className={`rounded-lg py-2 text-xs font-bold ${view === k ? "bg-white text-vert shadow-sm" : "text-slate-500"}`}>{l}</button>
+        ))}
+      </div>
+      {view === "session" ? (
+        <div className="pb-6">
+          <AdhkarSession key={activeTab} list={filtered} recited={recited} onSet={handleSetRecited}
+            speak={speak} speaking={speaking} favorites={favorites} toggleFav={toggleFav}
+            tabLabel={TAB_LABELS[activeTab]?.replace(/^\S+\s/, "")}
+            nextTab={(() => {
+              const keys = Object.keys(TAB_LABELS);
+              const k = keys.slice(keys.indexOf(activeTab) + 1).find(t => adhkarOfTab(t).some(d => (recited[d.id] || 0) < d.repetition));
+              return k ? { key: k, label: TAB_LABELS[k] } : null;
+            })()}
+            onGoTab={setActiveTab}/>
+        </div>
+      ) : (
       <AnimatePresence mode="wait">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4 pb-6">
           {filtered.length === 0 && <p className="text-center text-slate-500 py-10">Aucun dhikr dans cet onglet.</p>}
@@ -1111,6 +1141,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin" }) {
           ))}
         </motion.div>
       </AnimatePresence>
+      )}
       <AnimatePresence>
         {tasbih && (
           <TasbihCounter dhikr={tasbih} count={recited[tasbih.id] || 0}
