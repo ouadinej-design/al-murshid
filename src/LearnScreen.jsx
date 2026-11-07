@@ -402,6 +402,7 @@ import { logActivity, startOfLocalDay } from "./lib/progress";
 import WordsTab from "./components/WordsTab";
 import LearnHub, { TOOLS } from "./components/LearnHub";
 import PathLesson from "./components/PathLesson";
+import { useVerseAudio, wordBounds, wordWeight, arabicWeight } from "./lib/verseAudio";
 import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
 import SurahPicker from "./components/SurahPicker";
 
@@ -1709,11 +1710,80 @@ async function speakArabic(text, rate) {
   window.speechSynthesis.speak(u);
 }
 
+// ═══════════════════════════════════════════════════════
+// VERSET KARAOKÉ : la phonétique s'allume lettre par lettre et le mot arabe en cours
+// est surligné pendant la récitation. Toucher des mots = choisir un passage à travailler.
+// ═══════════════════════════════════════════════════════
+function splitArabicWords(ar) {
+  // les signes de pause isolés (ۚ ۖ …) restent collés au mot précédent
+  const out = [];
+  for (const t of String(ar || "").split(/\s+/).filter(Boolean)) {
+    if (/[\u0621-\u064A\u0671]/.test(t) || !out.length) out.push(t); else out[out.length - 1] += " " + t;
+  }
+  return out;
+}
+
+function KaraokeVerse({ ar, tr, info, pos, sel, onTap, results }) {
+  const arW = splitArabicWords(ar);
+  const trW = String(tr || "").split(/\s+/).filter(Boolean);
+  const arB = info ? wordBounds(arW.map(arabicWeight), info.start, info.end) : null;
+  const trB = info ? wordBounds(trW.map(wordWeight), info.start, info.end) : null;
+  const cur = arB && pos != null ? arB.findIndex((t, i) => i < arW.length && pos >= t && pos < arB[i + 1]) : -1;
+  // correspondance mot phonétique → mot arabe (même nombre : 1 pour 1, sinon par le temps)
+  const trToAr = (j) => {
+    if (trW.length === arW.length) return j;
+    return Math.min(arW.length - 1, Math.floor((j / Math.max(1, trW.length)) * arW.length));
+  };
+  const inSel = (i) => sel && i >= sel.a && i <= sel.b;
+  const status = (i) => results?.[i]?.status;
+  const statusColor = { correct: "#059669", close: "#B45309", wrong: "#DC2626", missing: "#64748B" };
+
+  return (
+    <div>
+      <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-1 py-2" dir="rtl">
+        {arW.map((w, i) => (
+          <button key={i} onClick={() => onTap(i)} aria-label={`Mot ${i + 1}`}
+            className={`rounded-xl px-1.5 transition-all ${inSel(i) ? "bg-jaune/40 ring-2 ring-jaune" : ""} ${i === cur ? "bg-vert/15 scale-110" : ""}`}
+            style={{ lineHeight: 2.3, borderBottom: status(i) ? `3px solid ${statusColor[status(i)]}` : "3px solid transparent" }}>
+            <LetterByLetter text={w} size="clamp(1.4rem,5vw,1.9rem)"/>
+          </button>
+        ))}
+      </div>
+      {trW.length > 0 && (
+        <p className="mt-2 flex flex-wrap justify-center gap-x-1.5 text-[15px] font-semibold leading-relaxed" dir="ltr">
+          {trW.map((w, j) => {
+            const a = trB?.[j], b = trB?.[j + 1];
+            const f = pos == null || a == null ? (cur === -1 && pos != null ? 0 : -1) : Math.max(0, Math.min(1, (pos - a) / (b - a)));
+            const lit = f < 0 ? 0 : Math.round(f * w.length);
+            const selected = inSel(trToAr(j));
+            return (
+              <span key={j} onClick={() => onTap(trToAr(j))} role="button"
+                className={`cursor-pointer rounded-md px-0.5 ${selected ? "bg-jaune/40" : ""}`}>
+                {pos == null
+                  ? <span className="text-blue-700">{w}</span>
+                  : <>
+                      <span style={{ color: "#00A19A", textShadow: "0 0 10px rgba(0,161,154,.35)" }}>{w.slice(0, lit)}</span>
+                      <span className="text-slate-400">{w.slice(lit)}</span>
+                    </>}
+              </span>
+            );
+          })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }) {
   const [mode, setMode] = useState(null);
   const [selectedSurah, setSelectedSurah] = useState(PROF_SURAHS[0]);
   const [surahLoading, setSurahLoading] = useState(false);
   const [surahError, setSurahError] = useState("");
+  const va = useVerseAudio();
+  const [sel, setSel] = useState(null);          // passage choisi { a, b } (indices de mots arabes)
+  const [loopTimes, setLoopTimes] = useState(3);
+  const [slow, setSlow] = useState(false);
+  const [segResult, setSegResult] = useState(false);
   const [memo, setMemo] = useState(() => getMemorized(PROF_SURAHS[0].number));
   // Choix parmi les 114 : versets locaux si disponibles, sinon chargés depuis l'API
   const chooseSurah = async (num) => {
@@ -1754,33 +1824,12 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
   const recognitionRef = useRef(null);
   const profCtxRef = useRef(null);
   const profSrcRef = useRef(null);
-  const doReset = () => { setMode(null); setStep("idle"); setTranscript(""); setResults(null); setScore(null); setLetterResult(null); setSessionScores([]); recognitionRef.current?.stop(); if (profSrcRef.current) { try { profSrcRef.current.stop(); } catch(e) {} } };
+  const doReset = () => { setMode(null); setStep("idle"); setTranscript(""); setResults(null); setScore(null); setLetterResult(null); setSessionScores([]); setSel(null); setSegResult(false); recognitionRef.current?.stop(); va.stop(); };
 
   // Joue un verset avec la voix d'Alafasy via XMLHttpRequest (bypass SW)
-  const playAlafasyVerse = (surahNum, verseNum) => {
-    const proxyUrl = window.location.origin + "/api/audio?slug=ar.alafasy&v=" + gvLS(surahNum, verseNum);
-    if (!profCtxRef.current || profCtxRef.current.state === "closed") {
-      profCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const ctx = profCtxRef.current;
-    if (ctx.state === "suspended") ctx.resume();
-    if (profSrcRef.current) { try { profSrcRef.current.stop(); } catch(e) {} }
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", proxyUrl, true);
-    xhr.responseType = "arraybuffer";
-    xhr.onload = () => {
-      if (xhr.status !== 200) return;
-      ctx.decodeAudioData(xhr.response, (audioBuf) => {
-        const src = ctx.createBufferSource();
-        src.buffer = audioBuf;
-        src.connect(ctx.destination);
-        profSrcRef.current = src;
-        src.start(0);
-      }, () => {});
-    };
-    xhr.onerror = () => {};
-    xhr.send();
-  };
+  const audioUrl = (surahNum, verseNum) => window.location.origin + "/api/audio?slug=ar.alafasy&v=" + gvLS(surahNum, verseNum);
+  // Joue un verset avec la voix d'Alafasy (effet karaoké sur le texte)
+  const playAlafasyVerse = (surahNum, verseNum) => { va.play(audioUrl(surahNum, verseNum), { rate: slow ? 0.75 : 1 }); };
 
   useEffect(() => {
     if (initialSurah) { chooseSurah(initialSurah); if (initialMode) setMode(initialMode); }
@@ -1788,6 +1837,8 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
 
   const verse = selectedSurah.verses[verseIdx];
   const letter = ALPHABET[letterIdx];
+  // nouveau verset : on oublie le passage choisi et on coupe l'audio
+  useEffect(() => { setSel(null); setSegResult(false); va.stop(); }, [verseIdx, selectedSurah]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Détecte si le navigateur supporte la reconnaissance vocale
   useEffect(() => {
@@ -1831,19 +1882,26 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
   const stopRec = () => { recognitionRef.current?.stop(); setStep("idle"); };
 
   // ── Résultat Verset / Mot ──────────────────────────────
-  const handleVerseResult = useCallback((heard, wordMode, alts) => {
-    const best = bestTranscript(verse.ar, alts && alts.length ? alts : [heard]);
+  const handleVerseResult = useCallback((heard, wordMode, alts, seg) => {
+    const best = bestTranscript(seg ? seg.text : verse.ar, alts && alts.length ? alts : [heard]);
     const res = best.results;
     const sc = best.score;
     setTranscript(best.heard);
     if (sc >= 60) logActivity("recite");
     // verset validé : compté comme appris (mémorisation, ex. objectif Al-Kahf)
-    if (sc >= MEMO_THRESHOLD && markVerseLearned(selectedSurah.number, verse.n)) setMemo(getMemorized(selectedSurah.number));
-    setResults(wordMode ? res : null);
+    if (!seg && sc >= MEMO_THRESHOLD && markVerseLearned(selectedSurah.number, verse.n)) setMemo(getMemorized(selectedSurah.number));
+    setSegResult(!!seg);
+    setResults(wordMode || seg ? res : null);
     setScore(sc);
     setStep("result");
     setSessionScores(prev => [...prev, sc]);
 
+    // Passage choisi : on le rejoue une fois s'il n'est pas encore maîtrisé
+    if (seg) {
+      if (sc >= 90) profSpeak("Mashā Allāh ! Ce passage est maîtrisé.");
+      else profSpeak("Écoute encore le passage, puis répète.", "fr-FR", () => seg.replay());
+      return;
+    }
     // Le prof parle selon le score
     if (sc >= 95) {
       profSpeak("Mashā Allāh ! Excellent, ta récitation est parfaite !");
@@ -2052,7 +2110,7 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
         score>=70 ? "bg-blue-50 border-blue-500/30" :
         "bg-orange-50 border-orange-500/25"}`}>
 
-        {results && isWordMode ? (
+        {results && isWordMode && !segResult ? (
           <div className="flex flex-wrap justify-center gap-3 py-3" dir="rtl">
             {results.map((r,i) => {
               const color = r.status==="correct" ? "#059669"
@@ -2082,12 +2140,15 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
             })}
           </div>
         ) : (
-          <div className="py-3" style={{lineHeight:"3"}}>
-            <LetterByLetter text={verse.ar} size="clamp(1.3rem,4.5vw,1.8rem)"/>
-          </div>
+          <KaraokeVerse ar={verse.ar} tr={verse.tr} info={va.info} pos={va.pos} sel={sel}
+            results={segResult && sel && results ? Object.fromEntries(results.map((r, k) => [sel.a + k, r])) : null}
+            onTap={(i) => {
+              va.load(audioUrl(selectedSurah.number, verse.n)).catch(() => {});
+              setSegResult(false);
+              setSel(p => !p ? { a: i, b: i } : (p.a === p.b && i !== p.a) ? { a: Math.min(p.a, i), b: Math.max(p.a, i) } : (i >= p.a && i <= p.b && p.a === p.b) ? null : { a: i, b: i });
+            }}/>
         )}
-
-        <p className="text-blue-700 text-xs italic mt-1" dir="ltr">{verse.tr}</p>
+        {!sel && <p className="mt-1 text-[11px] text-slate-400">👆 Touche un mot (puis un 2ᵉ) pour travailler seulement ce passage</p>}
 
         {score !== null && (
           <motion.div initial={{opacity:0,scale:0.9}} animate={{opacity:1,scale:1}} className="mt-3 space-y-1">
@@ -2104,6 +2165,45 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
         {step==="listening" && <p className="text-purple-700 text-sm mt-2 font-bold animate-pulse">🎙️ Je t'écoute… récite lentement</p>}
       </div>
 
+      {/* Passage choisi : écouter en boucle, puis le réciter seul */}
+      {sel && (() => {
+        const words = splitArabicWords(verse.ar);
+        const segText = words.slice(sel.a, sel.b + 1).join(" ");
+        const b = va.info ? wordBounds(words.map(arabicWeight), va.info.start, va.info.end) : null;
+        const from = b ? Math.max(0, b[sel.a] - 0.12) : undefined, to = b ? b[sel.b + 1] + 0.25 : undefined;
+        const playSeg = (times = loopTimes) => va.play(audioUrl(selectedSurah.number, verse.n), { from, to, times, rate: slow ? 0.75 : 1 });
+        return (
+          <div className="space-y-2.5 rounded-2xl border-2 border-jaune bg-jaune/10 p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-amber-800">Passage à travailler · mot{sel.a === sel.b ? ` ${sel.a + 1}` : `s ${sel.a + 1} à ${sel.b + 1}`}</p>
+              <button onClick={() => { setSel(null); setSegResult(false); va.stop(); }} className="text-xs font-bold text-slate-500">✕ Annuler</button>
+            </div>
+            <p dir="rtl" lang="ar" className="text-center text-2xl" style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif" }}>{segText}</p>
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+              <span className="text-slate-500">Répéter :</span>
+              {[1, 3, 5, 10, Infinity].map(n => (
+                <button key={n} onClick={() => setLoopTimes(n)}
+                  className={`rounded-full px-2.5 py-1 border ${loopTimes === n ? "bg-amber-600 text-white border-amber-600" : "bg-white text-slate-600 border-slate-200"}`}>
+                  {n === Infinity ? "∞" : `${n}×`}
+                </button>
+              ))}
+              <button onClick={() => setSlow(v => !v)} className={`ml-auto rounded-full px-2.5 py-1 border ${slow ? "bg-bleu text-white border-bleu" : "bg-white text-slate-600 border-slate-200"}`}>🐢 Lent</button>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => va.playing ? va.stop() : playSeg()} disabled={va.loading}
+                className="flex-1 rounded-xl bg-amber-600 py-3 text-sm font-bold text-white disabled:opacity-60">
+                {va.loading ? "⏳ Chargement…" : va.playing ? "⏹ Stop" : `🔁 Écouter ${loopTimes === Infinity ? "en boucle" : loopTimes + "×"}`}
+              </button>
+              <button onClick={() => step === "listening" ? stopRec() : startRec((h, alts) => handleVerseResult(h, true, alts, { text: segText, replay: () => playSeg(1) }))}
+                className={`flex-1 rounded-xl py-3 text-sm font-bold text-white ${step === "listening" ? "bg-red-500" : "bg-purple-600"}`}>
+                {step === "listening" ? "⏹ Stop" : "🎙️ Réciter ce passage"}
+              </button>
+            </div>
+            {segResult && score !== null && <p className="text-center text-xs font-semibold text-slate-600">Passage : {score} % {score >= 90 ? "— maîtrisé ✓" : "— recommence jusqu'à 90 %"}</p>}
+          </div>
+        );
+      })()}
+
       {/* Ce que j'ai entendu */}
       {transcript && step==="result" && (
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3">
@@ -2114,9 +2214,9 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
 
       {/* Boutons principaux */}
       <div className="flex gap-2">
-        <button onClick={() => { playAlafasyVerse(selectedSurah.number, verse.n); }}
+        <button onClick={() => { va.playing ? va.stop() : playAlafasyVerse(selectedSurah.number, verse.n); }}
           className="flex-1 py-3.5 bg-emerald-500/15 border border-emerald-500/25 text-emerald-700 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-          <Volume2 className="w-4 h-4"/> Écouter
+          <Volume2 className="w-4 h-4"/> {va.loading ? "Chargement…" : va.playing ? "Stop" : "Écouter"}
         </button>
         <motion.button whileTap={{scale:0.95}}
           onClick={() => step==="listening" ? stopRec() : startRec((h, alts) => handleVerseResult(h, isWordMode, alts))}
