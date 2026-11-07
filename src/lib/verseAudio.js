@@ -83,7 +83,7 @@ export function useVerseAudio() {
       const res = await fetch(url);
       if (!res.ok) throw new Error("audio");
       const arr = await res.arrayBuffer();
-      const buffer = await new Promise((ok, ko) => ctxRef.current.decodeAudioData(arr, ok, ko));
+      const buffer = await new Promise((ok, ko) => { const p = ctxRef.current.decodeAudioData(arr, ok, ko); if (p?.catch) p.catch(ko); });
       const c = { buffer, range: speechRange(buffer) };
       cache.set(url, c);
       if (cache.size > 30) cache.delete(cache.keys().next().value);

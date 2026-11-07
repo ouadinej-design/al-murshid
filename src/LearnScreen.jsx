@@ -403,6 +403,7 @@ import WordsTab from "./components/WordsTab";
 import LearnHub, { TOOLS } from "./components/LearnHub";
 import PathLesson from "./components/PathLesson";
 import { useVerseAudio, wordBounds, wordWeight, arabicWeight } from "./lib/verseAudio";
+import { diagnose, diagnosisSentence } from "./lib/diagnosis";
 import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
 import SurahPicker from "./components/SurahPicker";
 
@@ -1891,7 +1892,7 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
     // verset validé : compté comme appris (mémorisation, ex. objectif Al-Kahf)
     if (!seg && sc >= MEMO_THRESHOLD && markVerseLearned(selectedSurah.number, verse.n)) setMemo(getMemorized(selectedSurah.number));
     setSegResult(!!seg);
-    setResults(wordMode || seg ? res : null);
+    setResults(res); // détail mot par mot gardé dans tous les modes (diagnostic)
     setScore(sc);
     setStep("result");
     setSessionScores(prev => [...prev, sc]);
@@ -1910,10 +1911,9 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
       if (wrong.length) {
         profSpeak(`Bien ! Retravaille ces mots : ${wrong.slice(0,3).join("، ")}`, "fr-FR", () => playAlafasyVerse(selectedSurah.number, verse.n));
       } else profSpeak("Très bien ! Continue comme ça !");
-    } else if (sc >= 60) {
-      profSpeak("Écoute d'abord bien le verset, puis répète lentement.", "fr-FR", () => playAlafasyVerse(selectedSurah.number, verse.n));
     } else {
-      profSpeak("Recommençons. Je vais lire le verset, répète après moi.", "fr-FR", () => playAlafasyVerse(selectedSurah.number, verse.n));
+      // sous 80 % : on dit où ça a coincé (le détail s'affiche à l'écran)
+      profSpeak(diagnosisSentence(diagnose(res), res.length) || "Recommençons. Écoute bien le verset, puis répète.");
     }
   }, [verse, selectedSurah, profSpeak, playAlafasyVerse]);
 
@@ -2141,7 +2141,7 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
           </div>
         ) : (
           <KaraokeVerse ar={verse.ar} tr={verse.tr} info={va.info} pos={va.pos} sel={sel}
-            results={segResult && sel && results ? Object.fromEntries(results.map((r, k) => [sel.a + k, r])) : null}
+            results={!results ? null : segResult && sel ? Object.fromEntries(results.map((r, k) => [sel.a + k, r])) : (!segResult && score !== null && score < 80) ? results : null}
             onTap={(i) => {
               va.load(audioUrl(selectedSurah.number, verse.n)).catch(() => {});
               setSegResult(false);
@@ -2164,6 +2164,49 @@ function ProfesseurTab({ surahIndex = [], loadSurah, initialSurah, initialMode }
         )}
         {step==="listening" && <p className="text-purple-700 text-sm mt-2 font-bold animate-pulse">🎙️ Je t'écoute… récite lentement</p>}
       </div>
+
+      {/* Diagnostic : où ça a coincé (sous 80 %) */}
+      {score !== null && results && score < (segResult ? 90 : 80) && (() => {
+        const problems = diagnose(results);
+        if (!problems.length) return null;
+        const trW = String(verse.tr || "").split(/\s+/).filter(Boolean);
+        const arCount = splitArabicWords(verse.ar).length;
+        const offset = segResult && sel ? sel.a : 0;
+        return (
+          <div className="space-y-2 rounded-2xl border-2 border-rouge/30 bg-rouge/5 p-3">
+            <p className="text-sm font-extrabold text-rouge">🔍 Où ça a coincé — {problems.length} mot{problems.length > 1 ? "s" : ""} sur {results.length}</p>
+            {problems.map((p) => {
+              const i = p.index + offset;
+              const phon = trW.length === arCount ? trW[i] : null;
+              return (
+                <div key={p.index} className="rounded-xl border border-slate-200 bg-white p-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600">{i + 1}</span>
+                    <span dir="rtl" lang="ar" className="text-xl" style={{ fontFamily: "'Amiri Quran','Scheherazade New',serif" }}>{p.word}</span>
+                    {phon && <span className="text-xs font-semibold text-blue-700">{phon}</span>}
+                    <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold ${p.status === "close" ? "bg-amber-100 text-amber-800" : p.status === "missing" ? "bg-slate-200 text-slate-600" : "bg-rouge/15 text-rouge"}`}>{p.label}</span>
+                  </div>
+                  {p.spoken && <p className="mt-1 text-xs text-slate-500">J'ai entendu : <span dir="rtl" lang="ar" className="text-base text-rouge" style={{ fontFamily: "'Amiri Quran',serif" }}>{p.spoken}</span></p>}
+                  {p.tips.map((t) => (
+                    <p key={t.letters} className="mt-1 rounded-lg bg-jaune/15 px-2 py-1 text-[11px] text-amber-900">
+                      <span className="block font-bold">Tu as dit <bdi className="text-base">{t.said}</bdi> au lieu de <bdi className="text-base">{t.expected}</bdi></span>
+                      <span className="block" dir="ltr">{t.tip}</span>
+                    </p>
+                  ))}
+                  <button onClick={() => { setSel({ a: i, b: i }); setSegResult(false); setScore(null); setStep("idle"); va.load(audioUrl(selectedSurah.number, verse.n)).catch(() => {}); }}
+                    className="mt-2 rounded-lg bg-amber-600 px-3 py-1.5 text-[11px] font-bold text-white">🔁 Travailler ce mot</button>
+                </div>
+              );
+            })}
+            {problems.length > 1 && (
+              <button onClick={() => { const a = problems[0].index + offset, b = problems[problems.length - 1].index + offset; setSel({ a, b }); setSegResult(false); setScore(null); setStep("idle"); va.load(audioUrl(selectedSurah.number, verse.n)).catch(() => {}); }}
+                className="w-full rounded-xl border border-amber-600 py-2 text-xs font-bold text-amber-700">
+                Travailler tout le passage (mots {problems[0].index + offset + 1} à {problems[problems.length - 1].index + offset + 1})
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Passage choisi : écouter en boucle, puis le réciter seul */}
       {sel && (() => {
