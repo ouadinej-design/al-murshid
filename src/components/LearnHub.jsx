@@ -99,7 +99,7 @@ export default function LearnHub({ due, onOpenTool, onOpenLesson }) {
                               className={`relative flex h-16 w-16 items-center justify-center rounded-full border-b-4 font-display text-lg font-extrabold transition-all
                                 ${d ? "border-[#007A74] bg-vert text-white" : current ? "border-[#0B3A78] bg-bleu text-white ring-4 ring-bleu/20" : unlocked ? "border-slate-300 bg-white text-bleu" : "border-slate-200 bg-slate-100 text-slate-300"}`}>
                               {d ? <Check className="h-7 w-7" /> : unlocked ? u + 1 : <Lock className="h-5 w-5" />}
-                              {current && <span className="absolute -top-7 whitespace-nowrap rounded-lg bg-bleu px-2 py-0.5 text-[10px] font-bold text-white">Commencer</span>}
+                              {current && <span className={`absolute top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-bleu px-2 py-0.5 text-[10px] font-bold text-white ${offset > 0 ? "right-full mr-2" : "left-full ml-2"}`}>{u === 0 ? "Commencer" : "Continuer"}</span>}
                             </motion.button>
                             <span className="mt-1 text-[10px] font-semibold text-slate-400">
                               {d ? "⭐".repeat(d.stars) : UNITS[u][0]?.fr.split(/[ /(]/)[0]}

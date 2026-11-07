@@ -28,12 +28,22 @@ export default function PathLesson({ unit, onClose, onDone }) {
   const words = UNITS[unit];
   const pool = useMemo(() => [...words, ...RANKED.slice(Math.max(0, unit * 5 - 40), unit * 5 + 45)], [unit, words]);
 
+  // mots de la leçon précédente (repris en entier dans le test) + quelques mots plus anciens
+  const prevWords = useMemo(() => (unit > 0 ? UNITS[unit - 1].map((w) => ({ ...w, from: unit })) : []), [unit]);
+  const olderWords = useMemo(() => (unit > 1
+    ? UNITS.slice(0, unit - 1).flatMap((u, k) => u.map((w) => ({ ...w, from: k + 1 }))).sort(() => Math.random() - 0.5).slice(0, 5)
+    : []), [unit]);
+  const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
+
   // file des exercices
   const initialQueue = useMemo(() => [
     ...words.map((w) => ({ kind: "learn", w })),
-    ...[...words].sort(() => Math.random() - 0.5).map((w) => ({ kind: "ar2fr", w })),
-    ...[...words].sort(() => Math.random() - 0.5).map((w) => ({ kind: "fr2ar", w })),
-  ], [words]);
+    // test : les 5 nouveaux mots + les 5 de la leçon d'avant, mélangés, dans les deux sens
+    ...shuffle([...words, ...prevWords]).map((w) => ({ kind: "ar2fr", w })),
+    ...shuffle([...words, ...prevWords]).map((w) => ({ kind: "fr2ar", w })),
+    // rappel rapide de mots plus anciens
+    ...olderWords.map((w) => ({ kind: "ar2fr", w, old: true })),
+  ], [words, prevWords, olderWords]); // eslint-disable-line react-hooks/exhaustive-deps
   const [queue, setQueue] = useState(initialQueue);
   const [pos, setPos] = useState(0);
   const [picked, setPicked] = useState(null);
@@ -43,7 +53,8 @@ export default function PathLesson({ unit, onClose, onDone }) {
   const item = queue[pos];
   const options = useMemo(() => (item && item.kind !== "learn" ? makeOptions(item.w, item.kind === "ar2fr" ? "fr" : "ar", pool) : []), [item, pool]);
   const progress = Math.round((pos / queue.length) * 100);
-  const stepLabel = !item ? "" : item.kind === "learn" ? "1 · Découvrir" : item.kind === "ar2fr" ? "2 · Reconnaître" : "3 · Retrouver";
+  const stepLabel = !item ? "" : item.kind === "learn" ? "1 · Découvrir" : item.old ? "4 · Rappel des anciens mots" : item.kind === "ar2fr" ? "2 · Reconnaître" : "3 · Retrouver";
+  const origin = item?.w.from ? `Révision · leçon ${item.w.from}` : item && item.kind !== "learn" ? "Nouveau mot" : "";
 
   const next = () => {
     setPicked(null);
@@ -76,6 +87,7 @@ export default function PathLesson({ unit, onClose, onDone }) {
       <motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="text-5xl">{"⭐".repeat(result.stars)}{"☆".repeat(3 - result.stars)}</motion.p>
       <h2 className="mt-4 font-display text-2xl font-extrabold">Leçon {unit + 1} terminée !</h2>
       <p className="mt-1 text-sm text-slate-500">{Math.round(result.acc * 100)} % de bonnes réponses · +{10 + words.length * 2} XP</p>
+      {prevWords.length > 0 && <p className="mt-1 text-xs text-slate-400">5 nouveaux mots + {prevWords.length + olderWords.length} mots révisés des leçons précédentes</p>}
       <div className="mt-5 w-full max-w-xs space-y-1.5">
         {words.map((w) => (
           <div key={w.id} className="flex items-center justify-between rounded-xl bg-white px-3 py-2 border border-slate-200">
@@ -94,14 +106,17 @@ export default function PathLesson({ unit, onClose, onDone }) {
     </div>
   ) : (
     <div className="flex flex-1 flex-col px-5 pb-6">
-      <p className="mt-3 text-xs font-extrabold uppercase tracking-wider text-vert">{stepLabel}{item.retry ? " · on retente" : ""}</p>
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs font-extrabold uppercase tracking-wider text-vert">{stepLabel}{item.retry ? " · on retente" : ""}</p>
+        {origin && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.w.from ? "bg-bleu/10 text-bleu" : "bg-jaune/30 text-amber-800"}`}>{origin}</span>}
+      </div>
 
       <AnimatePresence mode="wait">
         <motion.div key={pos} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.18 }}
           className="flex flex-1 flex-col">
           {item.kind === "learn" && (
             <>
-              <p className="mt-1 text-sm text-slate-500">Nouveau mot {words.indexOf(item.w) + 1}/{words.length}</p>
+              <p className="mt-1 text-sm text-slate-500">Nouveau mot {words.indexOf(item.w) + 1}/{words.length}{prevWords.length ? " · le test reprendra aussi les mots de la leçon " + unit : ""}</p>
               <div className="mt-4 flex flex-1 flex-col items-center justify-center rounded-3xl border-2 border-bleu/20 bg-white p-6 text-center shadow-sm">
                 <p dir="rtl" lang="ar" className="text-6xl leading-[1.6] text-encre" style={AR}>{item.w.ar}</p>
                 <p className="mt-2 text-lg font-semibold text-bleu">{item.w.tr}</p>
