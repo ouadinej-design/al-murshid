@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus } from "lucide-react";
+import { useState } from "react";
 import { useProgress, updateSettings, ACTIVITIES } from "../lib/progress";
+import { RESET_GROUPS, resetData } from "../lib/reset";
 
 const GOALS = [5, 10, 15, 20, 30];
 const MIN = 0.85, MAX = 1.6, STEP = 0.05;
@@ -16,6 +18,14 @@ const STEPS = {
 
 export default function SettingsSheet({ open, onClose }) {
   const { settings } = useProgress();
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetSel, setResetSel] = useState(() => RESET_GROUPS.filter((g) => g.def).map((g) => g.key));
+  const doReset = () => {
+    const labels = RESET_GROUPS.filter((g) => resetSel.includes(g.key)).map((g) => "• " + g.label).join("\n");
+    if (!resetSel.length || !window.confirm(`Effacer définitivement :\n${labels}\n\nTes réglages, favoris et repères sont conservés.`)) return;
+    resetData(resetSel);
+    window.location.reload();
+  };
   const scale = settings.arabicScale;
   const setScale = (v) => updateSettings({ arabicScale: Math.round(Math.min(MAX, Math.max(MIN, v)) * 100) / 100 });
 
@@ -116,6 +126,30 @@ export default function SettingsSheet({ open, onClose }) {
                 ))}
               </div>
               <p className="mt-1.5 text-[11px] text-slate-400">À ce rythme : sourate apprise en environ {Math.ceil(110 / (settings.kahfWeekly || 10))} semaines.</p>
+            </section>
+
+            {/* Repartir de zéro */}
+            <section className="mb-5 rounded-2xl border border-rouge/20 bg-rouge/5 p-3">
+              <button onClick={() => setResetOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
+                <span className="text-sm font-bold text-rouge">🔄 Repartir de zéro</span>
+                <span className="text-xs text-slate-500">{resetOpen ? "▲" : "▼"}</span>
+              </button>
+              {resetOpen && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-[11px] text-slate-500">Coche ce que tu veux effacer. Tes réglages, favoris et repères sont toujours gardés.</p>
+                  {RESET_GROUPS.map((g) => (
+                    <label key={g.key} className="flex items-start gap-2 rounded-xl bg-white p-2.5 text-sm border border-slate-200">
+                      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#E30613]" checked={resetSel.includes(g.key)}
+                        onChange={(e) => setResetSel((s) => e.target.checked ? [...s, g.key] : s.filter((k) => k !== g.key))} />
+                      <span>{g.label}</span>
+                    </label>
+                  ))}
+                  <button onClick={doReset} disabled={!resetSel.length}
+                    className="w-full rounded-xl bg-rouge py-3 text-sm font-bold text-white disabled:opacity-40">
+                    Effacer et commencer aujourd'hui
+                  </button>
+                </div>
+              )}
             </section>
 
             <p className="text-center text-[11px] text-slate-400">Al-Murshid · ta progression reste sur ton téléphone</p>
