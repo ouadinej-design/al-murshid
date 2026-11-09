@@ -1,25 +1,33 @@
 import { motion } from "framer-motion";
-import { Check, Settings2, ChevronRight } from "lucide-react";
+import { Check, Settings2, ChevronRight, RotateCcw } from "lucide-react";
 
 /**
  * Carte « Mon programme du jour » (accueil).
  * rows : [{ item, done, sub }] ; toucher la ligne = lancer l'action, toucher la case = cocher/décocher.
  */
-export default function DailyProgram({ rows, onRun, onToggle, onEdit }) {
+export default function DailyProgram({ rows, onRun, onToggle, onEdit, onReset }) {
   const done = rows.filter((r) => r.done).length;
   const all = rows.length > 0 && done === rows.length;
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label="Mon programme du jour">
       <div className="flex items-center justify-between px-4 pb-2 pt-3.5">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Mon programme du jour</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Mon programme du jour · repart à zéro chaque jour</p>
           <p className="font-display text-lg font-extrabold text-encre">
             {all ? "🎉 Tout est fait !" : `${done} / ${rows.length} fait${done > 1 ? "s" : ""}`}
           </p>
         </div>
-        <button onClick={onEdit} className="flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-500">
-          <Settings2 className="h-3.5 w-3.5" /> Modifier
-        </button>
+        <div className="flex gap-1.5">
+          {done > 0 && (
+            <button onClick={() => { if (window.confirm("Tout réinitialiser ? Les cases et les compteurs d'adhkar du programme repartent à zéro pour aujourd'hui.")) onReset(); }}
+              aria-label="Tout réinitialiser" className="flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-500">
+              <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
+            </button>
+          )}
+          <button onClick={onEdit} className="flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-500">
+            <Settings2 className="h-3.5 w-3.5" /> Modifier
+          </button>
+        </div>
       </div>
       <div className="mx-4 mb-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
         <motion.div className="h-full rounded-full bg-vert" animate={{ width: `${rows.length ? (done / rows.length) * 100 : 0}%` }} />

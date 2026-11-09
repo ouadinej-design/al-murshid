@@ -867,14 +867,23 @@ function loadRecitedToday() {
   return saved && saved.day === localDayKey() ? saved.counts || {} : {};
 }
 function saveRecitedToday(counts) { storageSet(RECITED_KEY, { day: localDayKey(), counts }); }
+// Les adhkar « matin et soir » se récitent DEUX fois par jour : le soir, ils ont leur propre
+// compteur (identifiant « soir:N »), distinct de celui du matin (identifiant N).
 function adhkarOfTab(tab) {
   return ALL_ADHKAR.filter(d => {
     const cat = d.category.toLowerCase();
     if (tab === "matin") return cat === "matin" || cat === "matin_soir";
     if (tab === "soir")  return cat === "soir"  || cat === "matin_soir";
     return cat === tab;
-  });
+  }).map(d => (tab === "soir" && d.category.toLowerCase() === "matin_soir") ? { ...d, id: `soir:${d.id}`, baseId: d.id, slot: "soir" } : d);
 }
+// tous les « créneaux » d'adhkar de la journée (un matin_soir compte deux fois)
+const ADHKAR_SLOTS = (() => {
+  const seen = new Map();
+  ["matin", "soir", "priere", "sommeil", "repas", "voyage", "detresse"].forEach(t => adhkarOfTab(t).forEach(d => seen.set(d.id, d)));
+  ALL_ADHKAR.forEach(d => { if (!seen.has(d.id)) seen.set(d.id, d); });
+  return [...seen.values()];
+})();
 
 function useArabicSpeech() {
   const [speaking, setSpeaking] = useState(null);
@@ -1044,7 +1053,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin", onReadKa
     const prev = recitedRef.current;
     const next = typeof updater === "function" ? updater(prev) : updater;
     // +1 activité pour chaque dhikr qui vient d'être complété
-    ALL_ADHKAR.forEach(d => {
+    ADHKAR_SLOTS.forEach(d => {
       if ((prev[d.id] || 0) < d.repetition && (next[d.id] || 0) >= d.repetition) logActivity("adhkar");
     });
     recitedRef.current = next;
@@ -1940,11 +1949,21 @@ export default function App() {
   const [programEdit, setProgramEdit] = useState(false);
   const [homeTasbih, setHomeTasbih] = useState(null);
   const [recitedTick, setRecitedTick] = useState(0);
+  const [dayKey, setDayKey] = useState(localDayKey);
+  useEffect(() => {
+    const check = () => {
+      const k = localDayKey();
+      if (k !== dayKey) { setDayKey(k); setManualDoneState(getManualDone()); setRecitedTick(t => t + 1); }
+    };
+    const id = setInterval(check, 30000);
+    document.addEventListener("visibilitychange", check); // au retour sur l'app
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", check); };
+  }, [dayKey]);
   // modifie les compteurs d'adhkar du jour (et compte les adhkar complétés dans l'objectif)
   const updateRecited = useCallback((updater) => {
     const prev = loadRecitedToday();
     const next = typeof updater === "function" ? updater(prev) : updater;
-    ALL_ADHKAR.forEach(d => { if ((prev[d.id] || 0) < d.repetition && (next[d.id] || 0) >= d.repetition) logActivity("adhkar"); });
+    ADHKAR_SLOTS.forEach(d => { if ((prev[d.id] || 0) < d.repetition && (next[d.id] || 0) >= d.repetition) logActivity("adhkar"); });
     saveRecitedToday(next);
     setRecitedTick(t => t + 1);
   }, []);
@@ -2006,7 +2025,7 @@ export default function App() {
       words: { learned, due: dueReviews, nextLesson: (() => { const d = storage("path_progress_v1", { done: {} }).done || {}; let i = 0; while (d[i]) i++; return i < 100 ? i + 1 : null; })() },
       todayReading, bookmarksCount,
     };
-  }, [page, juzProgram.program, juzProgram.dailyCompleted, recitedTick]);
+  }, [page, juzProgram.program, juzProgram.dailyCompleted, recitedTick, dayKey]);
 
   // Inject tajweed CSS globally once
   useEffect(() => {
@@ -2066,7 +2085,7 @@ export default function App() {
         const n = list.filter(d => (recited[d.id] || 0) >= d.repetition).length;
         done = list.length > 0 && n === list.length; sub = `${n}/${list.length} récités`;
       } else if (item.type === "dhikr") {
-        const d = ALL_ADHKAR.find(x => x.id === item.ref);
+        const d = ADHKAR_SLOTS.find(x => x.id === item.ref);
         const c = recited[item.ref] || 0;
         done = !!d && c >= d.repetition; sub = d ? `${Math.min(c, d.repetition)} / ${d.repetition}${done ? "" : " · toucher pour le chapelet"}` : "";
       } else if (item.type === "reading") {
@@ -2082,11 +2101,12 @@ export default function App() {
       }
       return { item, done: done || manualDone.includes(item.id), sub };
     });
-  }, [page, homeData, programItems, manualDone, fridayKahf.isReadThisWeek, todayActivity, recitedTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, homeData, programItems, manualDone, fridayKahf.isReadThisWeek, todayActivity, recitedTick, dayKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const programCatalog = useMemo(() => [
     ...Object.entries(TAB_LABELS).map(([k, l]) => ({ group: "Adhkar (catégories)", type: "adhkarTab", ref: k, icon: l.split(" ")[0], label: `Adhkar · ${l.split(" ").slice(1).join(" ")}` })),
-    ...ALL_ADHKAR.filter(d => d.repetition >= 3).map(d => ({ group: "Dhikr précis (avec chapelet)", type: "dhikr", ref: d.id, icon: "📿", label: `${d.title.replace(/^\d+\.\s*/, "").replace(/\s*\(.*\)\s*$/, "")} ×${d.repetition}` })),
+    ...ADHKAR_SLOTS.filter(d => d.repetition >= 3).map(d => ({ group: "Dhikr précis (avec chapelet)", type: "dhikr", ref: d.id, icon: d.slot === "soir" ? "🌇" : d.category.toLowerCase() === "matin_soir" ? "🌅" : "📿",
+      label: `${d.title.replace(/^\d+\.\s*/, "").replace(/\s*\(.*\)\s*$/, "")} ×${d.repetition}${d.category.toLowerCase() === "matin_soir" ? (d.slot === "soir" ? " (soir)" : " (matin)") : ""}` })),
     { group: "Coran", type: "reading", icon: "📅", label: "Lecture du jour (Khatm)" },
     { group: "Coran", type: "kahf", icon: "🕌", label: "Sourate Al-Kahf" },
     { group: "Apprendre", type: "lesson", icon: "🎓", label: "Leçon du parcours (5 mots)" },
@@ -2097,7 +2117,7 @@ export default function App() {
   const runProgramItem = (item) => {
     switch (item.type) {
       case "adhkarTab": return navigate("adhkar", { tab: item.ref });
-      case "dhikr": { const d = ALL_ADHKAR.find(x => x.id === item.ref); return d && setHomeTasbih(d); }
+      case "dhikr": { const d = ADHKAR_SLOTS.find(x => x.id === item.ref); return d && setHomeTasbih(d); }
       case "reading": return navigate("program");
       case "kahf": return openSurah(18, 1);
       case "lesson": return navigate("learn", { tab: "lesson" });
@@ -2109,7 +2129,7 @@ export default function App() {
   // cocher = « j'ai fait l'action » (même hors de l'app : chapelet physique, mosquée…)
   const toggleProgramItem = (item, value) => {
     if (item.type === "dhikr") {
-      const d = ALL_ADHKAR.find(x => x.id === item.ref);
+      const d = ADHKAR_SLOTS.find(x => x.id === item.ref);
       if (d) updateRecited(p => ({ ...p, [d.id]: value ? d.repetition : 0 }));
     } else if (item.type === "adhkarTab") {
       const list = adhkarOfTab(item.ref);
@@ -2120,6 +2140,21 @@ export default function App() {
       juzProgram.markDayDone(localDayKey());
     }
     setManualDoneState(setManualDone(item.id, value));
+  };
+
+  // « Tout réinitialiser » : décoche tout et remet à zéro les compteurs d'adhkar du programme
+  const resetProgramToday = () => {
+    const items = todayItems(programItems);
+    updateRecited(p => {
+      const n = { ...p };
+      items.forEach(it => {
+        if (it.type === "dhikr") n[it.ref] = 0;
+        if (it.type === "adhkarTab") adhkarOfTab(it.ref).forEach(d => { n[d.id] = 0; });
+      });
+      return n;
+    });
+    items.forEach(it => setManualDone(it.id, false));
+    setManualDoneState(getManualDone());
   };
 
   const accent = PAGE_ACCENT[page] || "#0F4C9B";
@@ -2133,7 +2168,7 @@ export default function App() {
             className={`h-full overflow-y-auto ${page === "adhkar" ? "bg-white" : ""}`}>
             {page === "home" && homeData && (
               <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} onRecognize={() => setRecognizeOpen(true)} {...homeData}
-                program={<DailyProgram rows={programRows} onRun={runProgramItem} onToggle={toggleProgramItem} onEdit={() => setProgramEdit(true)}/>}
+                program={<DailyProgram rows={programRows} onRun={runProgramItem} onToggle={toggleProgramItem} onEdit={() => setProgramEdit(true)} onReset={resetProgramToday}/>}
                 kahf={{ isRead: fridayKahf.isReadThisWeek, markRead: () => { if (!fridayKahf.isReadThisWeek) logActivity("reading"); fridayKahf.markRead(); }, total: fridayKahf.totalFridays,
                   open: () => openSurah(18, 1), learn: () => navigate("learn", { tab: "prof", surah: 18, mode: "verse" }) }}/>
             )}
