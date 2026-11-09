@@ -126,7 +126,7 @@ function Module({ gradient, icon, title, sub, onClick, wide }) {
   );
 }
 
-export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, onRecognize, adhkar, todayReading, words, bookmarksCount, kahf }) {
+export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, onRecognize, adhkar, todayReading, words, bookmarksCount, kahf, program }) {
   const { done, goal, goalPct, goalItems, goalCustom, goalReached, today, streak, week, xp, level, settings } = useProgress();
   const friday = isKahfTime();
   const now = new Date();
@@ -166,6 +166,9 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, on
         <div className="rounded-2xl p-4" style={{ background: "linear-gradient(90deg, rgba(255,209,0,.28), rgba(245,130,32,.18), rgba(227,6,19,.08))" }}>
           <p className="text-sm font-semibold leading-relaxed text-slate-700">{coach}</p>
         </div>
+
+        {/* Mon programme du jour (raccourcis réglés à l'avance) */}
+        {program}
 
         {/* Vendredi : Al-Kahf en premier */}
         {kahf && friday && <KahfCard kahf={kahf} weekly={settings.kahfWeekly} onSettings={onOpenSettings} />}

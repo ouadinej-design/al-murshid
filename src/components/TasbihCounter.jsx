@@ -45,7 +45,7 @@ function Bead({ y, marker, fresh }) {
  * Chapelet plein écran : toucher (ou glisser vers le bas) fait descendre une perle.
  * L'état (count) reste celui de la page Adhkar, donc tout est sauvegardé.
  */
-export default function TasbihCounter({ dhikr, count, onIncrement, onReset, onClose }) {
+export default function TasbihCounter({ dhikr, count, onIncrement, onReset, onDone, onClose }) {
   const total = dhikr.repetition;
   const done = count >= total;
   const cyc = cycleInfo(dhikr, count);
@@ -197,7 +197,14 @@ export default function TasbihCounter({ dhikr, count, onIncrement, onReset, onCl
             <Check className="h-5 w-5" /> Terminé, mā shā' Allāh !
           </button>
         ) : (
-          <p className="text-center text-xs text-slate-500">Touche le chapelet ou fais glisser une perle vers le bas · <span className="italic">{dhikr.source}</span></p>
+          <div className="space-y-2 text-center">
+            {onDone && (
+              <button onClick={onDone} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-600">
+                ✓ Déjà fait (récité ailleurs)
+              </button>
+            )}
+            <p className="text-xs text-slate-500">Touche le chapelet ou fais glisser une perle vers le bas · <span className="italic">{dhikr.source}</span></p>
+          </div>
         )}
       </div>
     </motion.div>,

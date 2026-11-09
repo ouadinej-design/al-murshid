@@ -226,6 +226,11 @@ export default function AdhkarSession({ list, recited, onSet, speak, speaking, f
             className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-600 disabled:opacity-30"><ChevronRight className="h-5 w-5" /></button>
         </div>
         <div className="mt-1.5 flex justify-center gap-4 text-[11px] font-semibold text-slate-500">
+          {!done && (
+            <button onClick={() => { onSet((p) => ({ ...p, [d.id]: d.repetition })); vibrate([40, 60, 40]);
+              if (idx < list.length - 1) { clearTimeout(advanceRef.current); advanceRef.current = setTimeout(() => { setDir(1); setIdx((i) => i + 1); }, 650); } }}
+              className="rounded-full border border-slate-300 bg-white px-3 py-1 font-bold text-slate-600">✓ Déjà fait</button>
+          )}
           {count > 0 && <button onClick={() => onSet((p) => ({ ...p, [d.id]: 0 }))} className="flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" /> Recommencer</button>}
           {d.repetition > 1 && !done && onOpenTasbih && <button onClick={() => onOpenTasbih(d)} className={d.repetition >= 33 ? "rounded-full bg-vert/10 px-3 py-1 font-bold text-vert" : "text-vert"}>📿 Ouvrir le chapelet</button>}
         </div>

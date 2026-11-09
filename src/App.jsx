@@ -12,6 +12,9 @@ import HomeScreen from "./HomeScreen";
 import SettingsSheet from "./components/SettingsSheet";
 import StatsPanel from "./components/StatsPanel";
 import RecognizeVerse from "./components/RecognizeVerse";
+import DailyProgram from "./components/DailyProgram";
+import ProgramEditor from "./components/ProgramEditor";
+import { getProgram, todayItems, getManualDone, setManualDone } from "./lib/program";
 import TasbihCounter from "./components/TasbihCounter";
 import AdhkarSession from "./components/AdhkarSession";
 import ADHKAR_EXTRA from "./data/adhkarExtra";
@@ -983,6 +986,12 @@ function DhikrCard({ dhikr, favorites, toggleFav, copied, handleCopy, recited, s
           {count > 0 && (
             <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: 0 }))} className="p-2 text-slate-500 hover:text-encre hover:bg-slate-100 rounded-xl transition-all" title="Remettre à zéro"><RotateCcw className="w-3.5 h-3.5"/></button>
           )}
+          {!done && (
+            <button onClick={() => setRecited(p => ({ ...p, [dhikr.id]: dhikr.repetition }))} title="Je l'ai déjà fait"
+              className="px-3 py-3 rounded-2xl text-xs font-bold bg-white border border-slate-300 text-slate-600 hover:border-vert hover:text-vert transition-all">
+              ✓ Fait
+            </button>
+          )}
           {dhikr.repetition > 1 && !done && (
             <button onClick={() => onOpenTasbih(dhikr)} className="px-3 py-3 rounded-2xl text-xs font-bold bg-white border border-vert/30 text-vert hover:bg-vert/5 transition-all" title="Compteur plein écran">
               📿 Tasbih
@@ -1153,6 +1162,7 @@ function AdhkarPage({ fridayKahf: fridayKahfProp, initialTab = "matin", onReadKa
           <TasbihCounter dhikr={tasbih} count={recited[tasbih.id] || 0}
             onIncrement={() => handleSetRecited(p => ({ ...p, [tasbih.id]: Math.min(tasbih.repetition, (p[tasbih.id] || 0) + 1) }))}
             onReset={() => handleSetRecited(p => ({ ...p, [tasbih.id]: 0 }))}
+            onDone={() => handleSetRecited(p => ({ ...p, [tasbih.id]: tasbih.repetition }))}
             onClose={() => setTasbih(null)} />
         )}
       </AnimatePresence>
@@ -1923,7 +1933,21 @@ export default function App() {
   const juzProgram = useJuzProgram();
   const fridayKahf = useFridayKahf();
   const { checked, toggle, counts, resetChecked } = useSurahProgress();
-  const { settings } = useProgress();
+  const { settings, today: todayActivity } = useProgress();
+  // ── Programme du jour
+  const [programItems, setProgramItems] = useState(getProgram);
+  const [manualDone, setManualDoneState] = useState(getManualDone);
+  const [programEdit, setProgramEdit] = useState(false);
+  const [homeTasbih, setHomeTasbih] = useState(null);
+  const [recitedTick, setRecitedTick] = useState(0);
+  // modifie les compteurs d'adhkar du jour (et compte les adhkar complétés dans l'objectif)
+  const updateRecited = useCallback((updater) => {
+    const prev = loadRecitedToday();
+    const next = typeof updater === "function" ? updater(prev) : updater;
+    ALL_ADHKAR.forEach(d => { if ((prev[d.id] || 0) < d.repetition && (next[d.id] || 0) >= d.repetition) logActivity("adhkar"); });
+    saveRecitedToday(next);
+    setRecitedTick(t => t + 1);
+  }, []);
 
   // taille du texte arabe (Réglages)
   useEffect(() => { applyArabicScale(settings.arabicScale); }, [settings.arabicScale]);
@@ -1982,7 +2006,7 @@ export default function App() {
       words: { learned, due: dueReviews, nextLesson: (() => { const d = storage("path_progress_v1", { done: {} }).done || {}; let i = 0; while (d[i]) i++; return i < 100 ? i + 1 : null; })() },
       todayReading, bookmarksCount,
     };
-  }, [page, juzProgram.program, juzProgram.dailyCompleted]);
+  }, [page, juzProgram.program, juzProgram.dailyCompleted, recitedTick]);
 
   // Inject tajweed CSS globally once
   useEffect(() => {
@@ -2029,6 +2053,75 @@ export default function App() {
     navigate("quran");
   }, []);
 
+  const programRows = useMemo(() => {
+    if (page !== "home" || !homeData) return [];
+    const recited = loadRecitedToday();
+    const todayKey = localDayKey();
+    const path = storage("path_progress_v1", { done: {} }).done || {};
+    const lessonToday = Object.values(path).some(d => d?.date === todayKey);
+    return todayItems(programItems).map(item => {
+      let done = false, sub = "";
+      if (item.type === "adhkarTab") {
+        const list = adhkarOfTab(item.ref);
+        const n = list.filter(d => (recited[d.id] || 0) >= d.repetition).length;
+        done = list.length > 0 && n === list.length; sub = `${n}/${list.length} récités`;
+      } else if (item.type === "dhikr") {
+        const d = ALL_ADHKAR.find(x => x.id === item.ref);
+        const c = recited[item.ref] || 0;
+        done = !!d && c >= d.repetition; sub = d ? `${Math.min(c, d.repetition)} / ${d.repetition}${done ? "" : " · toucher pour le chapelet"}` : "";
+      } else if (item.type === "reading") {
+        done = !!homeData.todayReading?.done; sub = homeData.todayReading ? homeData.todayReading.label : "Aucun programme Khatm en cours";
+      } else if (item.type === "kahf") {
+        done = fridayKahf.isReadThisWeek; sub = done ? "Lue cette semaine" : "À lire aujourd'hui";
+      } else if (item.type === "lesson") {
+        done = lessonToday; sub = homeData.words.nextLesson ? `Leçon ${homeData.words.nextLesson}` : "Parcours terminé";
+      } else if (item.type === "revision") {
+        done = (todayActivity.words || 0) > 0; sub = homeData.words.due ? `${homeData.words.due} mots à revoir` : "Rien à revoir pour l'instant";
+      } else if (item.type === "recite") {
+        done = (todayActivity.recite || 0) > 0; sub = "Avec le professeur";
+      }
+      return { item, done: done || manualDone.includes(item.id), sub };
+    });
+  }, [page, homeData, programItems, manualDone, fridayKahf.isReadThisWeek, todayActivity, recitedTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const programCatalog = useMemo(() => [
+    ...Object.entries(TAB_LABELS).map(([k, l]) => ({ group: "Adhkar (catégories)", type: "adhkarTab", ref: k, icon: l.split(" ")[0], label: `Adhkar · ${l.split(" ").slice(1).join(" ")}` })),
+    ...ALL_ADHKAR.filter(d => d.repetition >= 3).map(d => ({ group: "Dhikr précis (avec chapelet)", type: "dhikr", ref: d.id, icon: "📿", label: `${d.title.replace(/^\d+\.\s*/, "").replace(/\s*\(.*\)\s*$/, "")} ×${d.repetition}` })),
+    { group: "Coran", type: "reading", icon: "📅", label: "Lecture du jour (Khatm)" },
+    { group: "Coran", type: "kahf", icon: "🕌", label: "Sourate Al-Kahf" },
+    { group: "Apprendre", type: "lesson", icon: "🎓", label: "Leçon du parcours (5 mots)" },
+    { group: "Apprendre", type: "revision", icon: "🃏", label: "Révision des mots" },
+    { group: "Apprendre", type: "recite", icon: "🎙️", label: "Réciter avec le professeur" },
+  ], []);
+
+  const runProgramItem = (item) => {
+    switch (item.type) {
+      case "adhkarTab": return navigate("adhkar", { tab: item.ref });
+      case "dhikr": { const d = ALL_ADHKAR.find(x => x.id === item.ref); return d && setHomeTasbih(d); }
+      case "reading": return navigate("program");
+      case "kahf": return openSurah(18, 1);
+      case "lesson": return navigate("learn", { tab: "lesson" });
+      case "revision": return navigate("learn", { tab: "revision" });
+      case "recite": return navigate("learn", { tab: "prof" });
+      default: return toggleProgramItem(item, !manualDone.includes(item.id));
+    }
+  };
+  // cocher = « j'ai fait l'action » (même hors de l'app : chapelet physique, mosquée…)
+  const toggleProgramItem = (item, value) => {
+    if (item.type === "dhikr") {
+      const d = ALL_ADHKAR.find(x => x.id === item.ref);
+      if (d) updateRecited(p => ({ ...p, [d.id]: value ? d.repetition : 0 }));
+    } else if (item.type === "adhkarTab") {
+      const list = adhkarOfTab(item.ref);
+      updateRecited(p => { const n = { ...p }; list.forEach(d => { n[d.id] = value ? d.repetition : 0; }); return n; });
+    } else if (item.type === "kahf" && value && !fridayKahf.isReadThisWeek) {
+      logActivity("reading"); fridayKahf.markRead();
+    } else if (item.type === "reading" && value && juzProgram.program.active) {
+      juzProgram.markDayDone(localDayKey());
+    }
+    setManualDoneState(setManualDone(item.id, value));
+  };
+
   const accent = PAGE_ACCENT[page] || "#0F4C9B";
   return (
     <div className="bg-creme text-encre font-sans antialiased flex flex-col" style={{ height: "100dvh", overflow: "hidden" }}>
@@ -2040,6 +2133,7 @@ export default function App() {
             className={`h-full overflow-y-auto ${page === "adhkar" ? "bg-white" : ""}`}>
             {page === "home" && homeData && (
               <HomeScreen onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenStats={() => setStatsOpen(true)} onRecognize={() => setRecognizeOpen(true)} {...homeData}
+                program={<DailyProgram rows={programRows} onRun={runProgramItem} onToggle={toggleProgramItem} onEdit={() => setProgramEdit(true)}/>}
                 kahf={{ isRead: fridayKahf.isReadThisWeek, markRead: () => { if (!fridayKahf.isReadThisWeek) logActivity("reading"); fridayKahf.markRead(); }, total: fridayKahf.totalFridays,
                   open: () => openSurah(18, 1), learn: () => navigate("learn", { tab: "prof", surah: 18, mode: "verse" }) }}/>
             )}
@@ -2080,6 +2174,16 @@ export default function App() {
       <StatsPanel isOpen={statsOpen} onClose={() => setStatsOpen(false)} onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)}
         counts={counts} fridayKahf={fridayKahf} juzProgram={juzProgram} resetChecked={resetChecked} {...statsData}/>
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)}/>
+      {programEdit && <ProgramEditor open items={programItems} catalog={programCatalog} onClose={() => setProgramEdit(false)} onSave={setProgramItems}/>}
+      <AnimatePresence>
+        {homeTasbih && (
+          <TasbihCounter dhikr={homeTasbih} count={loadRecitedToday()[homeTasbih.id] || 0}
+            onIncrement={() => updateRecited(p => ({ ...p, [homeTasbih.id]: Math.min(homeTasbih.repetition, (p[homeTasbih.id] || 0) + 1) }))}
+            onReset={() => updateRecited(p => ({ ...p, [homeTasbih.id]: 0 }))}
+            onDone={() => updateRecited(p => ({ ...p, [homeTasbih.id]: homeTasbih.repetition }))}
+            onClose={() => setHomeTasbih(null)}/>
+        )}
+      </AnimatePresence>
       <RecognizeVerse open={recognizeOpen} onClose={() => setRecognizeOpen(false)} surahIndex={SURAH_INDEX} embedded={EMBEDDED_VERSES}
         onOpenVerse={(sn, vn) => { setRecognizeOpen(false); openSurah(sn, vn); }}/>
     </div>
