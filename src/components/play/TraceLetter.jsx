@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Volume2, RotateCcw } from "lucide-react";
 import { FullScreen, speak, vibrate } from "./shared";
-import { ABC, DOTTED, traceScore, getPlay, savePlay } from "../../lib/play";
+import { ABC, DOTTED, traceScore, getPlay, savePlay, nextLetter, recordLetter } from "../../lib/play";
 import { logActivity } from "../../lib/progress";
 
 const SIZE = 280;     // taille du cadre (px CSS)
@@ -53,8 +53,10 @@ function dilate(m, r = 2) {
  * Tracer : on trace la lettre au doigt sur son modèle ; l'app vérifie que le tracé
  * recouvre la lettre (points compris) sans trop déborder.
  */
-export default function TraceLetter({ onClose }) {
+export default function TraceLetter({ onClose, stage = "mots" }) {
   const [idx, setIdx] = useState(() => {
+    // débutant : on commence par la lettre en cours d'apprentissage
+    if (stage === "lettres") { const n = nextLetter(); if (n) return ABC.findIndex((l) => l.ar === n.ar); }
     const t = getPlay().traced || {};
     const i = ABC.findIndex((l) => !t[l.ar]);
     return i < 0 ? 0 : i;
@@ -118,7 +120,7 @@ export default function TraceLetter({ onClose }) {
     if (s.ok) {
       vibrate([15, 30, 15]); speak(letter.ar, 0.5);
       const t = { ...traced, [letter.ar]: true };
-      setTraced(t); savePlay({ traced: t }); logActivity("games");
+      setTraced(t); savePlay({ traced: t }); recordLetter(letter.ar, true); logActivity("games");
       setVerdict({ ok: true, msg: `Bravo ! ${letter.name} est bien tracée ✨` });
     } else {
       vibrate([40, 60, 40]);

@@ -99,3 +99,42 @@ describe("relier", () => {
     expect(new Set(r.map((l) => l.ar)).size).toBe(4);
   });
 });
+
+import { unlockedLetters, nextLetter, currentStage, knownLetters, syllablesOf, stageItems, itemOptions, letterForms, ABC as ABC2 } from "../play";
+
+describe("niveau adaptatif (Lettres → Syllabes → Mots)", () => {
+  const base = { profile: { level: "zero" }, letters: {}, syll: 0 };
+  it("un débutant commence par 4 lettres", () => {
+    expect(unlockedLetters(base).map((l) => l.ar)).toEqual(["ا", "ب", "ت", "ث"]);
+    expect(nextLetter(base).ar).toBe("ا");
+    expect(currentStage(base)).toBe("lettres");
+  });
+  it("chaque lettre connue (3 bonnes réponses) en débloque une nouvelle", () => {
+    const p = { ...base, letters: { "ا": 3, "ب": 3, "ت": 1 } };
+    expect(knownLetters(p).map((l) => l.ar)).toEqual(["ا", "ب"]);
+    expect(unlockedLetters(p).map((l) => l.ar)).toEqual(["ا", "ب", "ت", "ث", "ج", "ح"]);
+    expect(nextLetter(p).ar).toBe("ت");
+  });
+  it("passe aux syllabes à 20 lettres connues, puis aux mots", () => {
+    const letters = Object.fromEntries(ABC2.slice(0, 20).map((l) => [l.ar, 3]));
+    expect(currentStage({ ...base, letters })).toBe("syllabes");
+    expect(currentStage({ ...base, letters, syll: 40 })).toBe("mots");
+    expect(currentStage({ profile: { level: "bien" } })).toBe("mots");
+    expect(currentStage({ profile: { level: "zero", stage: "mots" } })).toBe("mots"); // choix manuel
+  });
+  it("syllabes ba / bi / bu et a / i / u pour alif", () => {
+    expect(syllablesOf(ABC2[1]).map((s) => s.fr)).toEqual(["ba", "bi", "bu"]);
+    expect(syllablesOf(ABC2[0]).map((s) => [s.ar, s.fr])).toEqual([["أَ", "a"], ["إِ", "i"], ["أُ", "u"]]);
+  });
+  it("les jeux d'un débutant ne montrent que des lettres", () => {
+    const items = stageItems("lettres", base);
+    expect(items.map((i) => i.ar)).toEqual(["ا", "ب", "ت", "ث"]);
+    const opts = itemOptions(items[1], items);
+    expect(opts).toHaveLength(4);
+    expect(new Set(opts.map((o) => o.fr)).size).toBe(4);
+  });
+  it("formes des lettres", () => {
+    expect(letterForms("ب").map((f) => f.f)).toEqual(["ب", "بـ", "ـبـ", "ـب"]);
+    expect(letterForms("د")).toHaveLength(2);
+  });
+});

@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Volume2 } from "lucide-react";
 import { FullScreen, AR, speak, vibrate } from "./shared";
-import { linkRound, getPlay, savePlay } from "../../lib/play";
+import { linkRound, getPlay, savePlay, unlockedLetters, recordLetter } from "../../lib/play";
 import { logActivity } from "../../lib/progress";
 
 const ROUNDS = 5;
@@ -15,12 +15,15 @@ const MODES = [
  * Relier : on tire un fil de chaque lettre vers son nom (ou sa forme au début du mot).
  * Marche au doigt (glisser) ou en touchant la lettre puis la réponse.
  */
-export default function LinkLetters({ onClose }) {
+export default function LinkLetters({ onClose, stage = "mots" }) {
   const [round, setRound] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [finished, setFinished] = useState(false);
   const mode = MODES[round % 2];
-  const letters = useMemo(() => linkRound(round + getPlay().linked), [round]);
+  // Débutant : seulement les lettres débloquées (4 au départ), sinon tout l'alphabet
+  const letters = useMemo(() => (stage === "lettres"
+    ? [...unlockedLetters()].sort(() => Math.random() - 0.5).slice(0, 4)
+    : linkRound(round + getPlay().linked)), [round]); // eslint-disable-line react-hooks/exhaustive-deps
   const answers = useMemo(() => [...letters].sort(() => Math.random() - 0.5), [letters]);
   const [links, setLinks] = useState({});      // ar → ar relié correctement
   const [sel, setSel] = useState(null);        // lettre choisie (mode toucher)
@@ -41,6 +44,7 @@ export default function LinkLetters({ onClose }) {
     if (!from || !to || links[from]) return;
     if (from === to) {
       vibrate(12); speak(from, 0.5);
+      if (stage === "lettres") recordLetter(from, true);
       const nl = { ...links, [from]: to };
       setLinks(nl);
       if (Object.keys(nl).length === letters.length) {
@@ -54,6 +58,7 @@ export default function LinkLetters({ onClose }) {
       }
     } else {
       vibrate([40, 60, 40]); setMistakes((m) => m + 1);
+      if (stage === "lettres") recordLetter(from, false);
       setWrong({ from, to }); setTimeout(() => setWrong(null), 600);
     }
     setSel(null);

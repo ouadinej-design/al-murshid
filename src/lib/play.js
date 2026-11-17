@@ -193,3 +193,106 @@ export function linkRound(roundIndex, n = 4, rand = Math.random) {
   const window = Array.from({ length: 8 }, (_, i) => ABC[(start + i) % ABC.length]);
   return window.sort(() => rand() - 0.5).slice(0, n);
 }
+
+// ═══════════════════════════════════════════════════════
+// NIVEAU ADAPTATIF : Lettres → Syllabes → Mots
+// Une lettre est « connue » après 3 bonnes réponses (une erreur en retire une).
+// Les jeux ne proposent que les lettres débloquées : 4 au départ, puis +1 par lettre connue.
+// ═══════════════════════════════════════════════════════
+export const STAGES = [
+  { key: "lettres",  icon: "ا",  label: "Lettres",  desc: "Reconnaître les 28 lettres et leur son" },
+  { key: "syllabes", icon: "بَ", label: "Syllabes", desc: "Lire une lettre avec sa voyelle : ba, bi, bu" },
+  { key: "mots",     icon: "📖", label: "Mots",     desc: "Lire et comprendre les mots du Coran" },
+];
+export const KNOWN_AT = 3;                 // bonnes réponses pour connaître une lettre
+export const LETTERS_FOR_SYLLABES = 20;    // lettres connues pour passer aux syllabes
+export const SYLLABES_FOR_MOTS = 40;       // syllabes réussies pour passer aux mots
+
+export function knownLetters(p = getPlay()) {
+  return ABC.filter((l) => (p.letters?.[l.ar] || 0) >= KNOWN_AT);
+}
+
+/** Lettres proposées dans les jeux : les connues + 4 nouvelles (dans l'ordre de l'alphabet). */
+export function unlockedLetters(p = getPlay()) {
+  const known = new Set(knownLetters(p).map((l) => l.ar));
+  const out = ABC.filter((l) => known.has(l.ar));
+  for (const l of ABC) { if (out.length >= known.size + 4) break; if (!known.has(l.ar)) out.push(l); }
+  return ABC.filter((l) => out.includes(l)); // garde l'ordre de l'alphabet
+}
+
+/** La prochaine lettre à apprendre (première non connue). */
+export function nextLetter(p = getPlay()) {
+  return ABC.find((l) => (p.letters?.[l.ar] || 0) < KNOWN_AT) || null;
+}
+
+/** Étape actuelle : choisie dans le profil, sinon déduite du niveau de départ et des progrès. */
+export function currentStage(p = getPlay()) {
+  if (p.profile?.stage) return p.profile.stage;
+  const level = p.profile?.level;
+  if (level === "bien") return "mots";
+  if (level === "zero" && knownLetters(p).length < LETTERS_FOR_SYLLABES) return "lettres";
+  if ((p.syll || 0) < SYLLABES_FOR_MOTS) return "syllabes";
+  return "mots";
+}
+
+/** Enregistre une réponse sur une lettre (bonne : +1, jusqu'à 5 ; erreur : −1). */
+export function recordLetter(ar, ok) {
+  const p = getPlay();
+  const cur = p.letters?.[ar] || 0;
+  return savePlay({ letters: { ...(p.letters || {}), [ar]: Math.max(0, Math.min(5, cur + (ok ? 1 : -1))) } });
+}
+export function recordSyllable(ok) {
+  if (!ok) return getPlay();
+  return savePlay({ syll: (getPlay().syll || 0) + 1 });
+}
+
+const VOWELS = [
+  { mark: "َ", v: "a", name: "fatḥa" },
+  { mark: "ِ", v: "i", name: "kasra" },
+  { mark: "ُ", v: "u", name: "ḍamma" },
+];
+const CONSONANT = { "ا": "", "ج": "j", "و": "w", "ي": "y", "ع": "ʿ" };
+
+/** Syllabes d'une lettre : بَ ba, بِ bi, بُ bu (alif → أَ a, إِ i, أُ u). */
+export function syllablesOf(l) {
+  return VOWELS.map((vw) => {
+    const base = l.ar === "ا" ? (vw.v === "i" ? "إ" : "أ") : l.ar;
+    const c = l.ar in CONSONANT ? CONSONANT[l.ar] : l.sound.split(" ")[0];
+    return { id: l.ar + vw.v, ar: base + vw.mark, fr: c + vw.v, letter: l.ar, vowel: vw.name };
+  });
+}
+
+/** Lettres utilisées pour les syllabes : 6 au départ, puis 1 de plus toutes les 3 syllabes réussies. */
+export function syllableLetters(p = getPlay()) {
+  const known = knownLetters(p);
+  const n = Math.min(28, 6 + Math.floor((p.syll || 0) / 3));
+  return known.length >= n ? known : ABC.slice(0, n);
+}
+
+/**
+ * Éléments de jeu pour une étape : { id, ar, fr } (fr = ce qu'il faut reconnaître).
+ * null pour l'étape « mots » (les jeux utilisent alors le vocabulaire du Coran).
+ */
+export function stageItems(stage, p = getPlay()) {
+  if (stage === "lettres") return unlockedLetters(p).map((l) => ({ id: l.ar, ar: l.ar, fr: `${l.name} · ${l.sound}`, letter: l.ar }));
+  if (stage === "syllabes") return syllableLetters(p).flatMap(syllablesOf);
+  return null;
+}
+
+/** 4 choix (la bonne réponse + 3 autres au libellé différent) parmi les éléments. */
+export function itemOptions(item, pool, rand = Math.random) {
+  const seen = new Set([item.fr]);
+  const others = [];
+  for (const x of [...pool].sort(() => rand() - 0.5)) {
+    if (others.length >= 3) break;
+    if (!seen.has(x.fr)) { seen.add(x.fr); others.push(x); }
+  }
+  return [item, ...others].sort(() => rand() - 0.5);
+}
+
+/** Formes d'une lettre : isolée, début, milieu, fin (les 6 lettres « qui ne s'attachent pas à gauche » n'ont que 2 formes). */
+const NON_JOINING = new Set([..."اددذرزو"]);
+export function letterForms(ar) {
+  if (NON_JOINING.has(ar)) return [{ label: "Isolée", f: ar }, { label: "Fin", f: "ـ" + ar }];
+  return [{ label: "Isolée", f: ar }, { label: "Début", f: ar + "ـ" }, { label: "Milieu", f: "ـ" + ar + "ـ" }, { label: "Fin", f: "ـ" + ar }];
+}
