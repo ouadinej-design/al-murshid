@@ -8,6 +8,7 @@ export const RESET_GROUPS = [
   { key: "kahf",     label: "Lectures d'Al-Kahf du vendredi", keys: ["kahf_fridays_v1"], def: false },
   { key: "learning", label: "Apprentissage : parcours, mots appris, leçons, versets mémorisés",
     keys: ["path_progress_v1", "anki_cards", "lessons_progress", "mastered_surahs", "memorized_verses_v1"], def: false },
+  { key: "play",     label: "Jouer & apprendre : profil, mots du jour, records des jeux", keys: ["play_v1"], def: false },
   { key: "quran",    label: "Coran : sourates lues et programme Khatm",
     keys: ["surah_checked_v2", "daily_plan_v1", "juz_program_v3", "current_reading_day"], def: false },
 ];

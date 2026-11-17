@@ -402,6 +402,7 @@ import { logActivity, startOfLocalDay } from "./lib/progress";
 import WordsTab from "./components/WordsTab";
 import LearnHub, { TOOLS } from "./components/LearnHub";
 import PathLesson from "./components/PathLesson";
+import PlayHub from "./components/play/PlayHub";
 import { useVerseAudio, wordBounds, wordWeight, arabicWeight } from "./lib/verseAudio";
 import { diagnose, diagnosisSentence } from "./lib/diagnosis";
 import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
@@ -2332,6 +2333,7 @@ export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSur
           {tab === "alphabet" && <AlphabetTab/>}
           {tab === "tajweed"  && <TajweedTab/>}
           {tab === "voyelles" && <VoyellesTab/>}
+          {tab === "jouer"    && <PlayHub/>}
         </motion.div>
       </AnimatePresence>
       {lesson !== null && (

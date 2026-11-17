@@ -295,6 +295,8 @@ export default function HomeScreen({ onNavigate, onOpenSettings, onOpenStats, on
             sub={`${words.learned}/500 appris · ${words.due} à revoir`} onClick={() => onNavigate("learn")} />
           <Module gradient="linear-gradient(135deg,#00A19A,#00B8AF)" icon="📿" title={evening ? "Adhkar du soir" : "Adhkar du matin"}
             sub={`${adhkarSlot.done}/${adhkarSlot.total} récités aujourd'hui`} onClick={() => onNavigate("adhkar", { tab: evening ? "soir" : "matin" })} />
+          <Module wide gradient="linear-gradient(135deg,#1A1A1A,#7C3AED 55%,#F58220)" icon="🎮" title="Jouer & apprendre"
+            sub="Mot du jour, Survie, lettres qui tombent, tracer et relier les lettres" onClick={() => onNavigate("learn", { tab: "jouer" })} />
           <Module wide gradient="linear-gradient(135deg,#0B3A78,#7C3AED)" icon="🎧" title="Reconnaître un verset"
             sub="Récite quelques mots : l'app trouve la sourate, le verset et la traduction" onClick={onRecognize} />
           <Module wide gradient="linear-gradient(135deg,#C70511,#E8322F)" icon="🎙️" title="Réciter avec le coach"

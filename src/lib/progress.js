@@ -35,11 +35,12 @@ export const ACTIVITIES = {
   recite:  { label: "Versets récités",  icon: "🎙️", xp: 3  },
   lessons: { label: "Leçons finies",    icon: "📚", xp: 10 },
   reading: { label: "Lectures",         icon: "🕌", xp: 10 },
+  games:   { label: "Parties de jeux",  icon: "🎮", xp: 2  },
 };
 
 // goalMode "total" : un nombre d'actions toutes confondues (dailyGoal)
 // goalMode "custom" : un objectif par activité choisie (goals ; 0 = activité non suivie)
-const DEFAULT_GOALS = { words: 10, adhkar: 5, recite: 3, quiz: 0, lessons: 0, reading: 1 };
+const DEFAULT_GOALS = { words: 10, adhkar: 5, recite: 3, quiz: 0, lessons: 0, reading: 1, games: 0 };
 const DEFAULT_SETTINGS = { dailyGoal: 10, arabicScale: 1, goalMode: "total", goals: DEFAULT_GOALS, kahfWeekly: 10 };
 
 function emptyState() {
@@ -116,7 +117,7 @@ export function goalProgress(dayEntry = {}, settings = DEFAULT_SETTINGS) {
 
 /** Plus longue série jamais réalisée (sur l'historique conservé). */
 export function bestStreak(days) {
-  const keys = Object.keys(days).filter((k) => dayTotal(days[k]) > 0).sort();
+  const keys = Object.keys(days).filter((k) => isActiveDay(days[k])).sort();
   let best = 0, cur = 0, prev = null;
   for (const k of keys) {
     cur = prev && shiftDayKey(prev, 1) === k ? cur + 1 : 1;
@@ -156,10 +157,20 @@ export function dayTotal(dayEntry) {
  */
 export function computeStreak(days, now = new Date()) {
   let key = localDayKey(now);
-  if (dayTotal(days[key]) === 0) key = shiftDayKey(key, -1);
+  if (!isActiveDay(days[key])) key = shiftDayKey(key, -1);
   let n = 0;
-  while (dayTotal(days[key]) > 0) { n++; key = shiftDayKey(key, -1); }
+  while (isActiveDay(days[key])) { n++; key = shiftDayKey(key, -1); }
   return n;
+}
+
+/** Un jour compte pour la série s'il a une activité ou s'il a été « ravivé ». */
+export function isActiveDay(dayEntry) {
+  return dayTotal(dayEntry) > 0 || !!dayEntry?.restored;
+}
+
+/** Ravive un jour manqué (flamme rattrapée) : il compte pour la série, sans XP. */
+export function restoreDay(key) {
+  commit({ ...state, days: { ...state.days, [key]: { ...(state.days[key] || {}), restored: 1 } } });
 }
 
 /** Les 7 derniers jours (du plus ancien au plus récent) pour le mini-graphe. */
