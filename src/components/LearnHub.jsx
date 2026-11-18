@@ -12,6 +12,7 @@ export const TOOLS = [
   { key: "surahs",   icon: "🕌", title: "Comprendre les sourates", sub: "Mot à mot, audio, traduction", color: "#00A19A" },
   { key: "lessons",  icon: "📚", title: "Apprendre à lire",        sub: "7 leçons : lettres, voyelles…", color: "#F58220" },
   { key: "alphabet", icon: "ح",  title: "Alphabet",                sub: "28 lettres et leurs formes", color: "#0F4C9B" },
+  { key: "formes",   icon: "🔠", title: "Les 4 formes",            sub: "Jeu : seule, début, milieu, fin", color: "#0F4C9B" },
   { key: "voyelles", icon: "◌َ", title: "Voyelles",                sub: "Fatḥa, kasra, ḍamma…", color: "#7C3AED" },
   { key: "tajweed",  icon: "🎨", title: "Tajwid",                  sub: "Les règles en couleur", color: "#B45309" },
   { key: "quiz",     icon: "🎯", title: "Quiz libres",             sub: "Lettres, sons, vocabulaire", color: "#0E7490" },

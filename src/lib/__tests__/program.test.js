@@ -11,6 +11,12 @@ describe("programme du jour", () => {
   it("programme par défaut, puis celui enregistré", () => {
     expect(getProgram()).toEqual(DEFAULT_ITEMS);
     saveProgram([{ id: "x", type: "custom", label: "Duʿā'", icon: "🤲" }]);
+    expect(getProgram()).toHaveLength(1); // retiré par l'utilisateur : pas rajouté
+  });
+  it("ajoute une seule fois le jeu des 4 formes à un ancien programme", () => {
+    localStorage.setItem("daily_program_v1", JSON.stringify([{ id: "a", type: "custom", label: "X", icon: "•" }]));
+    expect(getProgram().map((i) => i.type)).toEqual(["custom", "forms"]);
+    saveProgram([{ id: "a", type: "custom", label: "X", icon: "•" }]);
     expect(getProgram()).toHaveLength(1);
   });
   it("n'affiche Al-Kahf que le vendredi", () => {

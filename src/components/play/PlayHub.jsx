@@ -8,6 +8,7 @@ import FallingLetters from "./FallingLetters";
 import TraceLetter from "./TraceLetter";
 import LinkLetters from "./LinkLetters";
 import LetterOfDay from "./LetterOfDay";
+import FormsGame from "./FormsGame";
 import { getPlay, savePlay, flameFor, canRestore, dailyWord, dailyNumber, GOALS, projection, STAGES, currentStage, knownLetters, nextLetter, LETTERS_FOR_SYLLABES, SYLLABES_FOR_MOTS } from "../../lib/play";
 import { useProgress, localDayKey, shiftDayKey, restoreDay } from "../../lib/progress";
 import { pathStats } from "../../lib/path";
@@ -18,10 +19,12 @@ const GAMES = [
   { key: "ninja",  icon: "🍉", title: "Lettres qui tombent", color: "#F58220", best: "ninja",
     sub: { lettres: "Attrape la bonne lettre", syllabes: "Attrape la bonne syllabe", mots: "Touche les lettres pour former le mot" } },
   { key: "trace",  icon: "✍️", title: "Tracer", color: "#0F4C9B", sub: { lettres: "Dessine ta lettre du moment au doigt", syllabes: "Dessine chaque lettre au doigt", mots: "Dessine chaque lettre au doigt" } },
+  { key: "forms",  icon: "🔠", title: "Les 4 formes", color: "#7C3AED", best: "forms",
+    sub: { lettres: "Seule, début, milieu, fin", syllabes: "Seule, début, milieu, fin", mots: "Repère les formes dans les mots" } },
   { key: "link",   icon: "🧵", title: "Relier", color: "#00A19A", sub: { lettres: "Relie tes lettres à leur nom", syllabes: "Lettre ↔ nom, lettre ↔ forme", mots: "Lettre ↔ nom, lettre ↔ forme" } },
 ];
 // Ordre conseillé pour un débutant : découvrir (lettre du jour) → tracer → relier → jouer
-const ORDER = { lettres: ["trace", "link", "survie", "ninja"], syllabes: ["survie", "ninja", "link", "trace"], mots: ["survie", "ninja", "trace", "link"] };
+const ORDER = { lettres: ["trace", "link", "forms", "survie", "ninja"], syllabes: ["survie", "forms", "ninja", "link", "trace"], mots: ["survie", "ninja", "forms", "trace", "link"] };
 
 /**
  * Tuile « Jouer & apprendre » : la méthode « jeu » (accueil personnalisé, Mot du jour,
@@ -183,6 +186,7 @@ export default function PlayHub() {
       {open === "survie" && <Survie stage={stage} onClose={() => { setOpen(null); refresh(); }} />}
       {open === "ninja"  && <FallingLetters stage={stage} onClose={() => { setOpen(null); refresh(); }} />}
       {open === "trace"  && <TraceLetter stage={stage} onClose={() => { setOpen(null); refresh(); }} />}
+      {open === "forms"  && <FormsGame stage={stage} onClose={() => { setOpen(null); refresh(); }} />}
       {open === "link"   && <LinkLetters stage={stage} onClose={() => { setOpen(null); refresh(); }} />}
     </div>
   );

@@ -290,9 +290,119 @@ export function itemOptions(item, pool, rand = Math.random) {
   return [item, ...others].sort(() => rand() - 0.5);
 }
 
-/** Formes d'une lettre : isolée, début, milieu, fin (les 6 lettres « qui ne s'attachent pas à gauche » n'ont que 2 formes). */
-const NON_JOINING = new Set([..."اددذرزو"]);
+/** Les 4 formes d'une lettre : isolée, début, milieu, fin.
+ *  Les 6 lettres « qui ne s'attachent pas à gauche » (ا د ذ ر ز و) ont la même forme
+ *  au début qu'isolée, et la même au milieu qu'à la fin. */
+export const NON_JOINING = new Set([..."ادذرزو"]);
+export const POSITIONS = [
+  { key: "iso", label: "Isolée", short: "Seule" },
+  { key: "ini", label: "Début", short: "Début" },
+  { key: "med", label: "Milieu", short: "Milieu" },
+  { key: "fin", label: "Fin", short: "Fin" },
+];
 export function letterForms(ar) {
-  if (NON_JOINING.has(ar)) return [{ label: "Isolée", f: ar }, { label: "Fin", f: "ـ" + ar }];
-  return [{ label: "Isolée", f: ar }, { label: "Début", f: ar + "ـ" }, { label: "Milieu", f: "ـ" + ar + "ـ" }, { label: "Fin", f: "ـ" + ar }];
+  const nj = NON_JOINING.has(ar);
+  return [
+    { key: "iso", label: "Isolée", f: ar },
+    { key: "ini", label: "Début", f: nj ? ar : ar + "ـ" },
+    { key: "med", label: "Milieu", f: nj ? "ـ" + ar : "ـ" + ar + "ـ" },
+    { key: "fin", label: "Fin", f: "ـ" + ar },
+  ];
 }
+
+/** Position de la lettre n° i dans un mot (sans voyelles). */
+export function positionInWord(letters, i) {
+  const prev = i > 0 && !NON_JOINING.has(letters[i - 1]);
+  const next = i < letters.length - 1 && !NON_JOINING.has(letters[i]);
+  return prev && next ? "med" : prev ? "fin" : next ? "ini" : "iso";
+}
+
+const ZWJ = "\u200D";
+/** Découpe un mot pour colorer la lettre n° i SANS casser les liaisons (ZWJ). */
+export function splitHighlight(letters, i) {
+  const prev = i > 0 && !NON_JOINING.has(letters[i - 1]);
+  const next = i < letters.length - 1 && !NON_JOINING.has(letters[i]);
+  return {
+    before: letters.slice(0, i).join("") + (prev ? ZWJ : ""),
+    mark: (prev ? ZWJ : "") + letters[i] + (next ? ZWJ : ""),
+    after: (next ? ZWJ : "") + letters.slice(i + 1).join(""),
+  };
+}
+
+/** Maîtrise des formes : 4 bonnes réponses sur une lettre = formes maîtrisées. */
+export const FORMS_KNOWN_AT = 4;
+export function recordForm(ar, ok) {
+  const p = getPlay();
+  const cur = p.forms?.[ar] || 0;
+  return savePlay({ forms: { ...(p.forms || {}), [ar]: Math.max(0, Math.min(6, cur + (ok ? 1 : -1))) } });
+}
+export function formsMastered(p = getPlay()) {
+  return ABC.filter((l) => (p.forms?.[l.ar] || 0) >= FORMS_KNOWN_AT).length;
+}
+export function formsDoneToday(day, p = getPlay()) {
+  return !!p.formsDay?.[day];
+}
+
+/**
+ * Une partie du jeu des 4 formes (10 questions) :
+ *  - pos2form : « Comment s'écrit ب au milieu ? » → les formes de la lettre
+ *  - form2pos : on montre ـبـ → « Où est-elle dans le mot ? »
+ *  - form2letter : on montre ـهـ → « Quelle lettre ? »
+ *  - word : un vrai mot du Coran, une lettre en couleur → « Sous quelle forme ? »
+ * Les lettres les moins maîtrisées reviennent plus souvent.
+ */
+export function formsSession(p = getPlay(), { n = 10, beginner = false, rand = Math.random } = {}) {
+  const pool = beginner ? unlockedLetters(p) : ABC;
+  const weight = (l) => 1 / (1 + (p.forms?.[l.ar] || 0));
+  const pick = (list) => {
+    const tot = list.reduce((a, l) => a + weight(l), 0);
+    let r = rand() * tot;
+    for (const l of list) { r -= weight(l); if (r <= 0) return l; }
+    return list[list.length - 1];
+  };
+  const joining = pool.filter((l) => !NON_JOINING.has(l.ar));
+  const words = PLAYABLE.map((w) => ({ w, s: [...skeleton(w.ar)] }));
+  const order = beginner
+    ? ["pos2form", "form2pos", "pos2form", "form2letter", "form2pos", "pos2form", "form2letter", "word", "form2pos", "word"]
+    : ["pos2form", "form2pos", "form2letter", "word", "pos2form", "word", "form2letter", "form2pos", "word", "word"];
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const type = order[k % order.length];
+    if (type === "word") {
+      const l = pick(joining.length ? joining : pool);
+      const cands = words.filter(({ s }) => s.includes(l.ar));
+      if (cands.length) {
+        const { w, s } = cands[Math.floor(rand() * cands.length)];
+        const idxs = s.map((c, i) => (c === l.ar ? i : -1)).filter((i) => i >= 0);
+        const i = idxs[Math.floor(rand() * idxs.length)];
+        out.push({ type, letter: l, word: w, letters: s, index: i, answer: positionInWord(s, i) });
+        continue;
+      }
+    }
+    if (type === "form2pos") {
+      const l = pick(joining.length ? joining : pool);
+      const pos = POSITIONS[Math.floor(rand() * 4)].key;
+      out.push({ type, letter: l, answer: pos });
+      continue;
+    }
+    const l = pick(pool);
+    const forms = letterForms(l.ar);
+    const usable = NON_JOINING.has(l.ar) ? forms.filter((f) => f.key === "iso" || f.key === "med") : forms;
+    const pos = usable[Math.floor(rand() * usable.length)].key;
+    out.push({ type: type === "word" ? "pos2form" : type, letter: l, answer: pos });
+  }
+  return out;
+}
+
+/** Les explications des 4 formes (affichées dans le jeu). */
+export const FORMS_GUIDE = [
+  { t: "Pourquoi 4 formes ?", d: "L'arabe s'écrit de droite à gauche et les lettres s'attachent entre elles, comme l'écriture « en attaché ». Une lettre change donc un peu de forme selon sa place : seule, au début, au milieu ou à la fin du mot." },
+  { t: "1. Isolée — seule", ex: "ب", d: "La forme « complète », celle de l'alphabet. Elle n'est reliée à rien." },
+  { t: "2. Début — attachée à gauche", ex: "بـ", d: "Première lettre du mot : elle tend la main vers la lettre suivante (à gauche) et perd souvent sa « queue »." },
+  { t: "3. Milieu — attachée des deux côtés", ex: "ـبـ", d: "Entre deux lettres : un trait la relie à droite ET à gauche. C'est souvent la forme la plus petite." },
+  { t: "4. Fin — attachée à droite", ex: "ـب", d: "Dernière lettre du mot : reliée à la lettre d'avant, elle retrouve sa queue." },
+  { t: "Les 6 lettres « égoïstes »", chips: ["ا", "د", "ذ", "ر", "ز", "و"], d: "Elles s'attachent à la lettre d'avant mais JAMAIS à celle d'après. Elles n'ont donc que 2 formes, et la lettre qui les suit repart en forme de début (ou isolée). Exemple : le mot « porte »", parts: ["بـ", "ـا", "ب"], result: "باب" },
+  { t: "Le truc : regarde les points", d: "Les points ne bougent jamais : même nombre, même place. Ces 5 lettres ont la même forme au début, seuls les points les distinguent (b : 1 dessous · t : 2 dessus · th : 3 dessus · n : 1 dessus · y : 2 dessous).", chips: ["بـ", "تـ", "ثـ", "نـ", "يـ"] },
+  { t: "Les lettres qui changent le plus", d: "Entraîne-toi surtout sur celles-là : leur forme change beaucoup selon la place.", rows: ["ه", "ع", "ك"] },
+  { t: "Exemple complet : « il a écrit »", d: "Pour lire un mot, découpe-le lettre par lettre en repérant les traits d'attache : début + milieu + fin.", parts: ["كـ", "ـتـ", "ـب"], result: "كتب" },
+];

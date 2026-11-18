@@ -403,6 +403,8 @@ import WordsTab from "./components/WordsTab";
 import LearnHub, { TOOLS } from "./components/LearnHub";
 import PathLesson from "./components/PathLesson";
 import PlayHub from "./components/play/PlayHub";
+import FormsGame, { FormsGuide } from "./components/play/FormsGame";
+import { currentStage } from "./lib/play";
 import { useVerseAudio, wordBounds, wordWeight, arabicWeight } from "./lib/verseAudio";
 import { diagnose, diagnosisSentence } from "./lib/diagnosis";
 import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
@@ -857,17 +859,31 @@ function SuratesTab() {
   );
 }
 
-function AlphabetTab() {
+function AlphabetTab({ onPlayForms }) {
   const [sel, setSel] = useState(null);
+  const [guide, setGuide] = useState(false);
   const doReset = () => { setSel(null); };
   const rows = [];
   for (let i = 0; i < ALPHABET.length; i += 4) rows.push(ALPHABET.slice(i, i+4));
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-blue-50 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+      <div className="p-4 bg-blue-50 border border-blue-500/20 rounded-2xl flex flex-wrap items-center justify-between gap-2">
         <p className="text-blue-700 font-bold text-sm">الحروف الهجائية — 28 lettres</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button>
         <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes. <span className="text-emerald-700">Vert = solaire</span> · <span className="text-blue-700">Bleu = lunaire</span></p>
       </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={onPlayForms} className="rounded-2xl bg-bleu px-3 py-3 text-left text-white shadow-sm">
+          <span className="block text-lg">🔠</span>
+          <span className="block text-sm font-extrabold">Jeu des 4 formes</span>
+          <span className="block text-[10px] text-white/80">10 questions · début, milieu, fin</span>
+        </button>
+        <button onClick={() => setGuide(g => !g)} className="rounded-2xl border border-bleu/30 bg-white px-3 py-3 text-left">
+          <span className="block text-lg">📘</span>
+          <span className="block text-sm font-extrabold text-bleu">Comprendre les 4 formes</span>
+          <span className="block text-[10px] text-slate-500">{guide ? "Masquer l'explication" : "Comment et quand les utiliser"}</span>
+        </button>
+      </div>
+      {guide && <FormsGuide/>}
       {rows.map((row, ri) => {
         const selInRow = sel && row.find(l => l.name === sel.name);
         return (
@@ -889,8 +905,8 @@ function AlphabetTab() {
                     l.group === "solaire" ? "bg-emerald-50 border-emerald-700/40" :
                     "bg-slate-100 border-slate-300"
                   }`}>
-                  <p className="text-2xl font-serif" style={{color:"#1A1A1A"}} dir="rtl">{l.ar}</p>
-                  <p className="text-[10px] mt-0.5" style={{color: l.group==="solaire" ? "#047857" : "#1D4ED8"}}>{l.name}</p>
+                  <p className="text-2xl font-serif" style={{color: sel?.name === l.name ? "#FFFFFF" : "#1A1A1A"}} dir="rtl">{l.ar}</p>
+                  <p className="text-[10px] mt-0.5" style={{color: sel?.name === l.name ? "#FFFFFF" : l.group==="solaire" ? "#047857" : "#1D4ED8"}}>{l.name}</p>
                 </button>
               ))}
             </div>
@@ -2330,7 +2346,8 @@ export default function LearnScreen({ initialTab, surahIndex, loadSurah, profSur
           {tab === "lessons"  && <LessonsTab/>}
           {tab === "revision" && <RevisionTab/>}
           {tab === "quiz"     && <QuizTab/>}
-          {tab === "alphabet" && <AlphabetTab/>}
+          {tab === "alphabet" && <AlphabetTab onPlayForms={() => setTab("formes")}/>}
+          {tab === "formes"   && <FormsGame stage={currentStage()} onClose={() => setTab(initialTab === "formes" ? "hub" : "alphabet")}/>}
           {tab === "tajweed"  && <TajweedTab/>}
           {tab === "voyelles" && <VoyellesTab/>}
           {tab === "jouer"    && <PlayHub/>}

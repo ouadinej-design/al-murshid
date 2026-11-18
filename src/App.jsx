@@ -15,6 +15,7 @@ import RecognizeVerse from "./components/RecognizeVerse";
 import DailyProgram from "./components/DailyProgram";
 import ProgramEditor from "./components/ProgramEditor";
 import { getProgram, todayItems, getManualDone, setManualDone } from "./lib/program";
+import { getPlay, formsMastered } from "./lib/play";
 import TasbihCounter from "./components/TasbihCounter";
 import AdhkarSession from "./components/AdhkarSession";
 import ADHKAR_EXTRA from "./data/adhkarExtra";
@@ -2096,6 +2097,8 @@ export default function App() {
         done = lessonToday; sub = homeData.words.nextLesson ? `Leçon ${homeData.words.nextLesson}` : "Parcours terminé";
       } else if (item.type === "revision") {
         done = (todayActivity.words || 0) > 0; sub = homeData.words.due ? `${homeData.words.due} mots à revoir` : "Rien à revoir pour l'instant";
+      } else if (item.type === "forms") {
+        done = !!getPlay().formsDay?.[todayKey]; sub = `${formsMastered()}/28 lettres maîtrisées · 10 questions`;
       } else if (item.type === "recite") {
         done = (todayActivity.recite || 0) > 0; sub = "Avec le professeur";
       }
@@ -2112,6 +2115,7 @@ export default function App() {
     { group: "Apprendre", type: "lesson", icon: "🎓", label: "Leçon du parcours (5 mots)" },
     { group: "Apprendre", type: "revision", icon: "🃏", label: "Révision des mots" },
     { group: "Apprendre", type: "recite", icon: "🎙️", label: "Réciter avec le professeur" },
+    { group: "Apprendre", type: "forms", icon: "🔠", label: "Jeu des 4 formes des lettres" },
   ], []);
 
   const runProgramItem = (item) => {
@@ -2123,6 +2127,7 @@ export default function App() {
       case "lesson": return navigate("learn", { tab: "lesson" });
       case "revision": return navigate("learn", { tab: "revision" });
       case "recite": return navigate("learn", { tab: "prof" });
+      case "forms": return navigate("learn", { tab: "formes" });
       default: return toggleProgramItem(item, !manualDone.includes(item.id));
     }
   };

@@ -135,6 +135,28 @@ describe("niveau adaptatif (Lettres → Syllabes → Mots)", () => {
   });
   it("formes des lettres", () => {
     expect(letterForms("ب").map((f) => f.f)).toEqual(["ب", "بـ", "ـبـ", "ـب"]);
-    expect(letterForms("د")).toHaveLength(2);
+    expect(letterForms("د").map((f) => f.f)).toEqual(["د", "د", "ـد", "ـد"]);
+  });
+});
+
+import { positionInWord, splitHighlight, formsSession, FORMS_GUIDE } from "../play";
+describe("jeu des 4 formes", () => {
+  it("position d'une lettre dans un mot", () => {
+    const k = [..."كتب"];
+    expect([0, 1, 2].map((i) => positionInWord(k, i))).toEqual(["ini", "med", "fin"]);
+    const b = [..."باب"]; // ا ne s'attache pas à gauche → le 2e ب est isolé
+    expect([0, 1, 2].map((i) => positionInWord(b, i))).toEqual(["ini", "fin", "iso"]);
+  });
+  it("coloration sans casser les liaisons", () => {
+    const h = splitHighlight([..."كتب"], 1);
+    expect(h.before + h.mark + h.after).toBe("ك\u200D\u200Dت\u200D\u200Dب");
+  });
+  it("une partie = 10 questions, débutant limité à ses lettres", () => {
+    const p = { profile: { level: "zero" }, letters: {}, forms: {} };
+    const q = formsSession(p, { beginner: true });
+    expect(q).toHaveLength(10);
+    const allowed = new Set(["ا", "ب", "ت", "ث"]);
+    q.filter((x) => x.type !== "word").forEach((x) => expect(allowed.has(x.letter.ar)).toBe(true));
+    expect(FORMS_GUIDE.length).toBeGreaterThan(5);
   });
 });

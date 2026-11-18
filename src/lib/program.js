@@ -12,6 +12,7 @@ export const DEFAULT_ITEMS = [
   { id: "d1", type: "adhkarTab", ref: "matin", label: "Adhkar du matin", icon: "🌅" },
   { id: "d2", type: "reading", label: "Lecture du jour (Khatm)", icon: "📅" },
   { id: "d3", type: "lesson", label: "Leçon du parcours (5 mots)", icon: "🎓" },
+  { id: "d6", type: "forms", label: "Jeu des 4 formes des lettres", icon: "🔠" },
   { id: "d4", type: "adhkarTab", ref: "soir", label: "Adhkar du soir", icon: "🌇" },
   { id: "d5", type: "kahf", label: "Sourate Al-Kahf", icon: "🕌", days: [5] },
 ];
@@ -26,9 +27,21 @@ function write(key, val) {
 }
 
 export function getProgram() {
-  return read(KEY, null) || DEFAULT_ITEMS;
+  const saved = read(KEY, null);
+  if (!saved) return DEFAULT_ITEMS;
+  // Ajout unique du jeu des 4 formes dans un programme déjà réglé (l'utilisateur peut l'enlever ensuite)
+  if (!read("program_forms_added", false)) {
+    write("program_forms_added", true);
+    if (!saved.some((it) => it.type === "forms")) {
+      const items = [...saved, { id: "d6", type: "forms", label: "Jeu des 4 formes des lettres", icon: "🔠" }];
+      write(KEY, items);
+      return items;
+    }
+  }
+  return saved;
 }
 export function saveProgram(items) {
+  write("program_forms_added", true);
   write(KEY, items);
 }
 
