@@ -4,6 +4,7 @@ import { Volume2 } from "lucide-react";
 import { FullScreen, AR, speak, vibrate } from "./shared";
 import { getPlay, savePlay, nextLetter, unlockedLetters, syllablesOf, syllableLetters, itemOptions, letterForms, recordLetter, recordSyllable, KNOWN_AT } from "../../lib/play";
 import { localDayKey, logActivity } from "../../lib/progress";
+import { colorOf, useColorMode } from "../../lib/letterColors";
 
 /**
  * La lettre du jour (étapes Lettres et Syllabes) : on DÉCOUVRE une lettre
@@ -35,6 +36,8 @@ export default function LetterOfDay({ stage, onClose, onDone }) {
   }, [letter, stage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [step, setStep] = useState(-1); // -1 = découverte
+  const [mode] = useColorMode();
+  const CA = (x) => ({ ...AR, color: colorOf(x, mode) });
   const [picked, setPicked] = useState(null);
   const [ok, setOk] = useState(0);
   const q = questions[step];
@@ -74,7 +77,7 @@ export default function LetterOfDay({ stage, onClose, onDone }) {
     return (
       <FullScreen title={title} onClose={onClose}>
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-          <p dir="rtl" className="text-8xl" style={AR}>{letter.ar}</p>
+          <p dir="rtl" className="text-8xl" style={CA(letter.ar)}>{letter.ar}</p>
           <h3 className="mt-3 font-display text-2xl font-extrabold">{ok}/{questions.length} bonnes réponses</h3>
           <p className="mt-1 text-sm text-slate-500">
             {stage === "syllabes" ? `Tu sais lire ${sylls.map((s) => s.fr).join(", ")} !` : level >= KNOWN_AT ? `Tu connais maintenant ${letter.name} ✓` : `Encore un peu d'entraînement sur ${letter.name} : rejoue à Survie ou Relier.`}
@@ -98,7 +101,7 @@ export default function LetterOfDay({ stage, onClose, onDone }) {
                 <div dir="rtl" className="mt-4 flex gap-3">
                   {sylls.map((s) => (
                     <button key={s.id} onClick={() => speak(s.ar, 0.5)} className="flex flex-col items-center rounded-2xl border border-slate-200 bg-creme px-4 py-3">
-                      <span className="text-5xl leading-[1.6]" style={AR}>{s.ar}</span>
+                      <span className="text-5xl leading-[1.6]" style={CA(s.ar)}>{s.ar}</span>
                       <span className="font-display text-xl font-extrabold text-bleu">{s.fr}</span>
                       <span className="text-[10px] text-slate-400">{s.vowel}</span>
                     </button>
@@ -111,7 +114,7 @@ export default function LetterOfDay({ stage, onClose, onDone }) {
             ) : (
               <>
                 <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Nouvelle lettre</p>
-                <motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="text-[7rem] leading-[1.5]" style={AR}>{letter.ar}</motion.p>
+                <motion.p initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="text-[7rem] leading-[1.5]" style={CA(letter.ar)}>{letter.ar}</motion.p>
                 <p className="font-display text-3xl font-extrabold">{letter.name}</p>
                 <p className="mt-1 text-sm text-slate-600">se prononce <b className="text-bleu">« {letter.sound} »</b></p>
                 <button onClick={() => speak(letter.ar, 0.5)} className="mt-3 flex items-center gap-2 rounded-full bg-bleu/10 px-4 py-2 text-sm font-bold text-bleu">
@@ -122,7 +125,7 @@ export default function LetterOfDay({ stage, onClose, onDone }) {
                   <div dir="rtl" className="flex justify-center gap-2">
                     {letterForms(letter.ar).map((f) => (
                       <div key={f.label} className="flex flex-col items-center rounded-xl bg-creme px-3 py-1.5">
-                        <span className="text-3xl leading-[1.7]" style={AR}>{f.f}</span>
+                        <span className="text-3xl leading-[1.7]" style={CA(letter.ar)}>{f.f}</span>
                         <span className="text-[10px] text-slate-500">{f.label}</span>
                       </div>
                     ))}

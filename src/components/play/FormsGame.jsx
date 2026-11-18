@@ -4,27 +4,31 @@ import { Volume2, BookOpen } from "lucide-react";
 import { FullScreen, AR, speak, vibrate } from "./shared";
 import {
   getPlay, savePlay, formsSession, letterForms, POSITIONS, FORMS_GUIDE, recordForm, recordLetter,
-  formsMastered, ABC, splitHighlight, NON_JOINING, FORMS_KNOWN_AT, unlockedLetters,
+  formsMastered, ABC, NON_JOINING, FORMS_KNOWN_AT, unlockedLetters,
 } from "../../lib/play";
 import { localDayKey, logActivity } from "../../lib/progress";
+import { colorOf, useColorMode, joinedSegments } from "../../lib/letterColors";
+import ColorModePicker from "../ColorModePicker";
 
 const POS_LABEL = Object.fromEntries(POSITIONS.map((p) => [p.key, p.label]));
 const POS_HINT = { iso: "seule", ini: "au début du mot", med: "au milieu du mot", fin: "à la fin du mot" };
 
 /** Le guide des 4 formes (aussi affiché depuis l'Alphabet). */
 export function FormsGuide({ compact = false }) {
+  const [mode] = useColorMode();
+  const C = (s) => ({ ...AR, color: colorOf(s, mode) });
   return (
     <div className="space-y-2">
       {FORMS_GUIDE.map((g) => (
         <div key={g.t} className="rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-extrabold text-encre">{g.t}</p>
-            {g.ex && <span dir="rtl" className="rounded-xl bg-bleu/10 px-3 text-3xl leading-[1.6] text-bleu" style={AR}>{g.ex}</span>}
+            {g.ex && <span dir="rtl" className="rounded-xl bg-bleu/10 px-3 text-3xl leading-[1.6]" style={C(g.ex)}>{g.ex}</span>}
           </div>
           {!compact && <p className="mt-1 text-xs leading-relaxed text-slate-600">{g.d}</p>}
           {!compact && g.chips && (
             <div dir="rtl" className="mt-2 flex flex-wrap justify-center gap-1.5">
-              {g.chips.map((c) => <span key={c} className="rounded-xl bg-creme px-3 text-3xl leading-[1.7]" style={AR}>{c}</span>)}
+              {g.chips.map((c) => <span key={c} className="rounded-xl bg-creme px-3 text-3xl leading-[1.7]" style={C(c)}>{c}</span>)}
             </div>
           )}
           {!compact && g.parts && (
@@ -32,11 +36,13 @@ export function FormsGuide({ compact = false }) {
               {g.parts.map((c, i) => (
                 <span key={i} className="flex items-center gap-1.5">
                   {i > 0 && <span className="text-lg font-bold text-slate-400">+</span>}
-                  <span className="rounded-xl bg-creme px-2 text-3xl leading-[1.7]" style={AR}>{c}</span>
+                  <span className="rounded-xl bg-creme px-2 text-3xl leading-[1.7]" style={C(c)}>{c}</span>
                 </span>
               ))}
               <span className="text-lg font-bold text-slate-400">=</span>
-              <span className="rounded-xl bg-vert/15 px-3 text-3xl leading-[1.7] text-vert" style={AR}>{g.result}</span>
+              <span className="rounded-xl bg-slate-100 px-3 text-3xl leading-[1.7]" style={AR}>
+                {joinedSegments([...g.result]).map((seg, i) => <span key={i} style={{ color: colorOf(seg, mode) }}>{seg}</span>)}
+              </span>
             </div>
           )}
           {!compact && g.rows && <div className="mt-2 space-y-1.5">{g.rows.map((ar) => <FormsRow key={ar} ar={ar} />)}</div>}
@@ -48,11 +54,12 @@ export function FormsGuide({ compact = false }) {
 
 /** Tableau des 4 formes d'une lettre. */
 function FormsRow({ ar, hi }) {
+  const [mode] = useColorMode();
   return (
     <div dir="rtl" className="grid grid-cols-4 gap-1.5">
       {letterForms(ar).map((f) => (
         <div key={f.key} className={`flex flex-col items-center rounded-xl px-1 py-1 ${hi === f.key ? "bg-vert/15 ring-2 ring-vert" : "bg-creme"}`}>
-          <span className="text-3xl leading-[1.7]" style={AR}>{f.f}</span>
+          <span className="text-3xl leading-[1.7]" style={{ ...AR, color: colorOf(ar, mode) }}>{f.f}</span>
           <span className="text-[10px] text-slate-500">{f.label}</span>
         </div>
       ))}
@@ -75,6 +82,8 @@ export default function FormsGame({ onClose, stage = "mots" }) {
   const [missed, setMissed] = useState([]);
   const q = questions[step];
   const mastered = formsMastered();
+  const [mode] = useColorMode();
+  const col = (s) => colorOf(s, mode);
 
   const options = useMemo(() => {
     if (!q) return [];
@@ -147,6 +156,7 @@ export default function FormsGame({ onClose, stage = "mots" }) {
                 <span>Lettres dont tu maîtrises les formes</span>
                 <span className="font-display text-lg font-extrabold text-vert">{mastered}/28</span>
               </div>
+              <ColorModePicker compact />
               <button onClick={() => setScreen("guide")} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-bleu/30 bg-bleu/5 py-3 text-sm font-bold text-bleu">
                 <BookOpen className="h-4 w-4" /> Comprendre les 4 formes (2 min)
               </button>
@@ -199,20 +209,24 @@ export default function FormsGame({ onClose, stage = "mots" }) {
   const form = letterForms(q.letter.ar).find((f) => f.key === q.answer)?.f;
   let prompt, display;
   if (q.type === "pos2form") {
-    prompt = <>Comment s'écrit <b>{q.letter.name}</b> <b className="text-bleu">{POS_HINT[q.answer]}</b> ?</>;
-    display = <div className="text-center"><p dir="rtl" className="text-7xl leading-[1.6]" style={AR}>{q.letter.ar}</p><p className="text-xs text-slate-400">{q.letter.name} · « {q.letter.sound} »</p></div>;
+    prompt = <>Comment s'écrit <b style={{ color: col(q.letter.ar) }}>{q.letter.name}</b> <b className="text-bleu">{POS_HINT[q.answer]}</b> ?</>;
+    display = <div className="text-center"><p dir="rtl" className="text-7xl leading-[1.6]" style={{ ...AR, color: col(q.letter.ar) }}>{q.letter.ar}</p><p className="text-xs text-slate-400">{q.letter.name} · « {q.letter.sound} »</p></div>;
   } else if (q.type === "form2pos") {
-    prompt = <>Cette forme de <b>{q.letter.name}</b> se trouve où dans le mot ?</>;
-    display = <p dir="rtl" className="text-7xl leading-[1.6]" style={AR}>{form}</p>;
+    prompt = <>Cette forme de <b style={{ color: col(q.letter.ar) }}>{q.letter.name}</b> se trouve où dans le mot ?</>;
+    display = <p dir="rtl" className="text-7xl leading-[1.6]" style={{ ...AR, color: col(q.letter.ar) }}>{form}</p>;
   } else if (q.type === "form2letter") {
     prompt = <>Quelle lettre est-ce ? <span className="text-slate-400">(forme {POS_LABEL[q.answer].toLowerCase()})</span></>;
-    display = <p dir="rtl" className="text-7xl leading-[1.6]" style={AR}>{form}</p>;
+    display = <p dir="rtl" className="text-7xl leading-[1.6]" style={{ ...AR, color: col(q.letter.ar) }}>{form}</p>;
   } else {
-    const h = splitHighlight(q.letters, q.index);
-    prompt = <>Dans ce mot, sous quelle forme est la lettre <b className="text-rouge">{q.letter.name}</b> ?</>;
+    // la lettre demandée dans sa couleur, les autres en gris
+    const segs = joinedSegments(q.letters);
+    const target = mode === "noir" ? "#E30613" : col(q.letter.ar);
+    prompt = <>Dans ce mot, sous quelle forme est la lettre <b style={{ color: target }}>{q.letter.name}</b> ?</>;
     display = (
       <div className="text-center">
-        <p dir="rtl" className="text-6xl leading-[1.8]" style={AR}>{h.before}<span className="text-rouge">{h.mark}</span>{h.after}</p>
+        <p dir="rtl" className="text-6xl leading-[1.8]" style={AR}>
+          {segs.map((s, i) => <span key={i} style={{ color: i === q.index ? target : "#B6BFCC" }}>{s}</span>)}
+        </p>
         <p className="text-xs text-slate-500">{q.word.fr}</p>
       </div>
     );

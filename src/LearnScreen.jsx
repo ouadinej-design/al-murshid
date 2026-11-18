@@ -405,6 +405,8 @@ import PathLesson from "./components/PathLesson";
 import PlayHub from "./components/play/PlayHub";
 import FormsGame, { FormsGuide } from "./components/play/FormsGame";
 import { currentStage } from "./lib/play";
+import { colorOf, useColorMode, familyOf, NON_JOINING as EGO } from "./lib/letterColors";
+import ColorModePicker from "./components/ColorModePicker";
 import { useVerseAudio, wordBounds, wordWeight, arabicWeight } from "./lib/verseAudio";
 import { diagnose, diagnosisSentence } from "./lib/diagnosis";
 import { markVerseLearned, getMemorized, MEMO_THRESHOLD } from "./lib/memorize";
@@ -862,6 +864,7 @@ function SuratesTab() {
 function AlphabetTab({ onPlayForms }) {
   const [sel, setSel] = useState(null);
   const [guide, setGuide] = useState(false);
+  const [mode] = useColorMode();
   const doReset = () => { setSel(null); };
   const rows = [];
   for (let i = 0; i < ALPHABET.length; i += 4) rows.push(ALPHABET.slice(i, i+4));
@@ -869,8 +872,9 @@ function AlphabetTab({ onPlayForms }) {
     <div className="space-y-4">
       <div className="p-4 bg-blue-50 border border-blue-500/20 rounded-2xl flex flex-wrap items-center justify-between gap-2">
         <p className="text-blue-700 font-bold text-sm">الحروف الهجائية — 28 lettres</p><button onClick={doReset} style={{background:"none",border:"1px solid rgba(15,23,42,0.12)",borderRadius:"8px",padding:"5px 12px",color:"#64748b",fontSize:"0.7rem",cursor:"pointer"}}>🔄 Réinitialiser</button>
-        <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes. <span className="text-emerald-700">Vert = solaire</span> · <span className="text-blue-700">Bleu = lunaire</span></p>
+        <p className="text-slate-500 text-xs">Appuie sur une lettre pour voir ses 4 formes. ✋ = lettre « égoïste » (ne s'attache pas à gauche).</p>
       </div>
+      <ColorModePicker/>
       <div className="grid grid-cols-2 gap-2">
         <button onClick={onPlayForms} className="rounded-2xl bg-bleu px-3 py-3 text-left text-white shadow-sm">
           <span className="block text-lg">🔠</span>
@@ -900,13 +904,11 @@ function AlphabetTab({ onPlayForms }) {
                       setTimeout(() => speakFeedback(`${l.name} — ${l.sound}`, "fr-FR"), 1200);
                     }
                   }}
-                  className={`p-3 rounded-2xl border text-center transition-all active:scale-95 ${
-                    sel?.name === l.name ? "bg-blue-600 border-blue-400" :
-                    l.group === "solaire" ? "bg-emerald-50 border-emerald-700/40" :
-                    "bg-slate-100 border-slate-300"
-                  }`}>
-                  <p className="text-2xl font-serif" style={{color: sel?.name === l.name ? "#FFFFFF" : "#1A1A1A"}} dir="rtl">{l.ar}</p>
-                  <p className="text-[10px] mt-0.5" style={{color: sel?.name === l.name ? "#FFFFFF" : l.group==="solaire" ? "#047857" : "#1D4ED8"}}>{l.name}</p>
+                  className="relative p-3 rounded-2xl border-2 text-center transition-all active:scale-95"
+                  style={{ background: sel?.name === l.name ? colorOf(l.ar, mode) : `${colorOf(l.ar, mode)}12`, borderColor: `${colorOf(l.ar, mode)}55` }}>
+                  {EGO.has(l.ar) && <span className="absolute right-1 top-0.5 text-[11px]" title="Ne s'attache pas à gauche">✋</span>}
+                  <p className="text-3xl font-serif" style={{color: sel?.name === l.name ? "#FFFFFF" : colorOf(l.ar, mode)}} dir="rtl">{l.ar}</p>
+                  <p className="text-[10px] mt-0.5 font-bold" style={{color: sel?.name === l.name ? "#FFFFFF" : colorOf(l.ar, mode)}}>{l.name}</p>
                 </button>
               ))}
             </div>
@@ -915,13 +917,17 @@ function AlphabetTab({ onPlayForms }) {
                 <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} className="overflow-hidden mb-2">
                   <div className="p-4 bg-blue-50 border border-blue-500/30 rounded-2xl">
                     <div className="flex items-center gap-4 mb-3">
-                      <div className="w-16 h-16 rounded-2xl bg-blue-600/40 border border-blue-400/50 flex items-center justify-center">
-                        <span className="text-4xl font-serif" style={{color:"#1A1A1A"}}>{sel.ar}</span>
+                      <div className="w-16 h-16 shrink-0 rounded-2xl border-2 flex items-center justify-center" style={{ background: `${colorOf(sel.ar, mode)}18`, borderColor: colorOf(sel.ar, mode) }}>
+                        <span className="text-4xl font-serif" style={{color: colorOf(sel.ar, mode)}}>{sel.ar}</span>
                       </div>
                       <div>
                         <p className="font-black text-xl" style={{color:"#1A1A1A"}}>{sel.name}</p>
                         <p className="text-blue-700 text-sm font-bold">{sel.sound}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${sel.group==="solaire" ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"}`}>{sel.group}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${sel.group==="solaire" ? "bg-orange-50 text-orange-700" : "bg-blue-50 text-blue-700"}`}>{sel.group === "solaire" ? "☀️ solaire" : "🌙 lunaire"}</span>
+                        {EGO.has(sel.ar) && <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-700">✋ égoïste : 2 formes</span>}
+                        {familyOf(sel.ar)?.letters.length > 1 && (
+                          <p className="mt-1 text-[11px] text-slate-500">{familyOf(sel.ar).name} : <bdi dir="rtl" className="font-serif text-base">{familyOf(sel.ar).letters.map(x => <span key={x} style={{ color: colorOf(x, mode) }}> {x} </span>)}</bdi><br/>{familyOf(sel.ar).hint}</p>
+                        )}
                         <div className="flex gap-2 mt-2">
                           <button onClick={() => speakArabic(sel.ar, 0.4)}
                             style={{background:"rgba(59,130,246,0.2)",border:"1px solid rgba(96,165,250,0.4)",borderRadius:"8px",padding:"4px 10px",color:"#1d4ed8",fontSize:"0.75rem",cursor:"pointer"}}>
@@ -938,7 +944,7 @@ function AlphabetTab({ onPlayForms }) {
                       {[{label:"Isolée",text:sel.i},{label:"Initiale",text:sel.ini},{label:"Médiane",text:sel.med},{label:"Finale",text:sel.fin}].map(f => (
                         <div key={f.label} className="bg-slate-100 rounded-xl p-2.5 text-center border border-slate-300">
                           <p className="text-[10px] text-slate-500 mb-1">{f.label}</p>
-                          <p className="text-2xl font-serif" style={{color:"#1A1A1A"}} dir="rtl">{f.text}</p>
+                          <p className="text-2xl font-serif" style={{color: colorOf(sel.ar, mode)}} dir="rtl">{f.text}</p>
                         </div>
                       ))}
                     </div>

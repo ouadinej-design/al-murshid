@@ -4,6 +4,7 @@ import { Volume2, RotateCcw } from "lucide-react";
 import { FullScreen, speak, vibrate } from "./shared";
 import { ABC, DOTTED, traceScore, getPlay, savePlay, nextLetter, recordLetter } from "../../lib/play";
 import { logActivity } from "../../lib/progress";
+import { colorOf, useColorMode } from "../../lib/letterColors";
 
 const SIZE = 280;     // taille du cadre (px CSS)
 const GRID = 56;      // résolution de la comparaison
@@ -62,6 +63,7 @@ export default function TraceLetter({ onClose, stage = "mots" }) {
     return i < 0 ? 0 : i;
   });
   const [verdict, setVerdict] = useState(null);
+  const [cmode] = useColorMode();
   const [traced, setTraced] = useState(() => getPlay().traced || {});
   const guide = useRef(null), ink = useRef(null), drawing = useRef(false), hasInk = useRef(false);
   const letter = ABC[idx];
@@ -162,7 +164,7 @@ export default function TraceLetter({ onClose, stage = "mots" }) {
           {ABC.map((l, i) => (
             <button key={l.ar} onClick={() => setIdx(i)} aria-label={l.name}
               className={`h-8 w-8 rounded-lg text-lg ${i === idx ? "bg-bleu text-white" : traced[l.ar] ? "bg-vert/15 text-vert" : "bg-white text-slate-500 border border-slate-200"}`}
-              style={{ fontFamily: "'Amiri Quran',serif" }}>{l.ar}</button>
+              style={{ fontFamily: "'Amiri Quran',serif", color: i === idx ? undefined : colorOf(l.ar, cmode) }}>{l.ar}</button>
           ))}
         </div>
       </div>

@@ -4,6 +4,7 @@ import { Volume2 } from "lucide-react";
 import { FullScreen, AR, speak, vibrate } from "./shared";
 import { linkRound, getPlay, savePlay, unlockedLetters, recordLetter } from "../../lib/play";
 import { logActivity } from "../../lib/progress";
+import { colorOf, useColorMode } from "../../lib/letterColors";
 
 const ROUNDS = 5;
 const MODES = [
@@ -17,6 +18,7 @@ const MODES = [
  */
 export default function LinkLetters({ onClose, stage = "mots" }) {
   const [round, setRound] = useState(0);
+  const [cmode] = useColorMode();
   const [mistakes, setMistakes] = useState(0);
   const [finished, setFinished] = useState(false);
   const mode = MODES[round % 2];
@@ -122,7 +124,7 @@ export default function LinkLetters({ onClose, stage = "mots" }) {
               <motion.button key={"l" + l.ar} ref={(el) => (leftRefs.current[l.ar] = el)} whileTap={{ scale: 0.95 }}
                 onPointerDown={(e) => onDown(e, l.ar)} onClick={() => !drag?.moved && setSel(sel === l.ar ? null : l.ar)}
                 className={`flex h-16 items-center justify-center rounded-2xl border-2 text-4xl ${doneL ? "border-vert bg-vert/10" : sel === l.ar ? "border-orange bg-orange/10" : "border-slate-200 bg-white"}`}
-                style={AR}>{l.ar}</motion.button>,
+                style={{ ...AR, color: colorOf(l.ar, cmode) }}>{l.ar}</motion.button>,
               <button key={"r" + a.ar} data-answer={a.ar} ref={(el) => (rightRefs.current[a.ar] = el)}
                 onClick={() => (sel ? tryLink(sel, a.ar) : mode.key === "name" && speak(a.ar, 0.5))}
                 className={`flex h-16 items-center justify-center gap-1.5 rounded-2xl border-2 px-2 text-center ${doneR ? "border-vert bg-vert/10 text-vert" : wrong?.to === a.ar ? "border-rouge bg-rouge/10" : "border-slate-200 bg-white"} ${mode.arabic ? "text-3xl" : "text-sm font-bold"}`}
